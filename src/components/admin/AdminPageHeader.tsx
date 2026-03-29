@@ -1,0 +1,34 @@
+"use client";
+
+import { ReactNode } from "react";
+
+interface AdminPageHeaderProps {
+  title: string;
+  description: string;
+  stats?: {
+    label: string;
+    value: string | number;
+  };
+  children?: ReactNode; // For actions like buttons
+}
+
+export default function AdminPageHeader({ title, description, stats, children }: AdminPageHeaderProps) {
+  return (
+    <div className="flex flex-wrap items-end justify-between gap-6 mb-12">
+      <div className="flex-1 min-w-[300px]">
+        <h1 className="text-4xl font-black uppercase tracking-tighter text-gray-900">{title}</h1>
+        <p className="text-gray-500 mt-2 font-medium">{description}</p>
+      </div>
+      
+      <div className="flex items-center gap-4">
+        {stats && (
+          <div className="bg-gray-100 px-6 py-3 rounded-2xl flex items-center gap-3 border border-gray-200/50">
+            <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">{stats.label}</span>
+            <span className="text-sm font-black text-gray-900">{stats.value}</span>
+          </div>
+        )}
+        {children}
+      </div>
+    </div>
+  );
+}
