@@ -63,14 +63,14 @@ export default function OrdersPage() {
 
   if (loading) {
     return (
-      <div className="p-8 flex items-center justify-center min-h-[400px]">
+      <div className="p-[10px] md:p-8 flex items-center justify-center min-h-[400px]">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black"></div>
       </div>
     );
   }
 
   return (
-    <div className="p-8 w-full">
+    <div className="p-[10px] md:p-8 w-full">
       <AdminPageHeader 
         title="Orders" 
         description="Manage and track all customer orders"
@@ -191,13 +191,13 @@ export default function OrdersPage() {
                       <div className="text-sm space-y-3">
                         <h5 className="text-[10px] font-black uppercase tracking-widest text-gray-400">Payment Receipt</h5>
                         <a 
-                          href={`http://127.0.0.1:8000/storage/${order.receipt_path}`} 
+                          href={`${(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api').replace('/api', '')}/storage/${order.receipt_path}`} 
                           target="_blank" 
                           rel="noreferrer"
                           className="group block relative w-32 h-32 rounded-2xl overflow-hidden border-2 border-dashed border-gray-200 hover:border-black transition-colors bg-white"
                         >
                           <img 
-                            src={`http://127.0.0.1:8000/storage/${order.receipt_path}`} 
+                            src={`${(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api').replace('/api', '')}/storage/${order.receipt_path}`} 
                             alt="Receipt" 
                             className="w-full h-full object-cover group-hover:opacity-50 transition-opacity"
                           />

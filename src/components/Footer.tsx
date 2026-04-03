@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { apiClient } from '@/utils/api';
 
 interface SocialPlatform {
@@ -16,6 +17,7 @@ interface Settings {
 }
 
 export default function Footer() {
+  const pathname = usePathname();
   const [settings, setSettings] = useState<Settings | null>(null);
   const [platforms, setPlatforms] = useState<SocialPlatform[]>([]);
   const currentYear = new Date().getFullYear();
@@ -24,13 +26,22 @@ export default function Footer() {
     // Fetch Settings
     apiClient('/settings').then(data => {
       if (data && data.company_name) setSettings(data);
-    }).catch(err => console.error('Footer settings fetch error:', err));
+    }).catch(err => {
+      // Fail silently for non-critical footer data
+    });
 
     // Fetch Social Platforms
     apiClient('/social-media').then(data => {
       if (Array.isArray(data)) setPlatforms(data);
-    }).catch(err => console.error('Footer social fetch error:', err));
+    }).catch(err => {
+      // Fail silently for non-critical footer data
+    });
   }, []);
+
+  // Hide footer on admin and dashboard pages
+  if (pathname?.startsWith('/admin') || pathname?.startsWith('/dashboard')) {
+    return null;
+  }
 
   const companyName = settings?.company_name || 'Wink Ecommerce';
 

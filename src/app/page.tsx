@@ -18,18 +18,30 @@ export default function Home() {
   const { products, loading: productsLoading, fetchProducts } = useProductStore();
   const { banners, fetchBanners } = useBannerStore();
   const [page, setPage] = useState(1);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState("All Products");
 
   useEffect(() => {
     fetchProducts();
     fetchBanners();
   }, [fetchProducts, fetchBanners]);
 
-  const totalPages = Math.max(1, Math.ceil(products.length / PER_PAGE));
-  const paginated = products.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+  // Filter by selected category
+  const filtered = selectedCategory === "All Products"
+    ? products
+    : products.filter((p) => p.category?.toLowerCase() === selectedCategory.toLowerCase());
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
+  const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
   const changePage = (p: number) => {
     setPage(p);
     document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const handleCategoryChange = (cat: string) => {
+    setSelectedCategory(cat);
+    setPage(1);
   };
 
   return (
@@ -98,39 +110,78 @@ export default function Home() {
       </section>
 
       {/* Main Content Area */}
-      <section id="products" className="max-w-[1600px] mx-auto px-8 py-20 flex gap-12">
-        <Sidebar />
+      <section id="products" className="max-w-[1600px] mx-auto px-4 md:px-8 py-12 md:py-20 flex gap-12">
+        <Sidebar
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
+          selectedCategory={selectedCategory}
+          onCategoryChange={handleCategoryChange}
+        />
 
-        <div className="flex-1">
-          <div className="flex justify-between items-end mb-10 pb-4 border-b border-gray-100 dark:border-neutral-800 transition-colors">
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-wrap justify-between items-end mb-10 pb-4 border-b border-gray-100 dark:border-neutral-800 gap-3">
             <div>
-              <h2 className="text-3xl font-bold tracking-tight mb-2 text-gray-900 dark:text-white transition-colors">New Arrivals</h2>
+              <h2 className="text-3xl font-bold tracking-tight mb-2 text-gray-900 dark:text-white transition-colors">
+                {selectedCategory}
+              </h2>
               <p className="text-gray-500 dark:text-gray-400 text-sm transition-colors">
-                {products.length === 0
+                {productsLoading
                   ? 'Loading products...'
-                  : `Showing ${Math.min((page - 1) * PER_PAGE + 1, products.length)}–${Math.min(page * PER_PAGE, products.length)} of ${products.length} items`
+                  : filtered.length === 0
+                    ? 'No products in this category'
+                    : `Showing ${Math.min((page - 1) * PER_PAGE + 1, filtered.length)}–${Math.min(page * PER_PAGE, filtered.length)} of ${filtered.length} items`
                 }
               </p>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Sort by:</span>
-              <select className="text-sm font-bold bg-transparent border-none outline-none cursor-pointer text-gray-900 dark:text-gray-100">
-                <option className="bg-white dark:bg-neutral-900">Newest Arrivals</option>
-                <option className="bg-white dark:bg-neutral-900">Price: High to Low</option>
-                <option className="bg-white dark:bg-neutral-900">Price: Low to High</option>
-              </select>
+            <div className="flex items-center gap-3">
+              {/* Mobile Filter Toggle */}
+              <button
+                onClick={() => setIsSidebarOpen(true)}
+                className="lg:hidden flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-neutral-700 rounded-xl text-sm font-bold text-gray-700 dark:text-gray-300 hover:border-black dark:hover:border-white transition-colors"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="4" y1="6" x2="20" y2="6"/>
+                  <line x1="8" y1="12" x2="16" y2="12"/>
+                  <line x1="11" y1="18" x2="13" y2="18"/>
+                </svg>
+                Filter
+                {selectedCategory !== "All Products" && (
+                  <span className="w-2 h-2 rounded-full bg-black dark:bg-white" />
+                )}
+              </button>
+
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Sort by:</span>
+                <select className="text-sm font-bold bg-transparent border-none outline-none cursor-pointer text-gray-900 dark:text-gray-100">
+                  <option className="bg-white dark:bg-neutral-900">Newest Arrivals</option>
+                  <option className="bg-white dark:bg-neutral-900">Price: High to Low</option>
+                  <option className="bg-white dark:bg-neutral-900">Price: Low to High</option>
+                </select>
+              </div>
             </div>
           </div>
 
           {/* Products Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
             {productsLoading
               ? Array.from({ length: PER_PAGE }).map((_, i) => (
                 <div key={i} className="bg-gray-100 dark:bg-neutral-800 rounded-2xl h-80 animate-pulse" />
               ))
-              : paginated.map((p) => (
-                <ProductCard key={p.id} {...p} />
-              ))
+              : paginated.length > 0
+                ? paginated.map((p) => (
+                  <ProductCard key={p.id} {...p} />
+                ))
+                : (
+                  <div className="col-span-full py-20 text-center">
+                    <p className="text-gray-400 font-bold uppercase tracking-widest text-sm">No products found</p>
+                    <button
+                      onClick={() => handleCategoryChange("All Products")}
+                      className="mt-4 text-xs font-bold underline text-gray-500 hover:text-black dark:hover:text-white transition-colors"
+                    >
+                      Clear filter
+                    </button>
+                  </div>
+                )
             }
           </div>
 
@@ -154,9 +205,9 @@ export default function Home() {
                   key={p}
                   onClick={() => changePage(p)}
                   className={`w-10 h-10 rounded-full text-sm font-bold transition-all ${p === page
-                      ? 'bg-black text-white dark:bg-white dark:text-black'
-                      : 'border border-gray-200 dark:border-neutral-800 text-gray-500 dark:text-gray-400 hover:border-black dark:hover:border-white hover:text-black dark:hover:text-white'
-                    }`}
+                    ? 'bg-black text-white dark:bg-white dark:text-black'
+                    : 'border border-gray-200 dark:border-neutral-800 text-gray-500 dark:text-gray-400 hover:border-black dark:hover:border-white hover:text-black dark:hover:text-white'
+                  }`}
                 >
                   {p}
                 </button>

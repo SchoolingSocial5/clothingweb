@@ -16,7 +16,7 @@ export default function CustomersPage() {
   }, [token, fetchCustomers]);
 
   return (
-    <div className="w-full px-8 py-12">
+    <div className="w-full p-[10px] md:px-8 md:py-12">
       <AdminPageHeader 
         title="Customers" 
         description="Manage your registered users and guests."

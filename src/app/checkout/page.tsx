@@ -51,7 +51,7 @@ export default function CheckoutPage() {
   }, [user]);
 
   useEffect(() => {
-    fetch('http://127.0.0.1:8000/api/settings', { headers: { Accept: 'application/json' } })
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/settings`, { headers: { Accept: 'application/json' } })
       .then(r => r.json())
       .then(data => { if (data && data.bank_name) setSettings(data); })
       .catch(() => { });

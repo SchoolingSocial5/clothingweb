@@ -2,16 +2,18 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useProductStore, Product } from "@/store/useProductStore";
+import { useCategoryStore } from "@/store/useCategoryStore";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 
 export default function ProductsPage() {
   const { token } = useAuth();
   const { products, loading, fetchProducts, createProduct, updateProduct, deleteProduct } = useProductStore();
+  const { categories, fetchCategories } = useCategoryStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [newProduct, setNewProduct] = useState({
     name: "",
-    category: "Clothing",
+    category: "",
     price: "",
     color: "#000000",
     quantity: "0",
@@ -35,7 +37,8 @@ export default function ProductsPage() {
 
   useEffect(() => {
     fetchProducts();
-  }, [fetchProducts]);
+    fetchCategories();
+  }, [fetchProducts, fetchCategories]);
 
   const handleEdit = (product: Product) => {
     setEditingProduct(product);
@@ -104,7 +107,7 @@ export default function ProductsPage() {
       
       setIsModalOpen(false);
       setEditingProduct(null);
-      setNewProduct({ name: "", category: "Clothing", price: "", color: "#000000", quantity: "0", image: null });
+      setNewProduct({ name: "", category: "", price: "", color: "#000000", quantity: "0", image: null });
       setImagePreview(null);
       showToast(editingProduct ? "Product updated successfully" : "Product saved successfully", "success");
     } catch (err) {
@@ -113,7 +116,7 @@ export default function ProductsPage() {
   };
 
   return (
-    <div className="p-8">
+    <div className="p-[10px] md:p-8">
       <AdminPageHeader 
         title="Products" 
         description="View and manage your store inventory."
@@ -122,11 +125,11 @@ export default function ProductsPage() {
         <button 
           onClick={() => {
             setEditingProduct(null);
-            setNewProduct({ name: "", category: "Clothing", price: "", color: "#000000", quantity: "0", image: null });
+            setNewProduct({ name: "", category: "", price: "", color: "#000000", quantity: "0", image: null });
             setImagePreview(null);
             setIsModalOpen(true);
           }}
-          className="bg-black text-white px-6 py-3 rounded-xl text-sm font-bold shadow-lg shadow-black/20 hover:bg-gray-900 transition-colors flex items-center gap-2 cursor-pointer"
+          className="bg-black text-white px-4 py-2 md:px-6 md:py-3 rounded-xl text-sm font-bold shadow-lg shadow-black/20 hover:bg-gray-900 transition-colors flex items-center gap-2 cursor-pointer"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
           Create New Product
@@ -136,7 +139,7 @@ export default function ProductsPage() {
 
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center">
-          <h3 className="font-bold text-lg">All Products ({products.length})</h3>
+          <h3 className="hidden md:block font-bold text-lg">All Products ({products.length})</h3>
           <div className="relative">
             <input type="text" placeholder="Search products..." className="w-64 pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black" />
             <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
@@ -171,7 +174,7 @@ export default function ProductsPage() {
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-lg bg-gray-100 flex-shrink-0 overflow-hidden flex items-center justify-center border border-gray-100">
                           {product.image_url ? (
-                            <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
+                            <img src={product.image_url.startsWith('http') ? product.image_url : `${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:8000'}${product.image_url}`} alt={product.name} className="w-full h-full object-cover" />
                           ) : (
                             <svg className="text-gray-400" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
                           )}
@@ -271,8 +274,8 @@ export default function ProductsPage() {
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center">
+          <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200 flex flex-col max-h-[90vh]">
+            <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center flex-shrink-0">
               <h3 className="text-xl font-bold">{editingProduct ? "Edit Product" : "Add New Product"}</h3>
               <button 
                 onClick={() => {
@@ -285,7 +288,7 @@ export default function ProductsPage() {
               </button>
             </div>
             
-            <form onSubmit={handleSubmit} className="p-8 space-y-6">
+            <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto flex-1">
               <div className="space-y-4">
                 <div className="flex flex-col gap-2">
                   <label className="text-sm font-bold text-gray-700">Product Name</label>
@@ -302,15 +305,20 @@ export default function ProductsPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="flex flex-col gap-2">
                     <label className="text-sm font-bold text-gray-700">Category</label>
-                    <select 
+                    <input
+                      list="categories-datalist"
+                      required
+                      type="text"
                       value={newProduct.category}
                       onChange={(e) => setNewProduct({...newProduct, category: e.target.value})}
+                      placeholder="e.g. Clothing"
                       className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black transition-all"
-                    >
-                      <option>Clothing</option>
-                      <option>Accessories</option>
-                      <option>Footwear</option>
-                    </select>
+                    />
+                    <datalist id="categories-datalist">
+                      {categories.map((cat) => (
+                        <option key={cat.id} value={cat.name} />
+                      ))}
+                    </datalist>
                   </div>
                   <div className="flex flex-col gap-2">
                     <label className="text-sm font-bold text-gray-700">Price ($)</label>

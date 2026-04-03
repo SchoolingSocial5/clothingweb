@@ -7,7 +7,7 @@ interface ApiOptions {
   isFormData?: boolean;
 }
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api';
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
 export const apiClient = async <T = any>(endpoint: string, options: ApiOptions = {}): Promise<T> => {
   const { method = 'GET', body, headers = {}, isFormData = false } = options;

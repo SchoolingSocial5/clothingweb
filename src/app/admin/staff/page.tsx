@@ -44,7 +44,7 @@ export default function StaffPage() {
   };
 
   return (
-    <div className="p-8">
+    <div className="p-[10px] md:p-8">
       <AdminPageHeader 
         title="Staff & Users" 
         description="Manage your team and assign roles to registered users."

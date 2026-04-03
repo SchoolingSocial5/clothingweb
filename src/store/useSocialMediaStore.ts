@@ -6,6 +6,9 @@ export interface SocialMediaPlatform {
   name: string;
   url?: string;
   handle?: string;
+  email?: string;
+  password?: string;
+  phone_number?: string;
   icon?: string;
   is_active: boolean;
   activities?: SocialMediaActivity[];
@@ -14,8 +17,14 @@ export interface SocialMediaPlatform {
 export interface SocialMediaActivity {
   id: number;
   platform_id: number;
+  name: string;
   activity_type: string;
   description?: string;
+  image_url?: string;
+  followers: number;
+  posts_count: number;
+  likes_count: number;
+  comments_count: number;
   date: string;
   platform?: SocialMediaPlatform;
 }
@@ -52,12 +61,14 @@ export const useSocialMediaStore = create<SocialMediaState>((set, get) => ({
     }
   },
 
-  createPlatform: async (data) => {
+  createPlatform: async (data: any) => {
     set({ loading: true });
     try {
+      const isFormData = data instanceof FormData;
       const platform = await apiClient<SocialMediaPlatform>('/admin/social-media/platforms', {
         method: 'POST',
         body: data,
+        isFormData: isFormData,
       });
       set({ platforms: [...get().platforms, platform], loading: false });
     } catch (err: any) {
@@ -66,12 +77,21 @@ export const useSocialMediaStore = create<SocialMediaState>((set, get) => ({
     }
   },
 
-  updatePlatform: async (id, data) => {
+  updatePlatform: async (id, data: any) => {
     set({ loading: true });
     try {
+      const isFormData = data instanceof FormData;
+      // Handle Laravel's PUT method for FormData (use _method spoofing if needed)
+      let method: any = 'PUT';
+      if (isFormData) {
+        method = 'POST';
+        if (!data.has('_method')) data.append('_method', 'PUT');
+      }
+
       const updated = await apiClient<SocialMediaPlatform>(`/admin/social-media/platforms/${id}`, {
-        method: 'PUT',
+        method: method,
         body: data,
+        isFormData: isFormData,
       });
       set({
         platforms: get().platforms.map((p) => (p.id === id ? updated : p)),
@@ -97,12 +117,14 @@ export const useSocialMediaStore = create<SocialMediaState>((set, get) => ({
     }
   },
 
-  createActivity: async (data) => {
+  createActivity: async (data: any) => {
     set({ loading: true });
     try {
+      const isFormData = data instanceof FormData;
       const activity = await apiClient<SocialMediaActivity>('/admin/social-media/activities', {
         method: 'POST',
         body: data,
+        isFormData: isFormData,
       });
       set({ activities: [activity, ...get().activities], loading: false });
     } catch (err: any) {

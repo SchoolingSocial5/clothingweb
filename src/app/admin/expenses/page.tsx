@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useExpenseStore, Expense } from "@/store/useExpenseStore";
+import { useExpenseStore } from "@/store/useExpenseStore";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 
 const CATEGORIES = ["Marketing", "Inventory", "Rent", "Utilities", "Salary", "Shipping", "Other"];
@@ -54,15 +54,15 @@ export default function ExpensesPage() {
   const totalExpenses = expenses.reduce((sum, e) => sum + parseFloat(e.amount), 0);
 
   return (
-    <div className="p-8">
-      <AdminPageHeader 
-        title="Expenses" 
+    <div className="p-[10px] md:p-8">
+      <AdminPageHeader
+        title="Expenses"
         description="Track your store's spending and manage business costs."
         stats={{ label: "Total Spent", value: `₦${totalExpenses.toLocaleString()}` }}
       >
-        <button 
+        <button
           onClick={() => setIsModalOpen(true)}
-          className="bg-black text-white px-6 py-3 rounded-xl text-sm font-bold shadow-lg shadow-black/20 hover:bg-gray-900 transition-colors flex items-center gap-2 cursor-pointer"
+          className="bg-black text-white px-4 py-2 md:px-6 md:py-3 rounded-xl text-sm font-bold shadow-lg shadow-black/20 hover:bg-gray-900 transition-colors flex items-center gap-2 cursor-pointer"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
           Record Expense
@@ -73,12 +73,12 @@ export default function ExpensesPage() {
         <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center">
           <h3 className="font-bold text-lg">Expense History</h3>
         </div>
-        
+
         <div className="overflow-x-auto min-h-[400px]">
           {loading ? (
-             <div className="flex justify-center items-center h-64">
-               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black"></div>
-             </div>
+            <div className="flex justify-center items-center h-64">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black"></div>
+            </div>
           ) : (
             <table className="w-full text-left border-collapse">
               <thead>
@@ -111,7 +111,7 @@ export default function ExpensesPage() {
                     </td>
                     <td className="px-6 py-4 text-center">
                       {expense.receipt_path ? (
-                        <a href={`http://localhost:8000/storage/${expense.receipt_path}`} target="_blank" className="text-black hover:scale-110 transition-transform inline-block">
+                        <a href={`${(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api').replace('/api', '')}/storage/${expense.receipt_path}`} target="_blank" className="text-black hover:scale-110 transition-transform inline-block">
                           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                         </a>
                       ) : <span className="text-gray-300 text-[10px] font-bold uppercase tracking-widest">No Receipt</span>}
@@ -140,39 +140,39 @@ export default function ExpensesPage() {
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
               </button>
             </div>
-            
+
             <form onSubmit={handleSubmit} className="p-8 space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2 flex flex-col gap-2">
                   <label className="text-sm font-bold text-gray-700">Expense Title</label>
-                  <input required type="text" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})}
+                  <input required type="text" value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })}
                     placeholder="e.g. Office Supplies" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black" />
                 </div>
                 <div className="flex flex-col gap-2">
                   <label className="text-sm font-bold text-gray-700">Amount (₦)</label>
-                  <input required type="number" value={formData.amount} onChange={e => setFormData({...formData, amount: e.target.value})}
+                  <input required type="number" value={formData.amount} onChange={e => setFormData({ ...formData, amount: e.target.value })}
                     placeholder="0.00" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black" />
                 </div>
                 <div className="flex flex-col gap-2">
                   <label className="text-sm font-bold text-gray-700">Category</label>
-                  <select value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})}
+                  <select value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })}
                     className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black">
                     {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
                 <div className="flex flex-col gap-2">
                   <label className="text-sm font-bold text-gray-700">Date</label>
-                  <input required type="date" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})}
+                  <input required type="date" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })}
                     className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black" />
                 </div>
                 <div className="flex flex-col gap-2">
                   <label className="text-sm font-bold text-gray-700">Receipt Image</label>
-                  <input type="file" onChange={e => setFormData({...formData, receipt: e.target.files?.[0] || null})}
+                  <input type="file" onChange={e => setFormData({ ...formData, receipt: e.target.files?.[0] || null })}
                     className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-gray-100 file:text-black hover:file:bg-gray-200" />
                 </div>
                 <div className="col-span-2 flex flex-col gap-2">
                   <label className="text-sm font-bold text-gray-700">Description (Optional)</label>
-                  <textarea rows={2} value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})}
+                  <textarea rows={2} value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })}
                     className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black resize-none" />
                 </div>
               </div>

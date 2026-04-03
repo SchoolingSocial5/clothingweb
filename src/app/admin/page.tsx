@@ -17,7 +17,7 @@ export default function AdminDashboard() {
   ];
 
   return (
-    <div className="p-8">
+    <div className="p-[10px] md:p-8">
       <AdminPageHeader 
         title="Dashboard" 
         description="Welcome back! Here's what's happening with your store today."
