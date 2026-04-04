@@ -280,14 +280,14 @@ export default function CheckoutPage() {
       </div>
 
         {/* Payment Modal */}
-        {showPaymentModal && settings && (
+        {showPaymentModal && (settings || globalSettings) && (
           <PaymentConfirmModal
             total={total}
             settings={settings || {
               company_name: globalSettings?.company_name || 'Store',
-              bank_name: 'Contact Support',
-              account_name: 'Payment Instruction Pending',
-              account_number: 'N/A'
+              bank_name: 'Bank Transfer',
+              account_name: 'Payment Instructions',
+              account_number: 'Contact Support'
             }}
             onConfirm={handleConfirmOrder}
             onClose={() => setShowPaymentModal(false)}
