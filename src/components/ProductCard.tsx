@@ -33,7 +33,13 @@ export default function ProductCard({ id, name, category, price, color, quantity
         {/* Product Image or Placeholder */}
         {image_url ? (
           <img 
-            src={image_url.startsWith('http') ? image_url : `${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:8000'}${image_url.startsWith('/') ? '' : '/'}${image_url}`} 
+            src={(() => {
+              if (image_url.startsWith('http')) return image_url;
+              const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:8000';
+              const cleanImageUrl = image_url.startsWith('/') ? image_url : `/${image_url}`;
+              // Prevent double /shop/ if it's already in the baseUrl
+              return `${baseUrl}${cleanImageUrl}`;
+            })()} 
             alt={name} 
             className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
           />
