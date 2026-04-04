@@ -55,7 +55,7 @@ export default function SignUp() {
   return (
     <div className="min-h-screen flex flex-col bg-white">
       <Header />
-      <div className="flex-1 flex items-center justify-center p-6">
+      <div className="flex-1 flex items-center justify-center px-[10px] py-6">
         <div className="w-full max-w-4xl flex bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] overflow-hidden">
           {/* Form Side */}
           <div className="w-full lg:w-1/2 p-12 lg:p-16 flex flex-col justify-center">

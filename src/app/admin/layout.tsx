@@ -2,19 +2,25 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import AdminTopHeader from '@/components/admin/AdminTopHeader';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user, logout, loading } = useAuth();
   const router = useRouter();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
     if (!loading && (!user || (user.status !== 'staff' && user.status !== 'admin'))) {
       router.push('/sign-in');
     }
   }, [user, loading, router]);
+
+  // Close sidebar on path change (mobile)
+  useEffect(() => {
+    setIsSidebarOpen(false);
+  }, [pathname]);
 
   if (loading || !user || (user.status !== 'staff' && user.status !== 'admin')) {
     return (
@@ -25,13 +31,32 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
   
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-neutral-950 flex transition-colors duration-300">
+    <div className="min-h-screen bg-gray-50 dark:bg-neutral-950 flex transition-colors duration-300 overflow-x-hidden">
+      {/* Mobile Sidebar Overlay */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-[60] md:hidden backdrop-blur-sm transition-opacity"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-64 bg-white dark:bg-neutral-900 border-r border-gray-200 dark:border-neutral-800 hidden md:flex flex-col transition-colors duration-300">
-        <div className="h-20 flex items-center px-8 border-b border-gray-100 dark:border-neutral-800">
+      <aside className={`
+        fixed inset-y-0 left-0 z-[70] w-64 bg-white dark:bg-neutral-900 border-r border-gray-200 dark:border-neutral-800 
+        transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0
+        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        flex flex-col
+      `}>
+        <div className="h-20 flex items-center justify-between px-8 border-b border-gray-100 dark:border-neutral-800">
           <Link href="/" className="flex items-center">
             <img src="/clothinglog.png" alt="Logo" className="h-10 object-contain dark:invert" />
           </Link>
+          <button 
+            onClick={() => setIsSidebarOpen(false)}
+            className="md:hidden p-2 text-gray-500 hover:text-black dark:hover:text-white"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
         </div>
         <nav className="flex-1 px-4 py-8 space-y-2">
           <Link href="/admin" className={`flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin' ? 'text-white bg-black dark:bg-white dark:text-black' : 'text-gray-500 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
@@ -80,7 +105,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col h-screen overflow-y-auto">
-        <AdminTopHeader />
+        <AdminTopHeader onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
 
         {children}
       </main>

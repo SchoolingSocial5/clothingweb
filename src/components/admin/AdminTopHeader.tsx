@@ -6,9 +6,10 @@ import ThemeToggle from '@/components/ThemeToggle';
 
 interface AdminTopHeaderProps {
   title?: string;
+  onToggleSidebar?: () => void;
 }
 
-export default function AdminTopHeader({ title }: AdminTopHeaderProps) {
+export default function AdminTopHeader({ title, onToggleSidebar }: AdminTopHeaderProps) {
   const pathname = usePathname();
   const { user } = useAuth();
 
@@ -18,8 +19,21 @@ export default function AdminTopHeader({ title }: AdminTopHeaderProps) {
   const derivedTitle = title || `Admin ${pathname === '/admin' ? 'Dashboard' : pathname.split('/').pop()?.replace(/-/g, ' ')}`;
 
   return (
-    <header className="h-20 py-5 w-full bg-white dark:bg-neutral-900 border-b border-gray-100 dark:border-neutral-800 flex items-center justify-between px-8 sticky top-0 z-50 transition-colors duration-300">
-      <h1 className="text-xl font-bold capitalize text-gray-900 dark:text-gray-100">{derivedTitle}</h1>
+    <header className="h-20 py-5 w-full bg-white dark:bg-neutral-900 border-b border-gray-100 dark:border-neutral-800 flex items-center justify-between px-4 md:px-8 sticky top-0 z-50 transition-colors duration-300">
+      <div className="flex items-center gap-4">
+        <button 
+          onClick={onToggleSidebar}
+          className="md:hidden p-2 hover:bg-gray-100 dark:hover:bg-neutral-800 rounded-lg transition-colors text-gray-600 dark:text-gray-400"
+          aria-label="Toggle Menu"
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+        <h1 className="text-lg md:text-xl font-bold capitalize text-gray-900 dark:text-gray-100 truncate max-w-[150px] sm:max-w-none">{derivedTitle}</h1>
+      </div>
 
       <div className="flex items-center gap-6">
         {/* Search Bar */}
