@@ -176,10 +176,10 @@ export default function CheckoutPage() {
                     </div>
                     <div className="flex-1">
                       <p className="font-bold text-sm text-gray-800 leading-tight">{item.name}</p>
-                      <div className="flex items-center gap-3 mt-2 bg-white w-fit px-2 py-1 rounded-lg border border-gray-100 shadow-sm">
+                      <div className="flex items-center gap-2 mt-1">
                         <button
                           type="button"
-                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                          onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
                           className="text-gray-400 hover:text-black transition-colors p-1"
                         >
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
@@ -194,10 +194,7 @@ export default function CheckoutPage() {
                         </button>
                       </div>
                     </div>
-                      <p className="font-bold text-sm">
-                        {formatPrice(parseFloat(item.price) * item.quantity, globalSettings?.currency_symbol)}
-                      </p>
-                    </div>
+                    <p className="font-bold text-sm">{formatPrice(Number(item.price) * item.quantity, globalSettings?.currency_symbol)}</p>
                   </div>
                 ))}
               </div>
