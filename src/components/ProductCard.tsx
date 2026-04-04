@@ -9,9 +9,12 @@ interface ProductCardProps {
 
 import { useCart } from "@/context/CartContext";
 import { useState } from "react";
+import { useSettings } from "@/context/SettingsContext";
+import { formatPrice } from "@/utils/format";
 
 export default function ProductCard({ id, name, category, price, color, quantity, image_url }: ProductCardProps & { id: number }) {
   const { addToCart } = useCart();
+  const { settings } = useSettings();
   const [isAdding, setIsAdding] = useState(false);
 
   const handleAddToCart = (e: React.MouseEvent) => {
@@ -64,7 +67,7 @@ export default function ProductCard({ id, name, category, price, color, quantity
           <h3 className="font-medium text-sm text-gray-900 dark:text-gray-100 mb-1">{name}</h3>
           <p className="text-xs text-gray-500 dark:text-gray-400">{category}</p>
         </div>
-        <p className="font-medium text-sm text-gray-900 dark:text-gray-100">${price}</p>
+        <p className="font-medium text-sm text-gray-900 dark:text-gray-100">{formatPrice(price, settings?.currency_symbol)}</p>
       </div>
       <div className="mt-3 flex gap-1">
         <div className="w-3 h-3 rounded-full border border-gray-300 dark:border-neutral-700" style={{ backgroundColor: color }}></div>

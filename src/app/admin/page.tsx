@@ -1,19 +1,25 @@
+"use client";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
+import { useSettings } from "@/context/SettingsContext";
+import { formatPrice } from "@/utils/format";
 
 export default function AdminDashboard() {
+  const { settings } = useSettings();
+  const currency = settings?.currency_symbol || "$";
+
   const stats = [
-    { label: "Total Sales", value: "$45,231.89", trend: "+20.1%", positive: true },
+    { label: "Total Sales", value: formatPrice(45231.89, currency), trend: "+20.1%", positive: true },
     { label: "Active Customers", value: "2,350", trend: "+15.2%", positive: true },
     { label: "Total Orders", value: "12,234", trend: "+8.1%", positive: true },
-    { label: "Revenue", value: "$124,563.00", trend: "-2.4%", positive: false },
+    { label: "Revenue", value: formatPrice(124563.00, currency), trend: "-2.4%", positive: false },
   ];
 
   const recentCustomers = [
-    { id: 1, name: "Alice Freeman", email: "alice@example.com", amount: "$320.00", status: "Completed" },
-    { id: 2, name: "Bobby Tables", email: "bobby@example.com", amount: "$150.00", status: "Pending" },
-    { id: 3, name: "Charlie Davis", email: "charlie@example.com", amount: "$890.50", status: "Completed" },
-    { id: 4, name: "Diana Prince", email: "diana@example.com", amount: "$45.00", status: "Processing" },
-    { id: 5, name: "Evan Wright", email: "evan@example.com", amount: "$210.00", status: "Completed" },
+    { id: 1, name: "Alice Freeman", email: "alice@example.com", amount: formatPrice(320.00, currency), status: "Completed" },
+    { id: 2, name: "Bobby Tables", email: "bobby@example.com", amount: formatPrice(150.00, currency), status: "Pending" },
+    { id: 3, name: "Charlie Davis", email: "charlie@example.com", amount: formatPrice(890.50, currency), status: "Completed" },
+    { id: 4, name: "Diana Prince", email: "diana@example.com", amount: formatPrice(45.00, currency), status: "Processing" },
+    { id: 5, name: "Evan Wright", email: "evan@example.com", amount: formatPrice(210.00, currency), status: "Completed" },
   ];
 
   return (

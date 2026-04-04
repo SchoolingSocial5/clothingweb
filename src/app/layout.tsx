@@ -16,6 +16,7 @@ import { CartProvider } from "@/context/CartContext";
 import { AuthProvider } from '@/context/AuthContext';
 import ThemeProvider from "@/components/ThemeProvider";
 import Footer from "@/components/Footer";
+import { SettingsProvider } from "@/context/SettingsContext";
 
 export default function RootLayout({
   children,
@@ -25,16 +26,18 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${outfit.variable} antialiased`}>
       <body className="min-h-screen font-sans transition-colors duration-300 flex flex-col">
-        <AuthProvider>
-          <CartProvider>
-            <ThemeProvider>
-              <div className="flex-1 flex flex-col">
-                {children}
-              </div>
-              <Footer />
-            </ThemeProvider>
-          </CartProvider>
-        </AuthProvider>
+        <SettingsProvider>
+          <AuthProvider>
+            <CartProvider>
+              <ThemeProvider>
+                <div className="flex-1 flex flex-col">
+                  {children}
+                </div>
+                <Footer />
+              </ThemeProvider>
+            </CartProvider>
+          </AuthProvider>
+        </SettingsProvider>
       </body>
     </html>
   );

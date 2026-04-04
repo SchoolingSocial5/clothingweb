@@ -7,6 +7,8 @@ import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import PaymentConfirmModal from '@/components/PaymentConfirmModal';
 import { useOrderStore } from '@/store/useOrderStore';
+import { useSettings } from '@/context/SettingsContext';
+import { formatPrice } from '@/utils/format';
 
 interface Settings {
   company_name: string;
@@ -20,6 +22,7 @@ export default function CheckoutPage() {
   const router = useRouter();
   const { cart, getCartTotal, clearCart, updateQuantity } = useCart();
   const { user } = useAuth();
+  const { settings: globalSettings } = useSettings();
   const { createOrder, loading: submitting, error: storeError } = useOrderStore();
   const [settings, setSettings] = useState<Settings | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -109,10 +112,14 @@ export default function CheckoutPage() {
             <div className="bg-gray-50 rounded-2xl p-8 text-left mb-10 border border-gray-100">
               <h3 className="font-black uppercase tracking-widest text-xs text-gray-400 mb-5">Payment Details</h3>
               <div className="space-y-3 text-sm">
-                <div className="flex justify-between"><span className="text-gray-500">Bank</span><span className="font-bold">{settings.bank_name}</span></div>
-                <div className="flex justify-between"><span className="text-gray-500">Account Name</span><span className="font-bold">{settings.account_name}</span></div>
-                <div className="flex justify-between"><span className="text-gray-500">Account Number</span><span className="font-black text-lg tracking-wider">{settings.account_number}</span></div>
-                <div className="pt-3 border-t border-gray-200 flex justify-between"><span className="text-gray-500">Amount to Pay</span><span className="font-black text-xl">₦{total.toFixed(2)}</span></div>
+                <div className="flex justify-between flex-col gap-1">
+                  <span className="text-gray-500">Account Number</span>
+                  <span className="font-black text-2xl tracking-widest text-black">{settings.account_number}</span>
+                </div>
+                <div className="pt-3 border-t border-gray-200 flex justify-between">
+                  <span className="text-gray-500">Amount to Pay</span>
+                  <span className="font-black text-xl">{formatPrice(total, globalSettings?.currency_symbol)}</span>
+                </div>
               </div>
             </div>
           )}
@@ -168,15 +175,29 @@ export default function CheckoutPage() {
                         </button>
                       </div>
                     </div>
-                    <p className="font-bold text-sm">₦{(parseFloat(item.price) * item.quantity).toFixed(2)}</p>
+                      <p className="font-bold text-sm">
+                        {formatPrice(parseFloat(item.price) * item.quantity, globalSettings?.currency_symbol)}
+                      </p>
+                    </div>
                   </div>
                 ))}
               </div>
 
               <div className="space-y-3 border-t border-gray-200 pt-4 text-sm">
-                <div className="flex justify-between text-gray-500"><span>Subtotal</span><span className="font-bold text-black">₦{subtotal.toFixed(2)}</span></div>
-                <div className="flex justify-between text-gray-500"><span>Shipping</span><span className="font-bold text-black">{shipping === 0 ? 'FREE' : `₦${shipping}`}</span></div>
-                <div className="flex justify-between text-lg font-black border-t border-gray-200 pt-3"><span>Total</span><span>₦{total.toFixed(2)}</span></div>
+                <div className="flex justify-between text-gray-500">
+                  <span>Subtotal</span>
+                  <span className="font-bold text-black">{formatPrice(subtotal, globalSettings?.currency_symbol)}</span>
+                </div>
+                <div className="flex justify-between text-gray-500">
+                  <span>Shipping</span>
+                  <span className="font-bold text-black">
+                    {shipping === 0 ? 'FREE' : formatPrice(shipping, globalSettings?.currency_symbol)}
+                  </span>
+                </div>
+                <div className="flex justify-between text-lg font-black border-t border-gray-200 pt-3">
+                  <span>Total</span>
+                  <span>{formatPrice(total, globalSettings?.currency_symbol)}</span>
+                </div>
               </div>
             </div>
           </div>

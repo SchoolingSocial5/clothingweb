@@ -1,5 +1,7 @@
 "use client";
 import { useState } from 'react';
+import { useSettings } from "@/context/SettingsContext";
+import { formatPrice } from "@/utils/format";
 
 interface Settings {
   company_name: string;
@@ -26,6 +28,7 @@ export default function PaymentConfirmModal({
   error 
 }: PaymentConfirmModalProps) {
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const { settings: globalSettings } = useSettings();
 
   const handleConfirm = () => {
     if (receiptFile) {
@@ -53,7 +56,7 @@ export default function PaymentConfirmModal({
           <div className="bg-gray-50 rounded-2xl p-6 space-y-4 mb-8 border border-gray-100">
             <div className="flex justify-between border-b border-gray-200 pb-3">
               <span className="text-xs font-black uppercase tracking-widest text-gray-400">Amount to Pay</span>
-              <span className="text-xl font-black">₦{total.toFixed(2)}</span>
+              <span className="text-xl font-black">{formatPrice(total, globalSettings?.currency_symbol)}</span>
             </div>
             <div className="space-y-3 text-sm">
               <div className="flex justify-between"><span className="text-gray-500">Bank</span><span className="font-bold">{settings.bank_name}</span></div>
