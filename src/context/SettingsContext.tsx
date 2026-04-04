@@ -26,12 +26,25 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchSettings = async () => {
     try {
+      // Direct fetch to ensure we get the latest settings
       const data = await apiClient("/settings");
-      if (data) {
-        setSettings(data);
+      if (data && typeof data === 'object') {
+        setSettings({
+          company_name: data.company_name || "Wink",
+          currency_symbol: data.currency_symbol || "₦",
+          logo: data.logo,
+          favicon: data.favicon,
+          email: data.email,
+          phone_number: data.phone_number,
+        });
       }
     } catch (err) {
       console.error("Failed to fetch settings:", err);
+      // Fallback settings if the API is unreachable
+      setSettings(prev => prev || {
+        company_name: "Wink",
+        currency_symbol: "₦",
+      });
     } finally {
       setLoading(false);
     }
