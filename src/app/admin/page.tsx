@@ -44,7 +44,10 @@ export default function AdminDashboard() {
   ];
 
   const recentUsers = users
-    .filter(user => user.role === 'user' || !user.role)
+    .filter(user => 
+      (user.role !== 'staff' && user.role !== 'admin') && 
+      (user.status !== 'staff' && user.status !== 'admin')
+    )
     .slice(0, 5);
 
   return (
