@@ -23,6 +23,7 @@ interface Order {
   payment_status: 'unpaid' | 'paid';
   created_at: string;
   receipt_path: string | null;
+  receipt_number?: string | null;
   items: OrderItem[];
 }
 
@@ -108,6 +109,17 @@ export default function OrdersPage() {
                 {/* Total */}
                 <div className="font-black text-gray-900 w-28 text-right">
                   ₦{Number(order.total_amount).toLocaleString()}
+                </div>
+
+                {/* Receipt Number (if exists) */}
+                <div className="w-40 text-left px-4">
+                  {order.receipt_number ? (
+                    <span className="text-[10px] font-black bg-black text-white px-2 py-1 rounded uppercase tracking-tighter">
+                      {order.receipt_number}
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest italic">No Receipt</span>
+                  )}
                 </div>
 
                 {/* Order Status */}

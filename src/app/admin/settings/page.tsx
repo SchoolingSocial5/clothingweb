@@ -183,7 +183,7 @@ export default function SettingsPage() {
   const labelClass = "block text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-2";
 
   return (
-    <div className="p-[10px] md:p-8 w-full max-w-7xl mx-auto">
+    <div className="px-[10px] md:px-8 py-8 w-full max-w-7xl mx-auto">
       <AdminPageHeader 
         title="Store Settings" 
         description="Update your store info, payment details and managing your brand assets."

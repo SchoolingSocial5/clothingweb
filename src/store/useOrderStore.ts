@@ -19,6 +19,7 @@ interface Order {
   status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
   payment_status: 'unpaid' | 'paid';
   receipt_path: string | null;
+  receipt_number?: string | null;
   created_at: string;
   items: OrderItem[];
 }
@@ -50,13 +51,12 @@ export const useOrderStore = create<OrderState>((set, get) => ({
 
   updateOrderStatus: async (id, data) => {
     try {
-      const updatedOrder = await apiClient<Order>(`/admin/orders/${id}`, {
+      const updatedOrder = await apiClient<any>(`/admin/orders/${id}`, {
         method: 'PATCH',
         body: data,
       });
-      set({
-        orders: get().orders.map((o) => (o.id === id ? { ...o, ...updatedOrder } : o)),
-      });
+      // Just fetch all orders again to be safe and get the new receipt number
+      await get().fetchOrders();
     } catch (err: any) {
       set({ error: err.message });
       throw err;
