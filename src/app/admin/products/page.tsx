@@ -4,6 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useProductStore, Product } from "@/store/useProductStore";
 import { useCategoryStore } from "@/store/useCategoryStore";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
+import { formatPrice } from "@/utils/format";
 
 export default function ProductsPage() {
   const { token } = useAuth();
@@ -85,7 +86,7 @@ export default function ProductsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!token) return;
-    
+
     const formData = new FormData();
     formData.append("name", newProduct.name);
     formData.append("category", newProduct.category);
@@ -107,7 +108,7 @@ export default function ProductsPage() {
       } else {
         await createProduct(formData);
       }
-      
+
       setIsModalOpen(false);
       setEditingProduct(null);
       setNewProduct({ name: "", category: "", price: "", cost_price: "", color: "#000000", quantity: "0", image: null });
@@ -120,12 +121,12 @@ export default function ProductsPage() {
 
   return (
     <div className="p-[10px] md:p-8">
-      <AdminPageHeader 
-        title="Products" 
+      <AdminPageHeader
+        title="Products"
         description="View and manage your store inventory."
         stats={{ label: "Total", value: products.length }}
       >
-        <button 
+        <button
           onClick={() => {
             setEditingProduct(null);
             setNewProduct({ name: "", category: "", price: "", cost_price: "", color: "#000000", quantity: "0", image: null });
@@ -148,12 +149,12 @@ export default function ProductsPage() {
             <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
           </div>
         </div>
-        
+
         <div className="overflow-x-auto min-h-[400px]">
           {loading ? (
-             <div className="flex justify-center items-center h-64">
-               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black"></div>
-             </div>
+            <div className="flex justify-center items-center h-64">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black"></div>
+            </div>
           ) : (
             <table className="w-full text-left border-collapse">
               <thead>
@@ -203,23 +204,22 @@ export default function ProductsPage() {
                       <span className="font-bold text-sm text-gray-900">{formatPrice(Number(product.price), settings?.currency_symbol || "₦")}</span>
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                        product.quantity > 10 ? 'bg-green-100 text-green-800' : 
-                        product.quantity > 0 ? 'bg-amber-100 text-amber-800' : 
-                        'bg-red-100 text-red-800'
-                      }`}>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${product.quantity > 10 ? 'bg-green-100 text-green-800' :
+                          product.quantity > 0 ? 'bg-amber-100 text-amber-800' :
+                            'bg-red-100 text-red-800'
+                        }`}>
                         {product.quantity} in stock
                       </span>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex justify-center gap-3">
-                        <button 
+                        <button
                           onClick={() => handleEdit(product)}
                           className="text-gray-400 hover:text-black transition-colors cursor-pointer"
                         >
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                         </button>
-                        <button 
+                        <button
                           onClick={() => handleDelete(product.id)}
                           className="text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
                         >
@@ -241,29 +241,28 @@ export default function ProductsPage() {
               Showing <span className="font-medium">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="font-medium">{Math.min(currentPage * itemsPerPage, products.length)}</span> of <span className="font-medium">{products.length}</span> results
             </p>
             <div className="flex items-center gap-2">
-              <button 
+              <button
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
                 className="p-2 border border-gray-200 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
               </button>
-              
+
               {Array.from({ length: Math.ceil(products.length / itemsPerPage) }, (_, i) => i + 1).map(page => (
                 <button
                   key={page}
                   onClick={() => setCurrentPage(page)}
-                  className={`w-8 h-8 rounded-lg text-sm font-bold transition-all ${
-                    currentPage === page 
-                      ? "bg-black text-white shadow-lg shadow-black/20" 
+                  className={`w-8 h-8 rounded-lg text-sm font-bold transition-all ${currentPage === page
+                      ? "bg-black text-white shadow-lg shadow-black/20"
                       : "text-gray-500 hover:bg-white hover:text-black border border-transparent hover:border-gray-200"
-                  }`}
+                    }`}
                 >
                   {page}
                 </button>
               ))}
 
-              <button 
+              <button
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(products.length / itemsPerPage)))}
                 disabled={currentPage === Math.ceil(products.length / itemsPerPage)}
                 className="p-2 border border-gray-200 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -280,27 +279,27 @@ export default function ProductsPage() {
           <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200 flex flex-col max-h-[90vh]">
             <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center flex-shrink-0">
               <h3 className="text-xl font-bold">{editingProduct ? "Edit Product" : "Add New Product"}</h3>
-              <button 
+              <button
                 onClick={() => {
                   setIsModalOpen(false);
                   setEditingProduct(null);
-                }} 
+                }}
                 className="text-gray-400 hover:text-black p-1"
               >
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
               </button>
             </div>
-            
+
             <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto flex-1">
               <div className="space-y-4">
                 <div className="flex flex-col gap-2">
                   <label className="text-sm font-bold text-gray-700">Product Name</label>
-                  <input 
+                  <input
                     required
-                    type="text" 
+                    type="text"
                     value={newProduct.name}
-                    onChange={(e) => setNewProduct({...newProduct, name: e.target.value})}
-                    placeholder="e.g. Minimalist Linen Shirt" 
+                    onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
+                    placeholder="e.g. Minimalist Linen Shirt"
                     className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black transition-all"
                   />
                 </div>
@@ -313,7 +312,7 @@ export default function ProductsPage() {
                       required
                       type="text"
                       value={newProduct.category}
-                      onChange={(e) => setNewProduct({...newProduct, category: e.target.value})}
+                      onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
                       placeholder="e.g. Clothing"
                       className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black transition-all"
                     />
@@ -325,23 +324,23 @@ export default function ProductsPage() {
                   </div>
                   <div className="flex flex-col gap-2">
                     <label className="text-sm font-bold text-gray-700">Cost Price (₦)</label>
-                    <input 
+                    <input
                       required
-                      type="number" 
+                      type="number"
                       value={newProduct.cost_price}
-                      onChange={(e) => setNewProduct({...newProduct, cost_price: e.target.value})}
-                      placeholder="70.00" 
+                      onChange={(e) => setNewProduct({ ...newProduct, cost_price: e.target.value })}
+                      placeholder="70.00"
                       className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black transition-all"
                     />
                   </div>
                   <div className="flex flex-col gap-2">
                     <label className="text-sm font-bold text-gray-700">Selling Price (₦)</label>
-                    <input 
+                    <input
                       required
-                      type="number" 
+                      type="number"
                       value={newProduct.price}
-                      onChange={(e) => setNewProduct({...newProduct, price: e.target.value})}
-                      placeholder="99.00" 
+                      onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
+                      placeholder="99.00"
                       className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black transition-all"
                     />
                   </div>
@@ -350,10 +349,10 @@ export default function ProductsPage() {
                 <div className="flex flex-col gap-2">
                   <label className="text-sm font-bold text-gray-700">Product Color</label>
                   <div className="flex items-center gap-3">
-                    <input 
-                      type="color" 
+                    <input
+                      type="color"
                       value={newProduct.color}
-                      onChange={(e) => setNewProduct({...newProduct, color: e.target.value})}
+                      onChange={(e) => setNewProduct({ ...newProduct, color: e.target.value })}
                       className="w-12 h-12 rounded-lg border border-gray-200 cursor-pointer overflow-hidden p-0"
                     />
                     <span className="text-sm text-gray-500 font-mono uppercase">{newProduct.color}</span>
@@ -362,12 +361,12 @@ export default function ProductsPage() {
 
                 <div className="flex flex-col gap-2">
                   <label className="text-sm font-bold text-gray-700">Stock Quantity</label>
-                  <input 
+                  <input
                     required
-                    type="number" 
+                    type="number"
                     value={newProduct.quantity}
-                    onChange={(e) => setNewProduct({...newProduct, quantity: e.target.value})}
-                    placeholder="100" 
+                    onChange={(e) => setNewProduct({ ...newProduct, quantity: e.target.value })}
+                    placeholder="100"
                     className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black transition-all"
                   />
                 </div>
@@ -375,15 +374,15 @@ export default function ProductsPage() {
                 <div className="flex flex-col gap-2">
                   <label className="text-sm font-bold text-gray-700">Product Image {editingProduct && "(Optional)"}</label>
                   <div className="relative group">
-                    <input 
-                      type="file" 
+                    <input
+                      type="file"
                       accept="image/*"
                       onChange={handleImageChange}
-                      className="hidden" 
+                      className="hidden"
                       id="product-image"
                     />
-                    <label 
-                      htmlFor="product-image" 
+                    <label
+                      htmlFor="product-image"
                       className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-gray-200 rounded-2xl hover:border-black hover:bg-gray-50 transition-all cursor-pointer overflow-hidden"
                     >
                       {imagePreview ? (
@@ -401,7 +400,7 @@ export default function ProductsPage() {
               </div>
 
               <div className="pt-4 flex gap-3">
-                <button 
+                <button
                   type="button"
                   onClick={() => {
                     setIsModalOpen(false);
@@ -411,7 +410,7 @@ export default function ProductsPage() {
                 >
                   Cancel
                 </button>
-                <button 
+                <button
                   type="submit"
                   className="flex-1 px-6 py-3 bg-black text-white rounded-xl text-sm font-bold shadow-lg shadow-black/20 hover:bg-gray-900 transition-colors cursor-pointer"
                 >
@@ -434,13 +433,13 @@ export default function ProductsPage() {
               <h3 className="text-2xl font-bold mb-3">Confirm Deletion</h3>
               <p className="text-gray-500 mb-8 px-4">Are you sure you want to remove this product? This action cannot be undone.</p>
               <div className="flex gap-3">
-                <button 
+                <button
                   onClick={() => setShowDeleteConfirm(false)}
                   className="flex-1 px-6 py-3.5 border border-gray-100 rounded-2xl text-sm font-bold hover:bg-gray-50 transition-colors cursor-pointer"
                 >
                   No, Keep it
                 </button>
-                <button 
+                <button
                   onClick={confirmDelete}
                   className="flex-1 px-6 py-3.5 bg-red-500 text-white rounded-2xl text-sm font-bold shadow-lg shadow-red-200 hover:bg-red-600 transition-colors cursor-pointer"
                 >
@@ -454,16 +453,14 @@ export default function ProductsPage() {
 
       {/* Toast Notification */}
       <div className={`fixed bottom-8 right-8 z-[70] transition-all duration-500 transform ${toast.visible ? "translate-y-0 opacity-100" : "translate-y-12 opacity-0 pointer-events-none"}`}>
-        <div className={`flex items-center gap-4 px-6 py-4 rounded-2xl shadow-2xl border ${
-          toast.type === "success" ? "bg-green-50 border-green-100 text-green-800" : 
-          toast.type === "error" ? "bg-red-50 border-red-100 text-red-800" : 
-          "bg-amber-50 border-amber-100 text-amber-800"
-        }`}>
-          <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-            toast.type === "success" ? "bg-green-500 text-white" : 
-            toast.type === "error" ? "bg-red-500 text-white" : 
-            "bg-amber-500 text-white"
+        <div className={`flex items-center gap-4 px-6 py-4 rounded-2xl shadow-2xl border ${toast.type === "success" ? "bg-green-50 border-green-100 text-green-800" :
+            toast.type === "error" ? "bg-red-50 border-red-100 text-red-800" :
+              "bg-amber-50 border-amber-100 text-amber-800"
           }`}>
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${toast.type === "success" ? "bg-green-500 text-white" :
+              toast.type === "error" ? "bg-red-500 text-white" :
+                "bg-amber-500 text-white"
+            }`}>
             {toast.type === "success" ? (
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
             ) : toast.type === "error" ? (
