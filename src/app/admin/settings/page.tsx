@@ -211,112 +211,136 @@ export default function SettingsPage() {
           </button>
         </div>
       ) : (
-        <form onSubmit={handleSubmit} className="space-y-8 animate-in fade-in duration-500">
-        
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-          
-          {/* Company Info */}
-          <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-gray-100 dark:border-neutral-800 p-8 shadow-sm space-y-6 transition-colors">
-            <h3 className="font-black text-sm uppercase tracking-widest text-gray-400 dark:text-gray-500 border-b border-gray-100 dark:border-neutral-800 pb-4">Company Information</h3>
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className={labelClass}>Company Name</label>
-                  <input type="text" value={formData.company_name} onChange={e => handleChange('company_name', e.target.value)} className={inputClass} placeholder="Velure Store" />
-                </div>
-                <div>
-                  <label className={labelClass}>Domain / Website</label>
-                  <input type="text" value={formData.domain} onChange={e => handleChange('domain', e.target.value)} className={inputClass} placeholder="velure.com" />
-                </div>
+        <div className="space-y-8 animate-in fade-in duration-500">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+            
+            {/* Company Info Form */}
+            <form onSubmit={handleSubmit} className="bg-white dark:bg-neutral-900 rounded-2xl border border-gray-100 dark:border-neutral-800 p-6 md:p-8 shadow-sm space-y-6 transition-colors mx-[10px] md:mx-0">
+              <div className="flex justify-between items-center border-b border-gray-100 dark:border-neutral-800 pb-4">
+                <h3 className="font-black text-sm uppercase tracking-widest text-gray-400 dark:text-gray-500">Company Information</h3>
+                <button type="submit" disabled={saving} className="text-[10px] font-black uppercase tracking-widest bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-all disabled:opacity-50">
+                  {saving ? 'Saving...' : 'Save Info'}
+                </button>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className={labelClass}>Email Address</label>
-                  <input type="email" value={formData.email} onChange={e => handleChange('email', e.target.value)} className={inputClass} placeholder="hello@velure.com" />
-                </div>
-                <div>
-                  <label className={labelClass}>Phone Number</label>
-                  <input type="text" value={formData.phone_number} onChange={e => handleChange('phone_number', e.target.value)} className={inputClass} placeholder="+234 800 000 0000" />
-                </div>
-              </div>
-              <div>
-                <label className={labelClass}>Address</label>
-                <textarea value={formData.address} onChange={e => handleChange('address', e.target.value)} rows={3} className={`${inputClass} resize-none`} placeholder="123 Fashion Ave, Lagos, Nigeria" />
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-8">
-            {/* Bank / Payment Info */}
-            <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-gray-100 dark:border-neutral-800 p-8 shadow-sm space-y-6 transition-colors">
-              <h3 className="font-black text-sm uppercase tracking-widest text-gray-400 dark:text-gray-500 border-b border-gray-100 dark:border-neutral-800 pb-4">Payment Details</h3>
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className={labelClass}>Bank Name</label>
-                    <input type="text" value={formData.bank_name} onChange={e => handleChange('bank_name', e.target.value)} className={inputClass} placeholder="First Bank Nigeria" />
+                    <label className={labelClass}>Company Name</label>
+                    <input type="text" value={formData.company_name} onChange={e => handleChange('company_name', e.target.value)} className={inputClass} placeholder="Velure Store" />
                   </div>
                   <div>
-                    <label className={labelClass}>Account Name</label>
-                    <input type="text" value={formData.account_name} onChange={e => handleChange('account_name', e.target.value)} className={inputClass} placeholder="VELURE CLOTHING" />
+                    <label className={labelClass}>Domain / Website</label>
+                    <input type="text" value={formData.domain} onChange={e => handleChange('domain', e.target.value)} className={inputClass} placeholder="velure.com" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className={labelClass}>Email Address</label>
+                    <input type="email" value={formData.email} onChange={e => handleChange('email', e.target.value)} className={inputClass} placeholder="hello@velure.com" />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Phone Number</label>
+                    <input type="text" value={formData.phone_number} onChange={e => handleChange('phone_number', e.target.value)} className={inputClass} placeholder="+234 800 000 0000" />
                   </div>
                 </div>
                 <div>
-                  <label className={labelClass}>Account Number</label>
-                  <input type="text" value={formData.account_number} onChange={e => handleChange('account_number', e.target.value)} className={inputClass} placeholder="0011223344" />
-                </div>
-                <div>
-                  <label className={labelClass}>Currency Symbol</label>
-                  <input
-                    type="text"
-                    value={formData.currency_symbol}
-                    onChange={e => handleChange('currency_symbol', e.target.value)}
-                    className={inputClass}
-                    placeholder="e.g. ₦, $, €, £"
-                    maxLength={5}
-                  />
-                  <p className="text-xs text-gray-400 mt-1 font-medium">Used for all price displays across the store</p>
+                  <label className={labelClass}>Address</label>
+                  <textarea value={formData.address} onChange={e => handleChange('address', e.target.value)} rows={3} className={`${inputClass} resize-none`} placeholder="123 Fashion Ave, Lagos, Nigeria" />
                 </div>
               </div>
-            </div>
+            </form>
 
-            {/* Logo & Favicon */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm space-y-6">
-              <h3 className="font-black text-sm uppercase tracking-widest text-gray-400 border-b border-gray-100 pb-4">Brand Assets</h3>
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <label className={labelClass}>Store Logo</label>
-                  <div className="relative group overflow-hidden rounded-xl border-2 border-dashed border-gray-200 hover:border-black transition-colors w-24 h-24 bg-gray-50 flex items-center justify-center p-2">
-                    {(previews.logo || formData.logo) ? (
-                      <img src={previews.logo || formData.logo} alt="Logo" className="max-w-full max-h-full object-contain" />
-                    ) : (
-                      <div className="text-center">
-                        <svg className="mx-auto text-gray-300 mb-1" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-                        <p className="text-[8px] font-black uppercase text-gray-400">Logo</p>
-                      </div>
-                    )}
-                    <input type="file" onChange={e => e.target.files?.[0] && handleFileChange('logo', e.target.files[0])} className="absolute inset-0 opacity-0 cursor-pointer" title="Change Logo" />
+            <div className="space-y-8">
+              {/* Bank / Payment Info Form */}
+              <form onSubmit={handleSubmit} className="bg-white dark:bg-neutral-900 rounded-2xl border border-gray-100 dark:border-neutral-800 p-6 md:p-8 shadow-sm space-y-6 transition-colors mx-[10px] md:mx-0">
+                <div className="flex justify-between items-center border-b border-gray-100 dark:border-neutral-800 pb-4">
+                  <h3 className="font-black text-sm uppercase tracking-widest text-gray-400 dark:text-gray-500">Payment Details</h3>
+                  <button type="submit" disabled={saving} className="text-[10px] font-black uppercase tracking-widest bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-all disabled:opacity-50">
+                    {saving ? 'Saving...' : 'Save Bank'}
+                  </button>
+                </div>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className={labelClass}>Bank Name</label>
+                      <input type="text" value={formData.bank_name} onChange={e => handleChange('bank_name', e.target.value)} className={inputClass} placeholder="First Bank Nigeria" />
+                    </div>
+                    <div>
+                      <label className={labelClass}>Account Name</label>
+                      <input type="text" value={formData.account_name} onChange={e => handleChange('account_name', e.target.value)} className={inputClass} placeholder="VELURE CLOTHING" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className={labelClass}>Account Number</label>
+                    <input type="text" value={formData.account_number} onChange={e => handleChange('account_number', e.target.value)} className={inputClass} placeholder="0011223344" />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Currency Symbol</label>
+                    <input
+                      type="text"
+                      value={formData.currency_symbol}
+                      onChange={e => handleChange('currency_symbol', e.target.value)}
+                      className={inputClass}
+                      placeholder="e.g. ₦, $, €, £"
+                      maxLength={5}
+                    />
+                    <p className="text-xs text-gray-400 mt-1 font-medium">Used for all price displays across the store</p>
                   </div>
                 </div>
+              </form>
 
-                <div>
-                  <label className={labelClass}>Favicon</label>
-                  <div className="relative group overflow-hidden rounded-xl border-2 border-dashed border-gray-200 hover:border-black transition-colors w-20 h-20 bg-gray-50 flex items-center justify-center p-4">
-                    {(previews.favicon || formData.favicon) ? (
-                      <img src={previews.favicon || formData.favicon} alt="Favicon" className="w-6 h-6 object-contain" />
-                    ) : (
-                      <div className="text-center">
-                        <svg className="mx-auto text-gray-300 mb-1" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>
-                        <p className="text-[8px] font-black uppercase text-gray-400">Favicon</p>
-                      </div>
-                    )}
-                    <input type="file" onChange={e => e.target.files?.[0] && handleFileChange('favicon', e.target.files[0])} className="absolute inset-0 opacity-0 cursor-pointer" title="Change Favicon" />
+              {/* Logo & Favicon Form */}
+              <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-gray-100 p-6 md:p-8 shadow-sm space-y-6 mx-[10px] md:mx-0">
+                <div className="flex justify-between items-center border-b border-gray-100 pb-4">
+                  <h3 className="font-black text-sm uppercase tracking-widest text-gray-400">Brand Assets</h3>
+                  <button type="submit" disabled={saving} className="text-[10px] font-black uppercase tracking-widest bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-all disabled:opacity-50">
+                    {saving ? 'Saving...' : 'Save Brand'}
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <label className={labelClass}>Store Logo</label>
+                    <div className="relative group overflow-hidden rounded-xl border-2 border-dashed border-gray-200 hover:border-black transition-colors w-24 h-24 bg-gray-50 flex items-center justify-center p-2">
+                      {(previews.logo || formData.logo) ? (
+                        <img src={previews.logo || formData.logo} alt="Logo" className="max-w-full max-h-full object-contain" />
+                      ) : (
+                        <div className="text-center">
+                          <svg className="mx-auto text-gray-300 mb-1" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                          <p className="text-[8px] font-black uppercase text-gray-400">Logo</p>
+                        </div>
+                      )}
+                      <input type="file" onChange={e => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          handleFileChange('logo', file);
+                        }
+                      }} className="absolute inset-0 opacity-0 cursor-pointer" title="Change Logo" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className={labelClass}>Favicon</label>
+                    <div className="relative group overflow-hidden rounded-xl border-2 border-dashed border-gray-200 hover:border-black transition-colors w-20 h-20 bg-gray-50 flex items-center justify-center p-4">
+                      {(previews.favicon || formData.favicon) ? (
+                        <img src={previews.favicon || formData.favicon} alt="Favicon" className="w-6 h-6 object-contain" />
+                      ) : (
+                        <div className="text-center">
+                          <svg className="mx-auto text-gray-300 mb-1" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>
+                          <p className="text-[8px] font-black uppercase text-gray-400">Favicon</p>
+                        </div>
+                      )}
+                      <input type="file" onChange={e => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          handleFileChange('favicon', file);
+                        }
+                      }} className="absolute inset-0 opacity-0 cursor-pointer" title="Change Favicon" />
+                    </div>
                   </div>
                 </div>
-              </div>
+              </form>
             </div>
           </div>
-        </div>
 
         {/* Hero Banners Management - Full Width */}
         <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-gray-100 dark:border-neutral-800 shadow-sm overflow-hidden transition-colors">
@@ -459,25 +483,19 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* Global Save Button */}
-        <div className="flex items-center gap-4 bg-gray-50 p-6 rounded-2xl border border-gray-100">
+        <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-gray-100 dark:border-neutral-800 p-6 md:p-8 shadow-md flex flex-col md:flex-row items-center gap-4 transition-colors mx-[10px] md:mx-0">
           <div className="flex-1">
+            <h4 className="font-black text-sm uppercase tracking-widest text-gray-900 dark:text-gray-100">Status & Notifications</h4>
             {message && (
-              <p className={`text-sm font-bold px-4 py-2 rounded-xl flex items-center gap-2 ${message.includes('success') ? 'text-green-600' : 'text-red-600'}`}>
-                {message.includes('success') && <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>}
+              <p className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg mt-2 inline-flex items-center gap-2 ${message.includes('successfully') ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
+                {message.includes('successfully') && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4"><polyline points="20 6 9 17 4 12"></polyline></svg>}
                 {message}
               </p>
             )}
           </div>
-          <button
-            type="submit"
-            disabled={saving}
-            className="px-10 py-4 bg-black text-white rounded-xl font-black uppercase tracking-widest text-sm hover:bg-gray-900 active:scale-95 transition-all disabled:opacity-50 shadow-xl shadow-black/10 cursor-pointer"
-          >
-            {saving ? 'Processing...' : 'Save All Settings'}
-          </button>
+          <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest italic">All changes are saved to the primary server</p>
         </div>
-      </form>
+      </div>
       )}
 
       {/* Banner Modal */}
