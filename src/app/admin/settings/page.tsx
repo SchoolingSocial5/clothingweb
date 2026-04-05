@@ -215,14 +215,11 @@ export default function SettingsPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
             
             {/* Company Info Form */}
-            <form onSubmit={handleSubmit} className="bg-white dark:bg-neutral-900 rounded-2xl border border-gray-100 dark:border-neutral-800 p-6 md:p-8 shadow-sm space-y-6 transition-colors mx-[10px] md:mx-0">
-              <div className="flex justify-between items-center border-b border-gray-100 dark:border-neutral-800 pb-4">
+            <form onSubmit={handleSubmit} className="bg-white dark:bg-neutral-900 rounded-2xl border border-gray-100 dark:border-neutral-800 py-6 md:py-8 shadow-sm space-y-6 transition-colors px-0 md:px-0">
+              <div className="flex justify-between items-center border-b border-gray-100 dark:border-neutral-800 pb-4 px-[10px] md:px-8">
                 <h3 className="font-black text-sm uppercase tracking-widest text-gray-400 dark:text-gray-500">Company Information</h3>
-                <button type="submit" disabled={saving} className="text-[10px] font-black uppercase tracking-widest bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-all disabled:opacity-50">
-                  {saving ? 'Saving...' : 'Save Info'}
-                </button>
               </div>
-              <div className="space-y-4">
+              <div className="space-y-4 px-[10px] md:px-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className={labelClass}>Company Name</label>
@@ -248,18 +245,20 @@ export default function SettingsPage() {
                   <textarea value={formData.address} onChange={e => handleChange('address', e.target.value)} rows={3} className={`${inputClass} resize-none`} placeholder="123 Fashion Ave, Lagos, Nigeria" />
                 </div>
               </div>
+              <div className="pt-4 px-[10px] md:px-8 border-t border-gray-50 dark:border-neutral-800">
+                <button type="submit" disabled={saving} className="w-full md:w-auto text-[10px] font-black uppercase tracking-widest bg-black text-white px-8 py-3 rounded-xl hover:bg-gray-800 transition-all disabled:opacity-50">
+                  {saving ? 'Saving...' : 'Save Info'}
+                </button>
+              </div>
             </form>
 
             <div className="space-y-8">
               {/* Bank / Payment Info Form */}
-              <form onSubmit={handleSubmit} className="bg-white dark:bg-neutral-900 rounded-2xl border border-gray-100 dark:border-neutral-800 p-6 md:p-8 shadow-sm space-y-6 transition-colors mx-[10px] md:mx-0">
-                <div className="flex justify-between items-center border-b border-gray-100 dark:border-neutral-800 pb-4">
+              <form onSubmit={handleSubmit} className="bg-white dark:bg-neutral-900 rounded-2xl border border-gray-100 dark:border-neutral-800 py-6 md:py-8 shadow-sm space-y-6 transition-colors px-0 md:px-0">
+                <div className="flex justify-between items-center border-b border-gray-100 dark:border-neutral-800 pb-4 px-[10px] md:px-8">
                   <h3 className="font-black text-sm uppercase tracking-widest text-gray-400 dark:text-gray-500">Payment Details</h3>
-                  <button type="submit" disabled={saving} className="text-[10px] font-black uppercase tracking-widest bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-all disabled:opacity-50">
-                    {saving ? 'Saving...' : 'Save Bank'}
-                  </button>
                 </div>
-                <div className="space-y-4">
+                <div className="space-y-4 px-[10px] md:px-8">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className={labelClass}>Bank Name</label>
@@ -287,17 +286,19 @@ export default function SettingsPage() {
                     <p className="text-xs text-gray-400 mt-1 font-medium">Used for all price displays across the store</p>
                   </div>
                 </div>
+                <div className="pt-4 px-[10px] md:px-8 border-t border-gray-50 dark:border-neutral-800">
+                  <button type="submit" disabled={saving} className="w-full md:w-auto text-[10px] font-black uppercase tracking-widest bg-black text-white px-8 py-3 rounded-xl hover:bg-gray-800 transition-all disabled:opacity-50">
+                    {saving ? 'Saving...' : 'Save Bank'}
+                  </button>
+                </div>
               </form>
 
               {/* Logo & Favicon Form */}
-              <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-gray-100 p-6 md:p-8 shadow-sm space-y-6 mx-[10px] md:mx-0">
-                <div className="flex justify-between items-center border-b border-gray-100 pb-4">
+              <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-gray-100 py-6 md:py-8 shadow-sm space-y-6 px-0 md:px-0">
+                <div className="flex justify-between items-center border-b border-gray-100 pb-4 px-[10px] md:px-8">
                   <h3 className="font-black text-sm uppercase tracking-widest text-gray-400">Brand Assets</h3>
-                  <button type="submit" disabled={saving} className="text-[10px] font-black uppercase tracking-widest bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-all disabled:opacity-50">
-                    {saving ? 'Saving...' : 'Save Brand'}
-                  </button>
                 </div>
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-2 gap-6 px-[10px] md:px-8">
                   <div>
                     <label className={labelClass}>Store Logo</label>
                     <div className="relative group overflow-hidden rounded-xl border-2 border-dashed border-gray-200 hover:border-black transition-colors w-24 h-24 bg-gray-50 flex items-center justify-center p-2">
@@ -337,6 +338,11 @@ export default function SettingsPage() {
                       }} className="absolute inset-0 opacity-0 cursor-pointer" title="Change Favicon" />
                     </div>
                   </div>
+                </div>
+                <div className="pt-4 px-[10px] md:px-8 border-t border-gray-50">
+                  <button type="submit" disabled={saving} className="w-full md:w-auto text-[10px] font-black uppercase tracking-widest bg-black text-white px-8 py-3 rounded-xl hover:bg-gray-800 transition-all disabled:opacity-50">
+                    {saving ? 'Saving...' : 'Save Brand'}
+                  </button>
                 </div>
               </form>
             </div>
