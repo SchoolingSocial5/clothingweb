@@ -43,7 +43,9 @@ export default function AdminDashboard() {
     { label: "Items Sold", value: (stats?.total_sales || 0).toLocaleString(), trend: "+10.4%", positive: true },
   ];
 
-  const recentUsers = users.slice(0, 5);
+  const recentUsers = users
+    .filter(user => user.role === 'user' || !user.role)
+    .slice(0, 5);
 
   return (
     <div className="p-[10px] md:p-8">
