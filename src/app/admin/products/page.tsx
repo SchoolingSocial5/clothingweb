@@ -15,6 +15,7 @@ export default function ProductsPage() {
     name: "",
     category: "",
     price: "",
+    cost_price: "",
     color: "#000000",
     quantity: "0",
     image: null as File | null
@@ -46,6 +47,7 @@ export default function ProductsPage() {
       name: product.name,
       category: product.category,
       price: product.price,
+      cost_price: product.cost_price || "",
       color: product.color,
       quantity: product.quantity.toString(),
       image: null
@@ -88,6 +90,7 @@ export default function ProductsPage() {
     formData.append("name", newProduct.name);
     formData.append("category", newProduct.category);
     formData.append("price", newProduct.price);
+    formData.append("cost_price", newProduct.cost_price);
     formData.append("color", newProduct.color);
     formData.append("quantity", newProduct.quantity);
     if (newProduct.image) {
@@ -107,7 +110,7 @@ export default function ProductsPage() {
       
       setIsModalOpen(false);
       setEditingProduct(null);
-      setNewProduct({ name: "", category: "", price: "", color: "#000000", quantity: "0", image: null });
+      setNewProduct({ name: "", category: "", price: "", cost_price: "", color: "#000000", quantity: "0", image: null });
       setImagePreview(null);
       showToast(editingProduct ? "Product updated successfully" : "Product saved successfully", "success");
     } catch (err) {
@@ -125,7 +128,7 @@ export default function ProductsPage() {
         <button 
           onClick={() => {
             setEditingProduct(null);
-            setNewProduct({ name: "", category: "", price: "", color: "#000000", quantity: "0", image: null });
+            setNewProduct({ name: "", category: "", price: "", cost_price: "", color: "#000000", quantity: "0", image: null });
             setImagePreview(null);
             setIsModalOpen(true);
           }}
@@ -197,7 +200,7 @@ export default function ProductsPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <span className="font-bold text-sm text-gray-900">${product.price}</span>
+                      <span className="font-bold text-sm text-gray-900">{formatPrice(Number(product.price), settings?.currency_symbol || "₦")}</span>
                     </td>
                     <td className="px-6 py-4 text-center">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
@@ -321,7 +324,18 @@ export default function ProductsPage() {
                     </datalist>
                   </div>
                   <div className="flex flex-col gap-2">
-                    <label className="text-sm font-bold text-gray-700">Price ($)</label>
+                    <label className="text-sm font-bold text-gray-700">Cost Price (₦)</label>
+                    <input 
+                      required
+                      type="number" 
+                      value={newProduct.cost_price}
+                      onChange={(e) => setNewProduct({...newProduct, cost_price: e.target.value})}
+                      placeholder="70.00" 
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black transition-all"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <label className="text-sm font-bold text-gray-700">Selling Price (₦)</label>
                     <input 
                       required
                       type="number" 

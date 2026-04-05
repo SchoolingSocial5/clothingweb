@@ -1,26 +1,48 @@
-"use client";
+import { useEffect, useState } from "react";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
+import AdminStatCard from "@/components/admin/AdminStatCard";
 import { useSettings } from "@/context/SettingsContext";
 import { formatPrice } from "@/utils/format";
+import { apiClient } from "@/utils/api";
+import { useUserStore } from "@/store/useUserStore";
+
+interface DashboardStats {
+  total_customers: number;
+  total_revenue: number;
+  total_orders: number;
+  total_sales: number;
+}
 
 export default function AdminDashboard() {
   const { settings } = useSettings();
-  const currency = settings?.currency_symbol || "$";
+  const { users, fetchUsers } = useUserStore();
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const currency = settings?.currency_symbol || "₦";
 
-  const stats = [
-    { label: "Total Sales", value: formatPrice(45231.89, currency), trend: "+20.1%", positive: true },
-    { label: "Active Customers", value: "2,350", trend: "+15.2%", positive: true },
-    { label: "Total Orders", value: "12,234", trend: "+8.1%", positive: true },
-    { label: "Revenue", value: formatPrice(124563.00, currency), trend: "-2.4%", positive: false },
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const statsData = await apiClient<DashboardStats>("/admin/analytics");
+        setStats(statsData);
+        await fetchUsers();
+      } catch (error) {
+        console.error("Dashboard data load error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, [fetchUsers]);
+
+  const statItems = [
+    { label: "Total Revenue", value: formatPrice(stats?.total_revenue || 0, currency), trend: "+12.5%", positive: true },
+    { label: "Active Customers", value: (stats?.total_customers || 0).toLocaleString(), trend: "+5.2%", positive: true },
+    { label: "Total Orders", value: (stats?.total_orders || 0).toLocaleString(), trend: "+8.1%", positive: true },
+    { label: "Items Sold", value: (stats?.total_sales || 0).toLocaleString(), trend: "+10.4%", positive: true },
   ];
 
-  const recentCustomers = [
-    { id: 1, name: "Alice Freeman", email: "alice@example.com", amount: formatPrice(320.00, currency), status: "Completed" },
-    { id: 2, name: "Bobby Tables", email: "bobby@example.com", amount: formatPrice(150.00, currency), status: "Pending" },
-    { id: 3, name: "Charlie Davis", email: "charlie@example.com", amount: formatPrice(890.50, currency), status: "Completed" },
-    { id: 4, name: "Diana Prince", email: "diana@example.com", amount: formatPrice(45.00, currency), status: "Processing" },
-    { id: 5, name: "Evan Wright", email: "evan@example.com", amount: formatPrice(210.00, currency), status: "Completed" },
-  ];
+  const recentUsers = users.slice(0, 5);
 
   return (
     <div className="p-[10px] md:p-8">
@@ -31,17 +53,18 @@ export default function AdminDashboard() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
-        {stats.map((stat, i) => (
-          <div key={i} className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-            <p className="text-sm font-medium text-gray-500 mb-2">{stat.label}</p>
-            <div className="flex items-end justify-between">
-              <h3 className="text-3xl font-bold">{stat.value}</h3>
-              <span className={`text-sm font-semibold px-2 py-1 rounded-md ${stat.positive ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'}`}>
-                {stat.trend}
-              </span>
+        {loading ? (
+          Array(4).fill(0).map((_, i) => (
+            <div key={i} className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm animate-pulse">
+              <div className="h-4 w-24 bg-gray-100 rounded mb-4"></div>
+              <div className="h-8 w-32 bg-gray-100 rounded"></div>
             </div>
-          </div>
-        ))}
+          ))
+        ) : (
+          statItems.map((stat, i) => (
+            <AdminStatCard key={i} {...stat} />
+          ))
+        )}
       </div>
 
       {/* Recent Customers List */}
@@ -60,33 +83,40 @@ export default function AdminDashboard() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {recentCustomers.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50/50 transition-colors">
+              {recentUsers.map((user) => (
+                <tr key={user.id} className="hover:bg-gray-50/50 transition-colors text-sm">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-sm font-bold text-gray-600">
-                        {user.name.charAt(0)}
+                      <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-600">
+                        {user.name.charAt(0).toUpperCase()}
                       </div>
                       <div>
-                        <p className="text-sm font-bold">{user.name}</p>
+                        <p className="font-bold text-gray-900">{user.name}</p>
                         <p className="text-xs text-gray-500">{user.email}</p>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${
-                      user.status === 'Completed' ? 'bg-green-50 text-green-700 border-green-200' :
-                      user.status === 'Pending' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
-                      'bg-blue-50 text-blue-700 border-blue-200'
+                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+                      user.role === 'admin' ? 'bg-purple-50 text-purple-700 border-purple-200' :
+                      user.role === 'staff' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                      'bg-green-50 text-green-700 border-green-200'
                     }`}>
-                      {user.status}
+                      {user.role || 'user'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-right text-sm font-bold">
-                    {user.amount}
+                  <td className="px-6 py-4 text-right text-gray-500 font-medium">
+                    {new Date(user.created_at).toLocaleDateString()}
                   </td>
                 </tr>
               ))}
+              {recentUsers.length === 0 && (
+                <tr>
+                  <td colSpan={3} className="px-6 py-12 text-center text-gray-400 font-medium">
+                    No customers found
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
