@@ -2,6 +2,8 @@
 import { useEffect, useState } from "react";
 import { useExpenseStore } from "@/store/useExpenseStore";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
+import DeleteConfirmModal from "@/components/admin/DeleteConfirmModal";
+import Toast from "@/components/admin/Toast";
 
 const CATEGORIES = ["Marketing", "Inventory", "Rent", "Utilities", "Salary", "Shipping", "Other"];
 
@@ -17,10 +19,40 @@ export default function ExpensesPage() {
     receipt: null as File | null
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "warning"; visible: boolean }>({
+    message: "",
+    type: "success",
+    visible: false
+  });
+
+  const showToast = (message: string, type: "success" | "error" | "warning" = "success") => {
+    setToast({ message, type, visible: true });
+    setTimeout(() => setToast(prev => ({ ...prev, visible: false })), 3000);
+  };
 
   useEffect(() => {
     fetchExpenses();
   }, [fetchExpenses]);
+
+  const handleDelete = (id: number) => {
+    setDeleteId(id);
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteId) return;
+    try {
+      await deleteExpense(deleteId);
+      showToast("Expense deleted successfully");
+    } catch (err) {
+      showToast("Failed to delete expense", "error");
+    } finally {
+      setShowDeleteConfirm(false);
+      setDeleteId(null);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,6 +67,7 @@ export default function ExpensesPage() {
       if (formData.receipt) data.append("receipt", formData.receipt);
 
       await createExpense(data);
+      showToast("Expense recorded successfully");
       setIsModalOpen(false);
       setFormData({
         title: "",
@@ -45,7 +78,7 @@ export default function ExpensesPage() {
         receipt: null
       });
     } catch (err) {
-      console.error(err);
+      showToast("Error saving expense", "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -118,8 +151,8 @@ export default function ExpensesPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex justify-center">
-                        <button onClick={() => deleteExpense(expense.id)} className="text-gray-400 hover:text-red-500 transition-colors">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        <button onClick={() => handleDelete(expense.id)} className="text-gray-400 hover:text-red-500 transition-colors cursor-pointer">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7c-1 0-2-1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                         </button>
                       </div>
                     </td>
@@ -134,9 +167,9 @@ export default function ExpensesPage() {
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center">
+            <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center text-sm font-bold">
               <h3 className="text-xl font-bold">Record New Expense</h3>
-              <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-black">
+              <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-black p-1">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
               </button>
             </div>
@@ -179,9 +212,9 @@ export default function ExpensesPage() {
 
               <div className="flex gap-3">
                 <button type="button" onClick={() => setIsModalOpen(false)}
-                  className="flex-1 px-6 py-3 border border-gray-200 rounded-xl text-sm font-bold hover:bg-gray-50 uppercase tracking-widest">Cancel</button>
+                  className="flex-1 px-6 py-3 border border-gray-200 rounded-xl text-sm font-bold hover:bg-gray-50 uppercase tracking-widest cursor-pointer">Cancel</button>
                 <button type="submit" disabled={isSubmitting}
-                  className="flex-1 px-6 py-3 bg-black text-white rounded-xl text-sm font-bold shadow-lg shadow-black/20 hover:bg-gray-900 disabled:opacity-50 uppercase tracking-widest">
+                  className="flex-1 px-6 py-3 bg-black text-white rounded-xl text-sm font-bold shadow-lg shadow-black/20 hover:bg-gray-900 disabled:opacity-50 uppercase tracking-widest cursor-pointer">
                   {isSubmitting ? "Saving..." : "Save Expense"}
                 </button>
               </div>
@@ -189,6 +222,21 @@ export default function ExpensesPage() {
           </div>
         </div>
       )}
+
+      <DeleteConfirmModal 
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={confirmDelete}
+        title="Delete Expense"
+        message="Are you sure you want to remove this expense record? This action cannot be undone."
+      />
+
+      <Toast 
+        message={toast.message}
+        type={toast.type}
+        visible={toast.visible}
+        onClose={() => setToast(prev => ({ ...prev, visible: false }))}
+      />
     </div>
   );
 }

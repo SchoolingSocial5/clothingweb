@@ -5,11 +5,15 @@ import { useProductStore, Product } from "@/store/useProductStore";
 import { useCategoryStore } from "@/store/useCategoryStore";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import { formatPrice } from "@/utils/format";
+import { useSettings } from "@/context/SettingsContext";
+import DeleteConfirmModal from "@/components/admin/DeleteConfirmModal";
+import Toast from "@/components/admin/Toast";
 
 export default function ProductsPage() {
   const { token } = useAuth();
   const { products, loading, fetchProducts, createProduct, updateProduct, deleteProduct } = useProductStore();
   const { categories, fetchCategories } = useCategoryStore();
+  const { settings } = useSettings();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [newProduct, setNewProduct] = useState({
@@ -422,58 +426,20 @@ export default function ProductsPage() {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-md z-[60] flex items-center justify-center p-4 animate-in fade-in duration-300">
-          <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in duration-200">
-            <div className="p-8 text-center">
-              <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                <svg className="text-red-500" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-              </div>
-              <h3 className="text-2xl font-bold mb-3">Confirm Deletion</h3>
-              <p className="text-gray-500 mb-8 px-4">Are you sure you want to remove this product? This action cannot be undone.</p>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setShowDeleteConfirm(false)}
-                  className="flex-1 px-6 py-3.5 border border-gray-100 rounded-2xl text-sm font-bold hover:bg-gray-50 transition-colors cursor-pointer"
-                >
-                  No, Keep it
-                </button>
-                <button
-                  onClick={confirmDelete}
-                  className="flex-1 px-6 py-3.5 bg-red-500 text-white rounded-2xl text-sm font-bold shadow-lg shadow-red-200 hover:bg-red-600 transition-colors cursor-pointer"
-                >
-                  Yes, Delete it
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <DeleteConfirmModal 
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={confirmDelete}
+        title="Confirm Deletion"
+        message="Are you sure you want to remove this product? This action cannot be undone."
+      />
 
-      {/* Toast Notification */}
-      <div className={`fixed bottom-8 right-8 z-[70] transition-all duration-500 transform ${toast.visible ? "translate-y-0 opacity-100" : "translate-y-12 opacity-0 pointer-events-none"}`}>
-        <div className={`flex items-center gap-4 px-6 py-4 rounded-2xl shadow-2xl border ${toast.type === "success" ? "bg-green-50 border-green-100 text-green-800" :
-            toast.type === "error" ? "bg-red-50 border-red-100 text-red-800" :
-              "bg-amber-50 border-amber-100 text-amber-800"
-          }`}>
-          <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${toast.type === "success" ? "bg-green-500 text-white" :
-              toast.type === "error" ? "bg-red-500 text-white" :
-                "bg-amber-500 text-white"
-            }`}>
-            {toast.type === "success" ? (
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
-            ) : toast.type === "error" ? (
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-            ) : (
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-            )}
-          </div>
-          <div>
-            <p className="font-bold text-sm tracking-tight">{toast.message}</p>
-          </div>
-        </div>
-      </div>
+      <Toast 
+        message={toast.message}
+        type={toast.type}
+        visible={toast.visible}
+        onClose={() => setToast(prev => ({ ...prev, visible: false }))}
+      />
     </div>
   );
 }
