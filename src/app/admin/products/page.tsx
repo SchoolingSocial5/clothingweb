@@ -9,11 +9,13 @@ import { useSettings } from "@/context/SettingsContext";
 import DeleteConfirmModal from "@/components/admin/DeleteConfirmModal";
 import Toast from "@/components/admin/Toast";
 import ProductModal from "@/components/admin/ProductModal";
+import { usePurchaseStore } from "@/store/usePurchaseStore";
 
 export default function ProductsPage() {
   const { token } = useAuth();
   const { products, loading, fetchProducts, createProduct, updateProduct, deleteProduct } = useProductStore();
   const { categories, fetchCategories } = useCategoryStore();
+  const { addPurchase } = usePurchaseStore();
   const { settings } = useSettings();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -121,6 +123,44 @@ export default function ProductsPage() {
       showToast(editingProduct ? "Product updated successfully" : "Product saved successfully", "success");
     } catch (err) {
       showToast("Error saving product", "error");
+    }
+  };
+
+  const handlePurchase = async (quantity: number, cost: number) => {
+    try {
+      let productId = editingProduct?.id;
+
+      // If it's a new product, we must create it first
+      if (!productId) {
+        const formData = new FormData();
+        formData.append("name", newProduct.name);
+        formData.append("category", newProduct.category);
+        formData.append("price", newProduct.price);
+        formData.append("cost_price", newProduct.cost_price);
+        formData.append("color", newProduct.color);
+        formData.append("quantity", "0"); // Start with 0, then add via purchase
+        if (newProduct.image) {
+          formData.append("image", newProduct.image);
+        }
+
+        const createdProduct = await createProduct(formData);
+        productId = createdProduct.id;
+      }
+
+      await addPurchase({
+        product_id: productId,
+        quantity,
+        cost_price: cost,
+      });
+
+      showToast("Purchase recorded and stock updated!", "success");
+      setIsModalOpen(false);
+      setEditingProduct(null);
+      setNewProduct({ name: "", category: "", price: "", cost_price: "", color: "#000000", quantity: "0", image: null });
+      setImagePreview(null);
+      await fetchProducts(); // Refresh stock in list
+    } catch (error: any) {
+      showToast(error.message || "Failed to record purchase", "error");
     }
   };
 
@@ -292,6 +332,7 @@ export default function ProductsPage() {
         onSubmit={handleSubmit}
         handleImageChange={handleImageChange}
         imagePreview={imagePreview}
+        onPurchase={handlePurchase}
       />
 
       <DeleteConfirmModal 

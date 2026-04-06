@@ -21,7 +21,7 @@ interface Settings {
 export default function CheckoutPage() {
   const router = useRouter();
   const { cart, getCartTotal, clearCart, updateQuantity } = useCart();
-  const { user } = useAuth();
+  const { user, login } = useAuth();
   const { settings: globalSettings } = useSettings();
   const { createOrder, loading: submitting, error: storeError } = useOrderStore();
   const [settings, setSettings] = useState<Settings | null>(null);
@@ -97,8 +97,14 @@ export default function CheckoutPage() {
     formData.append('receipt', receipt);
 
     try {
-      const order = await createOrder(formData);
-      setOrderId(order.id);
+      const response = await createOrder(formData) as any;
+      setOrderId(response.id);
+      
+      // Handle auto-login if returned
+      if (response.auth) {
+        login(response.auth.access_token, response.auth.user);
+      }
+      
       setDone(true);
       clearCart();
     } catch (err: any) {
@@ -117,9 +123,9 @@ export default function CheckoutPage() {
               <polyline points="20 6 9 17 4 12"></polyline>
             </svg>
           </div>
-          <h1 className="text-3xl font-black uppercase tracking-tight mb-3">Order Placed!</h1>
-          <p className="text-gray-500 mb-2">Your order <span className="font-bold text-black">#{orderId}</span> has been received.</p>
-          <p className="text-gray-500 mb-10">Please complete your payment using the details below.</p>
+          <h1 className="text-3xl font-black uppercase tracking-tight mb-3">Order Successful!</h1>
+          <p className="text-gray-500 mb-2">We have received your order details and payment submission.</p>
+          <p className="text-gray-500 mb-10">You can now relax. We will notify you once your order is confirmed.</p>
 
           {settings && (
             <div className="bg-gray-50 rounded-2xl p-8 text-left mb-10 border border-gray-100">
@@ -159,7 +165,7 @@ export default function CheckoutPage() {
         <h1 className="text-4xl font-black uppercase tracking-tighter mb-12">Checkout</h1>        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
           {/* Order Summary - First on Mobile, Right on Desktop */}
           <div className="lg:col-span-5 lg:order-2">
-            <div className="bg-gray-50 rounded-2xl p-8 sticky top-28 border border-gray-100">
+            <div className="bg-gray-50 rounded-2xl p-4 md:p-8 sticky top-28 border border-gray-100">
               <h2 className="font-black uppercase tracking-widest text-xs text-gray-400 border-b border-gray-200 pb-4 mb-6">Order Summary</h2>
 
               <div className="space-y-4 mb-6">
@@ -219,8 +225,8 @@ export default function CheckoutPage() {
           </div>
 
           {/* Form - Second on Mobile, Left on Desktop */}
-          <form onSubmit={handleSubmit} className="lg:col-span-7 lg:order-1 space-y-5 px-0 md:px-0">
-            <div className="bg-gray-50 rounded-2xl p-6 md:p-8 space-y-5 border border-gray-100">
+          <form onSubmit={handleSubmit} className="lg:col-span-7 lg:order-1 space-y-5 px-0">
+            <div className="bg-gray-50 rounded-2xl p-[10px] md:p-8 space-y-5 border border-gray-100">
               <div className="flex justify-between items-center border-b border-gray-200 pb-4">
                 <h2 className="font-black uppercase tracking-widest text-xs text-gray-400">Your Information</h2>
                 {user && (!user.phone || !user.address) && (

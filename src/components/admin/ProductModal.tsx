@@ -18,6 +18,7 @@ interface ProductModalProps {
   onSubmit: (e: React.FormEvent) => void;
   handleImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   imagePreview: string | null;
+  onPurchase?: (quantity: number, cost: number) => Promise<void>;
 }
 
 export default function ProductModal({
@@ -30,13 +31,14 @@ export default function ProductModal({
   onSubmit,
   handleImageChange,
   imagePreview,
+  onPurchase,
 }: ProductModalProps) {
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200 flex flex-col max-h-[90vh]">
-        <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center flex-shrink-0">
+        <div className="px-[10px] md:px-8 py-6 border-b border-gray-100 flex justify-between items-center flex-shrink-0">
           <h3 className="text-xl font-bold">{editingProduct ? "Edit Product" : "Add New Product"}</h3>
           <button
             onClick={onClose}
@@ -46,7 +48,7 @@ export default function ProductModal({
           </button>
         </div>
 
-        <form onSubmit={onSubmit} className="p-8 space-y-6 overflow-y-auto flex-1">
+        <form onSubmit={onSubmit} className="p-[10px] md:p-8 space-y-6 overflow-y-auto flex-1">
           <div className="space-y-4">
             <div className="flex flex-col gap-2">
               <label className="text-sm font-bold text-gray-700">Product Name</label>
@@ -155,20 +157,43 @@ export default function ProductModal({
             </div>
           </div>
 
-          <div className="pt-4 flex gap-3">
+          <div className="pt-4 flex flex-col-reverse md:flex-row gap-3 border-t border-gray-50 md:border-none mt-2">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-6 py-3 border border-gray-200 rounded-xl text-sm font-bold hover:bg-gray-50 transition-colors cursor-pointer"
+              className="w-full md:w-auto px-8 py-3 border border-gray-200 rounded-xl text-sm font-bold hover:bg-gray-50 transition-colors cursor-pointer"
             >
               Cancel
             </button>
-            <button
-              type="submit"
-              className="flex-1 px-6 py-3 bg-black text-white rounded-xl text-sm font-bold shadow-lg shadow-black/20 hover:bg-gray-900 transition-colors cursor-pointer"
-            >
-              {editingProduct ? "Update Product" : "Save Product"}
-            </button>
+            
+            <div className="flex-1 flex gap-3">
+              {onPurchase && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const qty = parseInt(newProduct.quantity);
+                    const cost = parseFloat(newProduct.cost_price);
+                    if (qty > 0 && cost >= 0) {
+                      onPurchase(qty, cost);
+                    } else {
+                      alert("Please enter a valid quantity and cost price to record a purchase.");
+                    }
+                  }}
+                  className="flex-1 px-4 py-3 bg-green-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-green-600/20 hover:bg-green-700 transition-colors cursor-pointer flex items-center justify-center gap-2"
+                  title="Record this as a new purchase and add to stock"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+                  Purchase
+                </button>
+              )}
+
+              <button
+                type="submit"
+                className="flex-1 px-4 py-3 bg-black text-white rounded-xl text-sm font-bold shadow-lg shadow-black/20 hover:bg-gray-900 transition-colors cursor-pointer"
+              >
+                {editingProduct ? "Update" : "Save"}
+              </button>
+            </div>
           </div>
         </form>
       </div>

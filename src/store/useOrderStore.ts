@@ -26,24 +26,47 @@ interface Order {
 
 interface OrderState {
   orders: Order[];
+  pagination: {
+    total: number;
+    page: number;
+    last_page: number;
+    per_page: number;
+  };
+  selectedOrderIds: number[];
   loading: boolean;
   error: string | null;
-  fetchOrders: () => Promise<void>;
+  fetchOrders: (page?: number) => Promise<void>;
   updateOrderStatus: (id: number, data: Partial<Order>) => Promise<void>;
+  bulkUpdateStatus: (ids: number[], data: Partial<Order>) => Promise<void>;
+  bulkDeleteOrders: (ids: number[]) => Promise<void>;
   deleteOrder: (id: number) => Promise<void>;
   createOrder: (formData: FormData) => Promise<Order>;
+  toggleOrderSelection: (id: number) => void;
+  toggleAllSelection: () => void;
+  clearSelection: () => void;
 }
 
 export const useOrderStore = create<OrderState>((set, get) => ({
   orders: [],
+  pagination: {
+    total: 0,
+    page: 1,
+    last_page: 1,
+    per_page: 10,
+  },
+  selectedOrderIds: [],
   loading: false,
   error: null,
 
-  fetchOrders: async () => {
+  fetchOrders: async (page = 1) => {
     set({ loading: true, error: null });
     try {
-      const data = await apiClient<Order[]>('/admin/orders');
-      set({ orders: data, loading: false });
+      const response = await apiClient<any>(`/admin/orders?page=${page}&limit=10`);
+      set({ 
+        orders: response.orders, 
+        pagination: response.pagination,
+        loading: false 
+      });
     } catch (err: any) {
       set({ error: err.message, loading: false });
     }
@@ -51,14 +74,45 @@ export const useOrderStore = create<OrderState>((set, get) => ({
 
   updateOrderStatus: async (id, data) => {
     try {
-      const updatedOrder = await apiClient<any>(`/admin/orders/${id}`, {
+      const response = await apiClient<any>(`/admin/orders/${id}`, {
         method: 'PATCH',
         body: data,
       });
-      // Just fetch all orders again to be safe and get the new receipt number
-      await get().fetchOrders();
+      // The API returns { message, orders } but with pagination it might be different now
+      // Let's re-fetch the current page to keep it consistent
+      await get().fetchOrders(get().pagination.page);
     } catch (err: any) {
       set({ error: err.message });
+      throw err;
+    }
+  },
+
+  bulkUpdateStatus: async (ids, data) => {
+    try {
+      set({ loading: true });
+      await apiClient<any>('/admin/orders/bulk-status', {
+        method: 'POST',
+        body: { ids, ...data },
+      });
+      set({ selectedOrderIds: [] }); // Clear selection after bulk action
+      await get().fetchOrders(get().pagination.page);
+    } catch (err: any) {
+      set({ error: err.message, loading: false });
+      throw err;
+    }
+  },
+
+  bulkDeleteOrders: async (ids) => {
+    try {
+      set({ loading: true });
+      await apiClient<any>('/admin/orders/bulk-delete', {
+        method: 'DELETE',
+        body: { ids },
+      });
+      set({ selectedOrderIds: [] });
+      await get().fetchOrders(get().pagination.page);
+    } catch (err: any) {
+      set({ error: err.message, loading: false });
       throw err;
     }
   },
@@ -66,12 +120,32 @@ export const useOrderStore = create<OrderState>((set, get) => ({
   deleteOrder: async (id) => {
     try {
       await apiClient(`/admin/orders/${id}`, { method: 'DELETE' });
-      set({ orders: get().orders.filter((o) => o.id !== id) });
+      await get().fetchOrders(get().pagination.page);
     } catch (err: any) {
       set({ error: err.message });
       throw err;
     }
   },
+
+  toggleOrderSelection: (id) => {
+    const { selectedOrderIds } = get();
+    if (selectedOrderIds.includes(id)) {
+      set({ selectedOrderIds: selectedOrderIds.filter((oid) => oid !== id) });
+    } else {
+      set({ selectedOrderIds: [...selectedOrderIds, id] });
+    }
+  },
+
+  toggleAllSelection: () => {
+    const { orders, selectedOrderIds } = get();
+    if (selectedOrderIds.length === orders.length) {
+      set({ selectedOrderIds: [] });
+    } else {
+      set({ selectedOrderIds: orders.map((o) => o.id) });
+    }
+  },
+
+  clearSelection: () => set({ selectedOrderIds: [] }),
 
   createOrder: async (formData: FormData) => {
     set({ loading: true, error: null });

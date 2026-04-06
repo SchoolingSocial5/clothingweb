@@ -34,7 +34,7 @@ export const useCategoryStore = create<CategoryStore>((set) => ({
   addCategory: async (name: string) => {
     const data = await apiClient('/admin/categories', {
       method: 'POST',
-      body: JSON.stringify({ name }),
+      body: { name },
     });
     set((state) => ({
       categories: [...state.categories, { id: data.id, name }].sort((a, b) => a.name.localeCompare(b.name)),

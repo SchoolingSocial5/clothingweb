@@ -39,8 +39,8 @@ export default function PaymentConfirmModal({
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <div className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-300">
-        <div className="p-8">
-          <div className="flex justify-between items-start mb-6">
+        <div className="p-[10px] md:p-8">
+          <div className="flex justify-between items-start mb-6 px-2 md:px-0">
             <div>
               <h2 className="text-2xl font-black uppercase tracking-tight">Complete Payment</h2>
               <p className="text-gray-500 text-sm mt-1">Please transfer the total amount.</p>
@@ -53,12 +53,12 @@ export default function PaymentConfirmModal({
             </button>
           </div>
 
-          <div className="bg-gray-50 rounded-2xl p-6 space-y-4 mb-8 border border-gray-100">
-            <div className="flex justify-between border-b border-gray-200 pb-3">
+          <div className="bg-gray-50 rounded-2xl p-[10px] md:p-6 space-y-4 mb-8 border border-gray-100">
+            <div className="flex justify-between border-b border-gray-200 pb-3 px-2 md:px-0">
               <span className="text-xs font-black uppercase tracking-widest text-gray-400">Amount to Pay</span>
               <span className="text-xl font-black">{formatPrice(total, globalSettings?.currency_symbol)}</span>
             </div>
-            <div className="space-y-3 text-sm">
+            <div className="space-y-3 text-sm px-2 md:px-0">
               <div className="flex justify-between"><span className="text-gray-500">Bank</span><span className="font-bold">{settings.bank_name}</span></div>
               <div className="flex justify-between"><span className="text-gray-500">Account Name</span><span className="font-bold">{settings.account_name}</span></div>
               <div className="flex justify-between flex-col gap-1">
@@ -68,7 +68,7 @@ export default function PaymentConfirmModal({
             </div>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-4 px-2 md:px-0">
             <label className="block">
               <span className="block text-xs font-black uppercase tracking-widest text-gray-400 mb-3">Upload Payment Receipt *</span>
               <div className="relative group">
