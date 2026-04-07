@@ -53,6 +53,13 @@ export const apiClient = async <T = any>(endpoint: string, options: ApiOptions =
   }
 
   if (!response.ok) {
+    if (response.status === 401) {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('auth_user');
+        window.location.href = '/sign-in';
+      }
+    }
     const errorData = await response.json().catch(() => ({ message: 'An unknown error occurred' }));
     const error: any = new Error(errorData.message || `Request failed with status ${response.status}`);
     error.data = errorData;

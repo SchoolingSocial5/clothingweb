@@ -30,12 +30,20 @@ interface Customer {
   orders_sum_total_amount?: string | number;
 }
 
+interface Pagination {
+  total: number;
+  page: number;
+  last_page: number;
+  per_page: number;
+}
+
 interface CustomerState {
   customers: Customer[];
+  pagination: Pagination;
   selectedCustomer: Customer | null;
   loading: boolean;
   error: string | null;
-  fetchCustomers: () => Promise<void>;
+  fetchCustomers: (page?: number) => Promise<void>;
   fetchCustomerDetails: (id: number) => Promise<void>;
   updateCustomer: (id: number, data: Partial<Customer>) => Promise<void>;
   deleteCustomer: (id: number) => Promise<void>;
@@ -43,15 +51,16 @@ interface CustomerState {
 
 export const useCustomerStore = create<CustomerState>((set, get) => ({
   customers: [],
+  pagination: { total: 0, page: 1, last_page: 1, per_page: 10 },
   selectedCustomer: null,
   loading: false,
   error: null,
 
-  fetchCustomers: async () => {
+  fetchCustomers: async (page = 1) => {
     set({ loading: true, error: null });
     try {
-      const data = await apiClient<Customer[]>('/admin/customers');
-      set({ customers: data, loading: false });
+      const data = await apiClient<{ customers: Customer[]; pagination: Pagination }>(`/admin/customers?page=${page}`);
+      set({ customers: data.customers, pagination: data.pagination, loading: false });
     } catch (err: any) {
       set({ error: err.message, loading: false });
     }
@@ -86,7 +95,7 @@ export const useCustomerStore = create<CustomerState>((set, get) => ({
   deleteCustomer: async (id) => {
     try {
       await apiClient(`/admin/customers/${id}`, { method: 'DELETE' });
-      set({ 
+      set({
         customers: get().customers.filter((c) => c.id !== id),
         selectedCustomer: get().selectedCustomer?.id === id ? null : get().selectedCustomer
       });

@@ -34,6 +34,8 @@ export default function ProductsPage() {
     type: "success",
     visible: false
   });
+  const [submitting, setSubmitting] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -92,7 +94,7 @@ export default function ProductsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!token) return;
+    if (!token || submitting) return;
 
     const formData = new FormData();
     formData.append("name", newProduct.name);
@@ -100,7 +102,7 @@ export default function ProductsPage() {
     formData.append("price", newProduct.price);
     formData.append("cost_price", newProduct.cost_price);
     formData.append("color", newProduct.color);
-    formData.append("quantity", newProduct.quantity);
+    // quantity is managed via Purchase, not directly on save
     if (newProduct.image) {
       formData.append("image", newProduct.image);
     }
@@ -109,6 +111,7 @@ export default function ProductsPage() {
       formData.append("_method", "PUT");
     }
 
+    setSubmitting(true);
     try {
       if (editingProduct) {
         await updateProduct(editingProduct.id, formData);
@@ -121,12 +124,16 @@ export default function ProductsPage() {
       setNewProduct({ name: "", category: "", price: "", cost_price: "", color: "#000000", quantity: "0", image: null });
       setImagePreview(null);
       showToast(editingProduct ? "Product updated successfully" : "Product saved successfully", "success");
-    } catch (err) {
-      showToast("Error saving product", "error");
+    } catch (err: any) {
+      showToast(err?.message || "Error saving product", "error");
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const handlePurchase = async (quantity: number, cost: number) => {
+    if (submitting) return;
+    setSubmitting(true);
     try {
       let productId = editingProduct?.id;
 
@@ -161,6 +168,8 @@ export default function ProductsPage() {
       await fetchProducts(); // Refresh stock in list
     } catch (error: any) {
       showToast(error.message || "Failed to record purchase", "error");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -221,9 +230,28 @@ export default function ProductsPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-lg bg-gray-100 flex-shrink-0 overflow-hidden flex items-center justify-center border border-gray-100">
+                        <div
+                          className={`w-12 h-12 rounded-lg bg-gray-100 flex-shrink-0 overflow-hidden flex items-center justify-center border border-gray-100 ${product.image_url ? 'cursor-pointer hover:ring-2 hover:ring-black transition-all' : ''}`}
+                          onClick={() => {
+                            if (!product.image_url) return;
+                            const base = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:8000';
+                            const url = product.image_url.startsWith('http')
+                              ? product.image_url.replace(/^http:\/\/localhost(?::\d+)?\//, `${base}/`)
+                              : `${base}${product.image_url.startsWith('/') ? '' : '/'}${product.image_url}`;
+                            setPreviewImage(url);
+                          }}
+                        >
                           {product.image_url ? (
-                            <img src={product.image_url.startsWith('http') ? product.image_url : `${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:8000'}${product.image_url}`} alt={product.name} className="w-full h-full object-cover" />
+                            <img
+                              src={(() => {
+                                const base = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:8000';
+                                if (product.image_url!.startsWith('http')) return product.image_url!.replace(/^http:\/\/localhost(?::\d+)?\//, `${base}/`);
+                                return `${base}${product.image_url!.startsWith('/') ? '' : '/'}${product.image_url}`;
+                              })()}
+                              alt={product.name}
+                              className="w-full h-full object-cover"
+                              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                            />
                           ) : (
                             <svg className="text-gray-400" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
                           )}
@@ -319,9 +347,10 @@ export default function ProductsPage() {
         )}
       </div>
 
-      <ProductModal 
+      <ProductModal
         isOpen={isModalOpen}
         onClose={() => {
+          if (submitting) return;
           setIsModalOpen(false);
           setEditingProduct(null);
         }}
@@ -333,6 +362,7 @@ export default function ProductsPage() {
         handleImageChange={handleImageChange}
         imagePreview={imagePreview}
         onPurchase={handlePurchase}
+        submitting={submitting}
       />
 
       <DeleteConfirmModal 
@@ -343,12 +373,37 @@ export default function ProductsPage() {
         message="Are you sure you want to remove this product? This action cannot be undone."
       />
 
-      <Toast 
+      <Toast
         message={toast.message}
         type={toast.type}
         visible={toast.visible}
         onClose={() => setToast(prev => ({ ...prev, visible: false }))}
       />
+
+      {/* Image Preview Lightbox */}
+      {previewImage && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setPreviewImage(null)}
+        >
+          <div className="relative max-w-3xl w-full max-h-[90vh] flex items-center justify-center">
+            <button
+              onClick={() => setPreviewImage(null)}
+              className="absolute -top-10 right-0 text-white/70 hover:text-white transition-colors p-2"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+            <img
+              src={previewImage}
+              alt="Product preview"
+              className="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

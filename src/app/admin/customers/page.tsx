@@ -4,10 +4,11 @@ import { useAuth } from '@/context/AuthContext';
 import { useCustomerStore } from '@/store/useCustomerStore';
 import Link from 'next/link';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import Pagination from '@/components/common/Pagination';
 
 export default function CustomersPage() {
   const { token } = useAuth();
-  const { customers, loading, fetchCustomers, deleteCustomer } = useCustomerStore();
+  const { customers, pagination, loading, fetchCustomers, deleteCustomer } = useCustomerStore();
 
   useEffect(() => {
     if (token) {
@@ -20,7 +21,7 @@ export default function CustomersPage() {
       <AdminPageHeader 
         title="Customers" 
         description="Manage your registered users and guests."
-        stats={{ label: "Total", value: customers.length }}
+        stats={{ label: "Total", value: pagination.total }}
       />
 
       {loading ? (
@@ -101,6 +102,15 @@ export default function CustomersPage() {
           {customers.length === 0 && (
             <div className="py-20 text-center bg-gray-50/30">
               <p className="text-gray-400 font-medium italic">No customers found.</p>
+            </div>
+          )}
+          {pagination.last_page > 1 && (
+            <div className="border-t border-gray-100 bg-gray-50/30">
+              <Pagination
+                currentPage={pagination.page}
+                totalPages={pagination.last_page}
+                onPageChange={(page) => fetchCustomers(page)}
+              />
             </div>
           )}
         </div>

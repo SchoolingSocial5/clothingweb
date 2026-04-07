@@ -1,9 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useUserStore, User } from "@/store/useUserStore";
+import { useAuth } from "@/context/AuthContext";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 
 export default function StaffPage() {
+  const { token } = useAuth();
   const { users, loading, fetchUsers, updateUserRole } = useUserStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -19,8 +21,10 @@ export default function StaffPage() {
   };
 
   useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+    if (token) {
+      fetchUsers();
+    }
+  }, [token, fetchUsers]);
 
   const handleOpenModal = (user: User) => {
     setSelectedUser(user);

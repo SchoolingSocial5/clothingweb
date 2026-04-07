@@ -82,10 +82,20 @@ export default function CheckoutPage() {
 
   const handleConfirmOrder = async (receipt: File) => {
     const formData = new FormData();
-    Object.entries(form).forEach(([key, value]) => {
-      formData.append(key, value);
-    });
-    
+
+    // Only send fields relevant to the user type
+    formData.append('customer_name', form.customer_name);
+    formData.append('customer_phone', form.customer_phone);
+    formData.append('delivery_address', form.delivery_address);
+
+    if (!user) {
+      // Guest checkout — send email and password to create an account
+      formData.append('customer_email', form.customer_email);
+      if (form.password) formData.append('password', form.password);
+    } else {
+      formData.append('customer_email', user.email);
+    }
+
     cart.forEach((item, index) => {
       formData.append(`items[${index}][product_id]`, item.id.toString());
       formData.append(`items[${index}][product_name]`, item.name);
@@ -99,23 +109,24 @@ export default function CheckoutPage() {
     try {
       const response = await createOrder(formData) as any;
       setOrderId(response.id);
-      
-      // Handle auto-login if returned
+
+      // Handle auto-login if new account was created
       if (response.auth) {
         login(response.auth.access_token, response.auth.user);
       }
-      
+
       setDone(true);
       clearCart();
     } catch (err: any) {
-      setShowPaymentModal(false);
+      // Keep the modal open so the error is visible to the user
+      // storeError is already set by the store
     }
   };
 
   // Success screen
   if (done) {
     return (
-      <main className="min-h-screen bg-white">
+      <main className="min-h-screen bg-background">
         <Header />
         <div className="max-w-xl mx-auto px-[10px] md:px-8 py-32 text-center">
           <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-8">
@@ -123,9 +134,9 @@ export default function CheckoutPage() {
               <polyline points="20 6 9 17 4 12"></polyline>
             </svg>
           </div>
-          <h1 className="text-3xl font-black uppercase tracking-tight mb-3">Order Successful!</h1>
-          <p className="text-gray-500 mb-2">We have received your order details and payment submission.</p>
-          <p className="text-gray-500 mb-10">You can now relax. We will notify you once your order is confirmed.</p>
+          <h1 className="text-heading mb-3">Order Successful!</h1>
+          <p className="text-caption text-base mb-2">We have received your order details and payment submission.</p>
+          <p className="text-caption text-base mb-10">You can now relax. We will notify you once your order is confirmed.</p>
 
           {settings && (
             <div className="bg-gray-50 rounded-2xl p-8 text-left mb-10 border border-gray-100">
@@ -143,7 +154,7 @@ export default function CheckoutPage() {
             </div>
           )}
 
-          <Link href="/" className="inline-block bg-black text-white px-10 py-4 rounded-xl font-bold hover:bg-gray-900 transition-colors">
+          <Link href="/" className="btn btn-primary btn-lg inline-flex">
             Continue Shopping
           </Link>
         </div>
@@ -152,17 +163,18 @@ export default function CheckoutPage() {
   }
 
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-background">
       <Header />
       <div className="max-w-[1100px] mx-auto px-[10px] md:px-8 py-16">
         <div className="flex items-center gap-3 mb-12">
-          <Link href="/cart" className="text-gray-400 hover:text-black transition-colors font-medium flex items-center gap-2 text-sm cursor-pointer">
+          <Link href="/cart" className="text-muted hover:text-foreground transition-colors font-medium flex items-center gap-2 text-sm cursor-pointer">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
             Back to Cart
           </Link>
         </div>
 
-        <h1 className="text-4xl font-black uppercase tracking-tighter mb-12">Checkout</h1>        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+        <h1 className="text-heading mb-12">Checkout</h1>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
           {/* Order Summary - First on Mobile, Right on Desktop */}
           <div className="lg:col-span-5 lg:order-2">
             <div className="bg-gray-50 rounded-2xl p-4 md:p-8 sticky top-28 border border-gray-100">
@@ -171,13 +183,23 @@ export default function CheckoutPage() {
               <div className="space-y-4 mb-6">
                 {cart.map(item => (
                   <div key={item.id} className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-gray-200 overflow-hidden flex-shrink-0">
-                      {item.image_url && (
-                        <img 
-                          src={item.image_url.startsWith('http') ? item.image_url : `${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || ''}${item.image_url.startsWith('/') ? '' : '/'}${item.image_url}`} 
-                          alt={item.name} 
-                          className="w-full h-full object-cover" 
+                    <div className="w-12 h-12 rounded-xl bg-gray-200 overflow-hidden flex-shrink-0 flex items-center justify-center">
+                      {item.image_url ? (
+                        <img
+                          src={(() => {
+                            const base = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:8000';
+                            if (item.image_url!.startsWith('http')) {
+                              // Normalize old localhost URLs with wrong port
+                              return item.image_url!.replace(/^http:\/\/localhost(?::\d+)?\//, `${base}/`);
+                            }
+                            return `${base}${item.image_url!.startsWith('/') ? '' : '/'}${item.image_url}`;
+                          })()}
+                          alt={item.name}
+                          className="w-full h-full object-cover"
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                         />
+                      ) : (
+                        <svg className="text-gray-400" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
                       )}
                     </div>
                     <div className="flex-1">
@@ -238,23 +260,23 @@ export default function CheckoutPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Full Name *</label>
+                  <label className="text-label block mb-2">Full Name *</label>
                   <input required value={form.customer_name} onChange={e => setForm({ ...form, customer_name: e.target.value })}
-                    className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-black"
+                    className="input-base"
                     placeholder="John Doe" />
                 </div>
                 {!user && (
                   <>
                     <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Email Address *</label>
+                      <label className="text-label block mb-2">Email Address *</label>
                       <input required type="email" value={form.customer_email} onChange={e => setForm({ ...form, customer_email: e.target.value })}
-                        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-black"
+                        className="input-base"
                         placeholder="john@example.com" />
                     </div>
                     <div className="md:col-span-2">
-                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Create Password (to save account) *</label>
-                      <input required type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })}
-                        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-black"
+                      <label className="text-label block mb-2">Create Password (to save account) *</label>
+                      <input required type="password" minLength={8} value={form.password} onChange={e => setForm({ ...form, password: e.target.value })}
+                        className="input-base"
                         placeholder="Min 8 characters" />
                     </div>
                   </>
@@ -262,23 +284,23 @@ export default function CheckoutPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Phone Number *</label>
+                <label className="text-label block mb-2">Phone Number *</label>
                 <input required value={form.customer_phone} onChange={e => setForm({ ...form, customer_phone: e.target.value })}
-                  className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-black"
+                  className="input-base"
                   placeholder="+234 800 000 0000" />
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Delivery Address *</label>
+                <label className="text-label block mb-2">Delivery Address *</label>
                 <textarea required rows={3} value={form.delivery_address} onChange={e => setForm({ ...form, delivery_address: e.target.value })}
-                  className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-black resize-none"
+                  className="input-base resize-none"
                   placeholder="Street, City, State" />
               </div>
             </div>
 
             {error || storeError ? <p className="text-red-500 text-sm font-semibold bg-red-50 px-4 py-3 rounded-xl">{error || storeError}</p> : null}
             <button type="submit" disabled={submitting || cart.length === 0}
-              className="w-full bg-black text-white py-5 rounded-2xl font-bold shadow-xl shadow-black/10 hover:bg-gray-900 transition-all active:scale-[0.98] disabled:opacity-50 uppercase tracking-widest cursor-pointer">
+              className="btn btn-primary btn-lg w-full rounded-2xl shadow-xl shadow-black/10">
               {submitting ? 'Placing Order...' : 'Place Order'}
             </button>
           </form>

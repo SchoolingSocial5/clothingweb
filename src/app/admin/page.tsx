@@ -5,28 +5,38 @@ import AdminStatCard from "@/components/admin/AdminStatCard";
 import { useSettings } from "@/context/SettingsContext";
 import { formatPrice } from "@/utils/format";
 import { apiClient } from "@/utils/api";
-import { useUserStore } from "@/store/useUserStore";
+import { useAuth } from "@/context/AuthContext";
+
+interface RecentCustomer {
+  id: number;
+  name: string;
+  email: string;
+  role?: string;
+  status: string;
+  created_at: string;
+}
 
 interface DashboardStats {
   total_customers: number;
   total_revenue: number;
   total_orders: number;
   total_sales: number;
+  recent_customers: RecentCustomer[];
 }
 
 export default function AdminDashboard() {
   const { settings } = useSettings();
-  const { users, fetchUsers } = useUserStore();
+  const { token } = useAuth();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const currency = settings?.currency_symbol || "₦";
 
   useEffect(() => {
+    if (!token) return;
     const loadData = async () => {
       try {
         const statsData = await apiClient<DashboardStats>("/admin/analytics");
         setStats(statsData);
-        await fetchUsers();
       } catch (error) {
         console.error("Dashboard data load error:", error);
       } finally {
@@ -34,7 +44,7 @@ export default function AdminDashboard() {
       }
     };
     loadData();
-  }, [fetchUsers]);
+  }, [token]);
 
   const statItems = [
     { label: "Total Revenue", value: formatPrice(stats?.total_revenue || 0, currency), trend: "+12.5%", positive: true },
@@ -43,12 +53,7 @@ export default function AdminDashboard() {
     { label: "Items Sold", value: (stats?.total_sales || 0).toLocaleString(), trend: "+10.4%", positive: true },
   ];
 
-  const recentUsers = users
-    .filter(user => 
-      (user.role !== 'staff' && user.role !== 'admin') && 
-      (user.status !== 'staff' && user.status !== 'admin')
-    )
-    .slice(0, 5);
+  const recentUsers = stats?.recent_customers || [];
 
   return (
     <div className="p-[10px] md:p-8">
@@ -85,7 +90,7 @@ export default function AdminDashboard() {
               <tr className="bg-gray-50/50 text-gray-500 text-xs uppercase tracking-wider">
                 <th className="px-6 py-4 font-semibold">Customer</th>
                 <th className="px-6 py-4 font-semibold">Status</th>
-                <th className="px-6 py-4 font-semibold text-right">Amount</th>
+                <th className="px-6 py-4 font-semibold text-right">Joined</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -103,12 +108,8 @@ export default function AdminDashboard() {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
-                      user.role === 'admin' ? 'bg-purple-50 text-purple-700 border-purple-200' :
-                      user.role === 'staff' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                      'bg-green-50 text-green-700 border-green-200'
-                    }`}>
-                      {user.role || 'user'}
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border bg-green-50 text-green-700 border-green-200">
+                      Customer
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right text-gray-500 font-medium">

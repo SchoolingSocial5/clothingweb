@@ -57,16 +57,18 @@ export default function ProductCard({ id, name, category, price, color, quantity
         )}
         {/* Product Image or Placeholder */}
         {image_url ? (
-          <img 
+          <img
             src={(() => {
-              if (image_url.startsWith('http')) return image_url;
-              const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:8000';
-              const cleanImageUrl = image_url.startsWith('/') ? image_url : `/${image_url}`;
-              // Prevent double /shop/ if it's already in the baseUrl
-              return `${baseUrl}${cleanImageUrl}`;
-            })()} 
-            alt={name} 
+              const base = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:8000';
+              if (image_url.startsWith('http')) {
+                // Normalize old localhost URLs that might have wrong port
+                return image_url.replace(/^http:\/\/localhost(?::\d+)?\//, `${base}/`);
+              }
+              return `${base}${image_url.startsWith('/') ? '' : '/'}${image_url}`;
+            })()}
+            alt={name}
             className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
           />
         ) : (
           <div className="absolute inset-0 bg-gradient-to-tr from-gray-200 to-gray-100 dark:from-neutral-800 dark:to-neutral-900 group-hover:scale-105 transition-transform duration-700 ease-out"></div>

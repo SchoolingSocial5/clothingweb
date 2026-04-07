@@ -24,7 +24,7 @@ export default function SignIn() {
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/login`, {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
           "Accept": "application/json"
         },
@@ -52,14 +52,14 @@ export default function SignIn() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
+    <div className="min-h-screen flex flex-col bg-background">
       <Header />
       <div className="flex-1 flex items-center justify-center px-[10px] py-6">
-        <div className="w-full max-w-4xl flex bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] overflow-hidden">
+        <div className="w-full max-w-4xl flex card shadow-[0_8px_30px_rgb(0,0,0,0.12)] overflow-hidden">
           {/* Form Side */}
           <div className="w-full lg:w-1/2 p-12 lg:p-16 flex flex-col justify-center">
-            <h1 className="text-3xl font-bold mb-2">Welcome Back</h1>
-            <p className="text-gray-500 mb-8">Please enter your details to sign in.</p>
+            <h1 className="text-heading mb-2">Welcome Back</h1>
+            <p className="text-caption text-base mb-8">Please enter your details to sign in.</p>
 
             {error && (
               <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-xl text-sm font-medium border border-red-100 italic transition-all animate-in slide-in-from-top-2">
@@ -69,31 +69,31 @@ export default function SignIn() {
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                <input 
+                <label className="text-label block mb-2">Email</label>
+                <input
                   required
-                  type="email" 
+                  type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-black transition-all"
+                  className="input-base"
                   placeholder="Enter your email"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                <label className="text-label block mb-2">Password</label>
                 <div className="relative">
-                  <input 
+                  <input
                     required
-                    type={showPassword ? "text" : "password"} 
+                    type={showPassword ? "text" : "password"}
                     value={formData.password}
                     onChange={(e) => setFormData({...formData, password: e.target.value})}
-                    className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-black transition-all pr-12"
+                    className="input-base pr-12"
                     placeholder="••••••••"
                   />
-                  <button 
+                  <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black transition-colors cursor-pointer"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted hover:text-foreground transition-colors cursor-pointer"
                   >
                     {showPassword ? (
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
@@ -107,22 +107,22 @@ export default function SignIn() {
               <div className="flex items-center justify-between text-sm">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input type="checkbox" className="rounded border-gray-300 text-black focus:ring-black" />
-                  <span className="text-gray-600">Remember me</span>
+                  <span className="text-caption text-sm">Remember me</span>
                 </label>
-                <a href="#" className="font-semibold text-black hover:underline">Forgot password?</a>
+                <a href="#" className="text-body font-semibold hover:underline">Forgot password?</a>
               </div>
 
-              <button 
+              <button
                 disabled={loading}
-                className="w-full py-4 bg-black text-white rounded-xl font-bold hover:bg-gray-900 transition-colors shadow-lg shadow-black/20 disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+                className="btn btn-primary btn-lg w-full"
               >
                 {loading && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>}
                 Sign In
               </button>
             </form>
 
-            <p className="mt-8 text-center text-gray-500 text-sm">
-              Don't have an account? <Link href="/sign-up" className="text-black font-bold hover:underline">Sign up for free</Link>
+            <p className="mt-8 text-center text-caption text-sm">
+              Don't have an account? <Link href="/sign-up" className="text-foreground font-bold hover:underline">Sign up for free</Link>
             </p>
           </div>
 

@@ -62,7 +62,12 @@ export default function Home() {
               <SwiperSlide key={banner.id}>
                 <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
                   <img
-                    src={banner.image_path}
+                    src={(() => {
+                      const base = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:8000';
+                      const p = banner.image_path;
+                      if (p.startsWith('http')) return p.replace(/^http:\/\/localhost(?::\d+)?\//, `${base}/`);
+                      return `${base}${p.startsWith('/') ? '' : '/'}${p}`;
+                    })()}
                     alt={banner.title}
                     className="absolute inset-0 w-full h-full object-cover"
                   />
@@ -77,7 +82,7 @@ export default function Home() {
                     </h1>
                     <button
                       onClick={() => document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' })}
-                      className="bg-white text-black px-12 py-5 text-sm font-black tracking-widest uppercase hover:bg-gray-100 transition-all active:scale-95 shadow-2xl shadow-black/20"
+                      className="btn bg-white text-black px-12 py-5 text-sm font-black tracking-widest uppercase hover:bg-gray-100 shadow-2xl shadow-black/20"
                     >
                       Explore More
                     </button>
@@ -100,7 +105,7 @@ export default function Home() {
               </h1>
               <button
                 onClick={() => document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' })}
-                className="bg-white text-black px-10 py-4 text-sm font-bold tracking-widest uppercase hover:bg-gray-200"
+                className="btn bg-white text-black px-10 py-4 text-sm font-bold tracking-widest uppercase hover:bg-gray-200"
               >
                 Shop Collection
               </button>
