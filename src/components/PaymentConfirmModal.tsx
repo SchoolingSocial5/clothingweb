@@ -38,14 +38,14 @@ export default function PaymentConfirmModal({
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-300">
+      <div className="bg-white dark:bg-neutral-900 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-300">
         <div className="p-[10px] md:p-8">
           <div className="flex justify-between items-start mb-6 px-2 md:px-0">
             <div>
-              <h2 className="text-2xl font-black uppercase tracking-tight">Complete Payment</h2>
-              <p className="text-gray-500 text-sm mt-1">Please transfer the total amount.</p>
+              <h2 className="text-2xl font-black uppercase tracking-tight text-gray-900 dark:text-gray-100">Complete Payment</h2>
+              <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Please transfer the total amount.</p>
             </div>
-            <button onClick={onClose} className="text-gray-400 hover:text-black transition-colors p-2 cursor-pointer">
+            <button onClick={onClose} className="text-gray-400 hover:text-black dark:hover:text-white transition-colors p-2 cursor-pointer">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <line x1="18" y1="6" x2="6" y2="18"></line>
                 <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -53,17 +53,17 @@ export default function PaymentConfirmModal({
             </button>
           </div>
 
-          <div className="bg-gray-50 rounded-2xl p-[10px] md:p-6 space-y-4 mb-8 border border-gray-100">
-            <div className="flex justify-between border-b border-gray-200 pb-3 px-2 md:px-0">
+          <div className="bg-gray-50 dark:bg-neutral-800 rounded-2xl p-[10px] md:p-6 space-y-4 mb-8 border border-gray-100 dark:border-neutral-700">
+            <div className="flex justify-between border-b border-gray-200 dark:border-neutral-700 pb-3 px-2 md:px-0">
               <span className="text-xs font-black uppercase tracking-widest text-gray-400">Amount to Pay</span>
-              <span className="text-xl font-black">{formatPrice(total, globalSettings?.currency_symbol)}</span>
+              <span className="text-xl font-black text-gray-900 dark:text-gray-100">{formatPrice(total, globalSettings?.currency_symbol)}</span>
             </div>
             <div className="space-y-3 text-sm px-2 md:px-0">
-              <div className="flex justify-between"><span className="text-gray-500">Bank</span><span className="font-bold">{settings.bank_name}</span></div>
-              <div className="flex justify-between"><span className="text-gray-500">Account Name</span><span className="font-bold">{settings.account_name}</span></div>
+              <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">Bank</span><span className="font-bold text-gray-900 dark:text-gray-100">{settings.bank_name}</span></div>
+              <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">Account Name</span><span className="font-bold text-gray-900 dark:text-gray-100">{settings.account_name}</span></div>
               <div className="flex justify-between flex-col gap-1">
-                <span className="text-gray-500">Account Number</span>
-                <span className="font-black text-2xl tracking-widest text-black">{settings.account_number}</span>
+                <span className="text-gray-500 dark:text-gray-400">Account Number</span>
+                <span className="font-black text-2xl tracking-widest text-black dark:text-white">{settings.account_number}</span>
               </div>
             </div>
           </div>
@@ -79,8 +79,8 @@ export default function PaymentConfirmModal({
                   onChange={(e) => setReceiptFile(e.target.files?.[0] || null)}
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                 />
-                <div className={`border-2 border-dashed rounded-2xl p-6 text-center transition-all ${receiptFile ? 'border-green-500 bg-green-50/30' : 'border-gray-200 group-hover:border-black bg-gray-50'}`}>
-                  <div className="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center mx-auto mb-3">
+                <div className={`border-2 border-dashed rounded-2xl p-6 text-center transition-all ${receiptFile ? 'border-green-500 bg-green-50/30 dark:bg-green-900/10' : 'border-gray-200 dark:border-neutral-700 group-hover:border-black dark:group-hover:border-white bg-gray-50 dark:bg-neutral-800'}`}>
+                  <div className="w-12 h-12 bg-white dark:bg-neutral-700 rounded-xl shadow-sm flex items-center justify-center mx-auto mb-3">
                     {receiptFile ? (
                       <svg className="text-green-500" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                         <polyline points="20 6 9 17 4 12"></polyline>

@@ -43,7 +43,7 @@ interface CustomerState {
   selectedCustomer: Customer | null;
   loading: boolean;
   error: string | null;
-  fetchCustomers: (page?: number) => Promise<void>;
+  fetchCustomers: (page?: number, search?: string) => Promise<void>;
   fetchCustomerDetails: (id: number) => Promise<void>;
   updateCustomer: (id: number, data: Partial<Customer>) => Promise<void>;
   deleteCustomer: (id: number) => Promise<void>;
@@ -56,11 +56,13 @@ export const useCustomerStore = create<CustomerState>((set, get) => ({
   loading: false,
   error: null,
 
-  fetchCustomers: async (page = 1) => {
-    set({ loading: true, error: null });
+  fetchCustomers: async (page = 1, search = '') => {
+    if (get().customers.length === 0) set({ loading: true });
     try {
-      const data = await apiClient<{ customers: Customer[]; pagination: Pagination }>(`/admin/customers?page=${page}`);
-      set({ customers: data.customers, pagination: data.pagination, loading: false });
+      const params = new URLSearchParams({ page: String(page) });
+      if (search) params.set('search', search);
+      const data = await apiClient<{ customers: Customer[]; pagination: Pagination }>(`/admin/customers?${params}`);
+      set({ customers: data.customers, pagination: data.pagination, loading: false, error: null });
     } catch (err: any) {
       set({ error: err.message, loading: false });
     }

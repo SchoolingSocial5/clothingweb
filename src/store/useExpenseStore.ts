@@ -16,7 +16,7 @@ interface ExpenseState {
   expenses: Expense[];
   loading: boolean;
   error: string | null;
-  fetchExpenses: () => Promise<void>;
+  fetchExpenses: (from?: string, to?: string) => Promise<void>;
   createExpense: (formData: FormData) => Promise<void>;
   deleteExpense: (id: number) => Promise<void>;
 }
@@ -26,10 +26,14 @@ export const useExpenseStore = create<ExpenseState>((set, get) => ({
   loading: false,
   error: null,
 
-  fetchExpenses: async () => {
-    set({ loading: true, error: null });
+  fetchExpenses: async (from = '', to = '') => {
+    if (get().expenses.length === 0) set({ loading: true });
     try {
-      const data = await apiClient<Expense[]>('/admin/expenses');
+      const params = new URLSearchParams();
+      if (from) params.set('from', from);
+      if (to) params.set('to', to);
+      const query = params.toString() ? `?${params.toString()}` : '';
+      const data = await apiClient<Expense[]>(`/admin/expenses${query}`);
       set({ expenses: data, loading: false });
     } catch (err: any) {
       set({ error: err.message, loading: false });

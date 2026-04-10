@@ -9,6 +9,7 @@ import PaymentConfirmModal from '@/components/PaymentConfirmModal';
 import { useOrderStore } from '@/store/useOrderStore';
 import { useSettings } from '@/context/SettingsContext';
 import { formatPrice } from '@/utils/format';
+import { getImageUrl } from '@/utils/image';
 
 interface Settings {
   company_name: string;
@@ -58,44 +59,31 @@ export default function CheckoutPage() {
     fetch(`${apiBase}/settings`, { headers: { Accept: 'application/json' } })
       .then(r => r.json())
       .then(data => { if (data && data.bank_name) setSettings(data); })
-      .catch((err) => { 
-        console.error("Failed to load settings in Checkout:", err);
-      });
+      .catch(console.error);
   }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (cart.length === 0) {
-      setError('Your cart is empty');
-      return;
-    }
+    if (cart.length === 0) { setError('Your cart is empty'); return; }
     setError('');
-    
-    // If settings are not loaded yet, we can't show payment info
     if (!settings && !globalSettings) {
       setError('Loading payment configuration... Please wait a moment and try again.');
       return;
     }
-    
     setShowPaymentModal(true);
   };
 
   const handleConfirmOrder = async (receipt: File) => {
     const formData = new FormData();
-
-    // Only send fields relevant to the user type
     formData.append('customer_name', form.customer_name);
     formData.append('customer_phone', form.customer_phone);
     formData.append('delivery_address', form.delivery_address);
-
     if (!user) {
-      // Guest checkout — send email and password to create an account
       formData.append('customer_email', form.customer_email);
       if (form.password) formData.append('password', form.password);
     } else {
       formData.append('customer_email', user.email);
     }
-
     cart.forEach((item, index) => {
       formData.append(`items[${index}][product_id]`, item.id.toString());
       formData.append(`items[${index}][product_name]`, item.name);
@@ -103,58 +91,48 @@ export default function CheckoutPage() {
       formData.append(`items[${index}][quantity]`, item.quantity.toString());
       if (item.image_url) formData.append(`items[${index}][product_image]`, item.image_url);
     });
-
     formData.append('receipt', receipt);
-
     try {
       const response = await createOrder(formData) as any;
       setOrderId(response.id);
-
-      // Handle auto-login if new account was created
-      if (response.auth) {
-        login(response.auth.access_token, response.auth.user);
-      }
-
+      if (response.auth) login(response.auth.access_token, response.auth.user);
       setDone(true);
       clearCart();
-    } catch (err: any) {
-      // Keep the modal open so the error is visible to the user
-      // storeError is already set by the store
-    }
+    } catch {}
   };
 
-  // Success screen
+  const inputCls = "w-full px-4 py-3 bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-xl text-sm font-medium text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all";
+  const labelCls = "text-xs font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 block mb-2";
+
   if (done) {
     return (
-      <main className="min-h-screen bg-background">
+      <main className="min-h-screen bg-gray-50 dark:bg-neutral-950 transition-colors duration-300">
         <Header />
-        <div className="max-w-xl mx-auto px-[10px] md:px-8 py-32 text-center">
-          <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-8">
+        <div className="max-w-xl mx-auto px-4 md:px-8 py-32 text-center">
+          <div className="w-20 h-20 bg-green-50 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto mb-8">
             <svg className="text-green-500" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <polyline points="20 6 9 17 4 12"></polyline>
+              <polyline points="20 6 9 17 4 12" />
             </svg>
           </div>
-          <h1 className="text-heading mb-3">Order Successful!</h1>
-          <p className="text-caption text-base mb-2">We have received your order details and payment submission.</p>
-          <p className="text-caption text-base mb-10">You can now relax. We will notify you once your order is confirmed.</p>
-
+          <h1 className="text-3xl font-black uppercase tracking-tight text-gray-900 dark:text-gray-100 mb-3">Order Successful!</h1>
+          <p className="text-gray-500 dark:text-gray-400 mb-2">We have received your order details and payment submission.</p>
+          <p className="text-gray-500 dark:text-gray-400 mb-10">You can now relax. We will notify you once your order is confirmed.</p>
           {settings && (
-            <div className="bg-gray-50 rounded-2xl p-8 text-left mb-10 border border-gray-100">
-              <h3 className="font-black uppercase tracking-widest text-xs text-gray-400 mb-5">Payment Details</h3>
+            <div className="bg-white dark:bg-neutral-900 rounded-2xl p-8 text-left mb-10 border border-gray-100 dark:border-neutral-800">
+              <h3 className="font-black uppercase tracking-widest text-xs text-gray-400 dark:text-gray-500 mb-5">Payment Details</h3>
               <div className="space-y-3 text-sm">
-                <div className="flex justify-between flex-col gap-1">
-                  <span className="text-gray-500">Account Number</span>
-                  <span className="font-black text-2xl tracking-widest text-black">{settings.account_number}</span>
+                <div className="flex flex-col gap-1">
+                  <span className="text-gray-500 dark:text-gray-400">Account Number</span>
+                  <span className="font-black text-2xl tracking-widest text-gray-900 dark:text-gray-100">{settings.account_number}</span>
                 </div>
-                <div className="pt-3 border-t border-gray-200 flex justify-between">
-                  <span className="text-gray-500">Amount to Pay</span>
-                  <span className="font-black text-xl">{formatPrice(total, globalSettings?.currency_symbol)}</span>
+                <div className="pt-3 border-t border-gray-100 dark:border-neutral-800 flex justify-between">
+                  <span className="text-gray-500 dark:text-gray-400">Amount to Pay</span>
+                  <span className="font-black text-xl text-gray-900 dark:text-gray-100">{formatPrice(total, globalSettings?.currency_symbol)}</span>
                 </div>
               </div>
             </div>
           )}
-
-          <Link href="/" className="btn btn-primary btn-lg inline-flex">
+          <Link href="/" className="inline-flex items-center gap-2 bg-black dark:bg-white text-white dark:text-black px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-sm hover:opacity-85 transition-all">
             Continue Shopping
           </Link>
         </div>
@@ -163,82 +141,61 @@ export default function CheckoutPage() {
   }
 
   return (
-    <main className="min-h-screen bg-background">
+    <main className="min-h-screen bg-gray-50 dark:bg-neutral-950 transition-colors duration-300">
       <Header />
-      <div className="max-w-[1100px] mx-auto px-[10px] md:px-8 py-16">
-        <div className="flex items-center gap-3 mb-12">
-          <Link href="/cart" className="text-muted hover:text-foreground transition-colors font-medium flex items-center gap-2 text-sm cursor-pointer">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+      <div className="max-w-[1100px] mx-auto px-4 md:px-8 py-12 md:py-16">
+        <div className="flex items-center gap-3 mb-10">
+          <Link href="/cart" className="text-gray-400 dark:text-gray-500 hover:text-black dark:hover:text-white transition-colors font-medium flex items-center gap-2 text-sm">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" /></svg>
             Back to Cart
           </Link>
         </div>
 
-        <h1 className="text-heading mb-12">Checkout</h1>
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-          {/* Order Summary - First on Mobile, Right on Desktop */}
-          <div className="lg:col-span-5 lg:order-2">
-            <div className="bg-gray-50 rounded-2xl p-4 md:p-8 sticky top-28 border border-gray-100">
-              <h2 className="font-black uppercase tracking-widest text-xs text-gray-400 border-b border-gray-200 pb-4 mb-6">Order Summary</h2>
+        <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tight text-gray-900 dark:text-gray-100 mb-10">Checkout</h1>
 
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* Order Summary */}
+          <div className="lg:col-span-5 lg:order-2">
+            <div className="bg-white dark:bg-neutral-900 rounded-2xl p-6 md:p-8 sticky top-24 border border-gray-100 dark:border-neutral-800 shadow-sm">
+              <h2 className="font-black uppercase tracking-widest text-xs text-gray-400 dark:text-gray-500 border-b border-gray-100 dark:border-neutral-800 pb-4 mb-6">Order Summary</h2>
               <div className="space-y-4 mb-6">
                 {cart.map(item => (
                   <div key={item.id} className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-gray-200 overflow-hidden flex-shrink-0 flex items-center justify-center">
+                    <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-neutral-800 overflow-hidden flex-shrink-0">
                       {item.image_url ? (
-                        <img
-                          src={(() => {
-                            const base = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:8000';
-                            if (item.image_url!.startsWith('http')) {
-                              // Normalize old localhost URLs with wrong port
-                              return item.image_url!.replace(/^http:\/\/localhost(?::\d+)?\//, `${base}/`);
-                            }
-                            return `${base}${item.image_url!.startsWith('/') ? '' : '/'}${item.image_url}`;
-                          })()}
-                          alt={item.name}
-                          className="w-full h-full object-cover"
-                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                        />
+                        <img src={getImageUrl(item.image_url) || ''} alt={item.name} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                       ) : (
-                        <svg className="text-gray-400" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                        <div className="w-full h-full flex items-center justify-center">
+                          <svg className="text-gray-400" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" /></svg>
+                        </div>
                       )}
                     </div>
                     <div className="flex-1">
-                      <p className="font-bold text-sm text-gray-800 leading-tight">{item.name}</p>
+                      <p className="font-bold text-sm text-gray-900 dark:text-gray-100 leading-tight">{item.name}</p>
                       <div className="flex items-center gap-2 mt-1">
-                        <button
-                          type="button"
-                          onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
-                          className="text-gray-400 hover:text-black transition-colors p-1"
-                        >
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        <button type="button" onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))} className="text-gray-400 hover:text-black dark:hover:text-white transition-colors p-1">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="5" y1="12" x2="19" y2="12" /></svg>
                         </button>
-                        <span className="text-xs font-black min-w-[12px] text-center">{item.quantity}</span>
-                        <button
-                          type="button"
-                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                          className="text-gray-400 hover:text-black transition-colors p-1"
-                        >
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        <span className="text-xs font-black min-w-[12px] text-center text-gray-900 dark:text-gray-100">{item.quantity}</span>
+                        <button type="button" onClick={() => updateQuantity(item.id, item.quantity + 1)} className="text-gray-400 hover:text-black dark:hover:text-white transition-colors p-1">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
                         </button>
                       </div>
                     </div>
-                    <p className="font-bold text-sm">{formatPrice(Number(item.price) * item.quantity, globalSettings?.currency_symbol)}</p>
+                    <p className="font-bold text-sm text-gray-900 dark:text-gray-100">{formatPrice(Number(item.price) * item.quantity, globalSettings?.currency_symbol)}</p>
                   </div>
                 ))}
               </div>
-
-              <div className="space-y-3 border-t border-gray-200 pt-4 text-sm">
-                <div className="flex justify-between text-gray-500">
+              <div className="space-y-3 border-t border-gray-100 dark:border-neutral-800 pt-4 text-sm">
+                <div className="flex justify-between text-gray-500 dark:text-gray-400">
                   <span>Subtotal</span>
-                  <span className="font-bold text-black">{formatPrice(subtotal, globalSettings?.currency_symbol)}</span>
+                  <span className="font-bold text-gray-900 dark:text-gray-100">{formatPrice(subtotal, globalSettings?.currency_symbol)}</span>
                 </div>
-                <div className="flex justify-between text-gray-500">
+                <div className="flex justify-between text-gray-500 dark:text-gray-400">
                   <span>Shipping</span>
-                  <span className="font-bold text-black">
-                    {shipping === 0 ? 'FREE' : formatPrice(shipping, globalSettings?.currency_symbol)}
-                  </span>
+                  <span className="font-bold text-gray-900 dark:text-gray-100">{shipping === 0 ? 'FREE' : formatPrice(shipping, globalSettings?.currency_symbol)}</span>
                 </div>
-                <div className="flex justify-between text-lg font-black border-t border-gray-200 pt-3">
+                <div className="flex justify-between text-lg font-black border-t border-gray-100 dark:border-neutral-800 pt-3 text-gray-900 dark:text-gray-100">
                   <span>Total</span>
                   <span>{formatPrice(total, globalSettings?.currency_symbol)}</span>
                 </div>
@@ -246,83 +203,65 @@ export default function CheckoutPage() {
             </div>
           </div>
 
-          {/* Form - Second on Mobile, Left on Desktop */}
-          <form onSubmit={handleSubmit} className="lg:col-span-7 lg:order-1 space-y-5 px-0">
-            <div className="bg-gray-50 rounded-2xl p-[10px] md:p-8 space-y-5 border border-gray-100">
-              <div className="flex justify-between items-center border-b border-gray-200 pb-4">
-                <h2 className="font-black uppercase tracking-widest text-xs text-gray-400">Your Information</h2>
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="lg:col-span-7 lg:order-1 space-y-5">
+            <div className="bg-white dark:bg-neutral-900 rounded-2xl p-6 md:p-8 space-y-5 border border-gray-100 dark:border-neutral-800 shadow-sm">
+              <div className="flex justify-between items-center border-b border-gray-100 dark:border-neutral-800 pb-4">
+                <h2 className="font-black uppercase tracking-widest text-xs text-gray-400 dark:text-gray-500">Your Information</h2>
                 {user && (!user.phone || !user.address) && (
-                  <span className="text-[10px] bg-amber-50 text-amber-600 px-2 py-1 rounded-lg font-bold animate-pulse">
+                  <span className="text-[10px] bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 px-2 py-1 rounded-lg font-bold animate-pulse">
                     Please complete your profile
                   </span>
                 )}
               </div>
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-label block mb-2">Full Name *</label>
-                  <input required value={form.customer_name} onChange={e => setForm({ ...form, customer_name: e.target.value })}
-                    className="input-base"
-                    placeholder="John Doe" />
+                  <label className={labelCls}>Full Name *</label>
+                  <input required value={form.customer_name} onChange={e => setForm({ ...form, customer_name: e.target.value })} className={inputCls} placeholder="John Doe" />
                 </div>
                 {!user && (
                   <>
                     <div>
-                      <label className="text-label block mb-2">Email Address *</label>
-                      <input required type="email" value={form.customer_email} onChange={e => setForm({ ...form, customer_email: e.target.value })}
-                        className="input-base"
-                        placeholder="john@example.com" />
+                      <label className={labelCls}>Email Address *</label>
+                      <input required type="email" value={form.customer_email} onChange={e => setForm({ ...form, customer_email: e.target.value })} className={inputCls} placeholder="john@example.com" />
                     </div>
                     <div className="md:col-span-2">
-                      <label className="text-label block mb-2">Create Password (to save account) *</label>
-                      <input required type="password" minLength={8} value={form.password} onChange={e => setForm({ ...form, password: e.target.value })}
-                        className="input-base"
-                        placeholder="Min 8 characters" />
+                      <label className={labelCls}>Create Password (to save account) *</label>
+                      <input required type="password" minLength={8} value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} className={inputCls} placeholder="Min 8 characters" />
                     </div>
                   </>
                 )}
               </div>
-
               <div>
-                <label className="text-label block mb-2">Phone Number *</label>
-                <input required value={form.customer_phone} onChange={e => setForm({ ...form, customer_phone: e.target.value })}
-                  className="input-base"
-                  placeholder="+234 800 000 0000" />
+                <label className={labelCls}>Phone Number *</label>
+                <input required value={form.customer_phone} onChange={e => setForm({ ...form, customer_phone: e.target.value })} className={inputCls} placeholder="+234 800 000 0000" />
               </div>
-
               <div>
-                <label className="text-label block mb-2">Delivery Address *</label>
-                <textarea required rows={3} value={form.delivery_address} onChange={e => setForm({ ...form, delivery_address: e.target.value })}
-                  className="input-base resize-none"
-                  placeholder="Street, City, State" />
+                <label className={labelCls}>Delivery Address *</label>
+                <textarea required rows={3} value={form.delivery_address} onChange={e => setForm({ ...form, delivery_address: e.target.value })} className={`${inputCls} resize-none`} placeholder="Street, City, State" />
               </div>
             </div>
-
-            {error || storeError ? <p className="text-red-500 text-sm font-semibold bg-red-50 px-4 py-3 rounded-xl">{error || storeError}</p> : null}
+            {(error || storeError) && (
+              <p className="text-red-500 text-sm font-semibold bg-red-50 dark:bg-red-900/20 px-4 py-3 rounded-xl border border-red-100 dark:border-red-800">{error || storeError}</p>
+            )}
             <button type="submit" disabled={submitting || cart.length === 0}
-              className="btn btn-primary btn-lg w-full rounded-2xl shadow-xl shadow-black/10">
+              className="w-full py-4 bg-black dark:bg-white text-white dark:text-black font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-black/10 hover:opacity-85 active:scale-[0.98] transition-all disabled:opacity-50 cursor-pointer">
               {submitting ? 'Placing Order...' : 'Place Order'}
             </button>
           </form>
         </div>
       </div>
 
-        {/* Payment Modal */}
-        {showPaymentModal && (settings || globalSettings) && (
-          <PaymentConfirmModal
-            total={total}
-            settings={settings || {
-              company_name: globalSettings?.company_name || 'Store',
-              bank_name: 'Bank Transfer',
-              account_name: 'Payment Instructions',
-              account_number: 'Contact Support'
-            }}
-            onConfirm={handleConfirmOrder}
-            onClose={() => setShowPaymentModal(false)}
-            submitting={submitting}
-            error={error || storeError || undefined}
-          />
-        )}
+      {showPaymentModal && (settings || globalSettings) && (
+        <PaymentConfirmModal
+          total={total}
+          settings={settings || { company_name: globalSettings?.company_name || 'Store', bank_name: 'Bank Transfer', account_name: 'Payment Instructions', account_number: 'Contact Support' }}
+          onConfirm={handleConfirmOrder}
+          onClose={() => setShowPaymentModal(false)}
+          submitting={submitting}
+          error={error || storeError || undefined}
+        />
+      )}
     </main>
   );
 }

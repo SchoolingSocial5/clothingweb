@@ -10,6 +10,7 @@ export interface Product {
   color: string;
   quantity: number;
   image_url?: string;
+  description?: string;
 }
 
 interface ProductState {
@@ -28,10 +29,10 @@ export const useProductStore = create<ProductState>((set, get) => ({
   error: null,
 
   fetchProducts: async () => {
-    set({ loading: true, error: null });
+    if (get().products.length === 0) set({ loading: true });
     try {
       const data = await apiClient<Product[]>('/products');
-      set({ products: data, loading: false });
+      set({ products: data, loading: false, error: null });
     } catch (err: any) {
       set({ error: err.message, loading: false });
     }

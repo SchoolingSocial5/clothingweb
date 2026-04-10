@@ -10,6 +10,7 @@ interface Settings {
   favicon?: string;
   email?: string;
   phone_number?: string;
+  address?: string;
 }
 
 interface SettingsContextType {
@@ -36,6 +37,7 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
           favicon: data.favicon,
           email: data.email,
           phone_number: data.phone_number,
+          address: data.address,
         });
       }
     } catch (err) {

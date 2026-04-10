@@ -7,7 +7,7 @@ interface ToastProps {
 
 export default function Toast({ message, type, visible, onClose }: ToastProps) {
   return (
-    <div className={`fixed bottom-8 right-8 z-[100] transition-all duration-500 transform ${visible ? "translate-y-0 opacity-100" : "translate-y-12 opacity-0 pointer-events-none"}`}>
+    <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-[100] transition-all duration-500 transform ${visible ? "translate-y-0 opacity-100" : "-translate-y-4 opacity-0 pointer-events-none"}`}>
       <div className={`flex items-center gap-4 px-6 py-4 rounded-2xl shadow-2xl border ${
         type === "success" ? "bg-green-50 border-green-100 text-green-800" : 
         type === "error" ? "bg-red-50 border-red-100 text-red-800" : 

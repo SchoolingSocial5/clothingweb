@@ -6,6 +6,7 @@ export interface Banner {
   image_path: string;
   title: string;
   subtitle: string;
+  category: string;
   order: number;
 }
 

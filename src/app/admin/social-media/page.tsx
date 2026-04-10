@@ -140,11 +140,11 @@ export default function SocialMediaPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-neutral-900 rounded-[2rem] border border-gray-100 dark:border-neutral-800 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-gray-50/50 text-gray-400 text-[10px] uppercase font-bold tracking-widest">
+                <tr className="bg-gray-50/50 dark:bg-neutral-800/50 text-gray-400 dark:text-gray-500 text-[10px] uppercase font-bold tracking-widest">
                   <th className="px-8 py-6">Reference / Image</th>
                   <th className="px-8 py-6">Engagement Report</th>
                   <th className="px-8 py-6">Activity Type</th>
@@ -152,9 +152,9 @@ export default function SocialMediaPage() {
                   <th className="px-8 py-6 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody className="divide-y divide-gray-50 dark:divide-neutral-800">
                 {filteredActivities.map(activity => (
-                  <tr key={activity.id} className="group hover:bg-gray-50/30 transition-colors">
+                  <tr key={activity.id} className="group hover:bg-gray-50/30 dark:hover:bg-neutral-800/30 transition-colors">
                     <td className="px-8 py-6">
                       <div className="flex items-center gap-4">
                         <div className="w-14 h-14 rounded-2xl bg-gray-100 overflow-hidden flex-shrink-0 flex items-center justify-center border border-gray-100">
@@ -167,7 +167,7 @@ export default function SocialMediaPage() {
                           )}
                         </div>
                         <div className="flex flex-col">
-                          <span className="font-bold text-sm text-gray-900">{activity.name}</span>
+                          <span className="font-bold text-sm text-gray-900 dark:text-gray-100">{activity.name}</span>
                           <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">
                             {activity.platform?.name}
                           </span>
@@ -177,15 +177,15 @@ export default function SocialMediaPage() {
                     <td className="px-8 py-6">
                       <div className="flex gap-6">
                         <div className="flex flex-col">
-                          <span className="text-sm font-black text-gray-900">{activity.followers.toLocaleString()}</span>
+                          <span className="text-sm font-black text-gray-900 dark:text-gray-100">{activity.followers.toLocaleString()}</span>
                           <span className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">Followers</span>
                         </div>
                         <div className="flex flex-col">
-                          <span className="text-sm font-black text-gray-900">{activity.likes_count.toLocaleString()}</span>
+                          <span className="text-sm font-black text-gray-900 dark:text-gray-100">{activity.likes_count.toLocaleString()}</span>
                           <span className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">Likes</span>
                         </div>
                         <div className="flex flex-col">
-                          <span className="text-sm font-black text-gray-900">{activity.comments_count.toLocaleString()}</span>
+                          <span className="text-sm font-black text-gray-900 dark:text-gray-100">{activity.comments_count.toLocaleString()}</span>
                           <span className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">Comments</span>
                         </div>
                       </div>
@@ -217,7 +217,7 @@ export default function SocialMediaPage() {
                         <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-300"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
                         </div>
-                        <h4 className="text-sm font-bold text-gray-900 mb-1">No activities found</h4>
+                        <h4 className="text-sm font-bold text-gray-900 dark:text-gray-100 mb-1">No activities found</h4>
                         <p className="text-xs text-gray-400">Start by adding an account or logging your first performance update.</p>
                       </div>
                     </td>
@@ -232,8 +232,8 @@ export default function SocialMediaPage() {
       {/* Add Platform Modal */}
       {isPlatformModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-[2.5rem] w-full max-w-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
-            <div className="px-10 py-8 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
+          <div className="bg-white dark:bg-neutral-900 rounded-[2.5rem] w-full max-w-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
+            <div className="px-10 py-8 border-b border-gray-50 dark:border-neutral-800 flex justify-between items-center bg-gray-50/50 dark:bg-neutral-800/50">
               <div>
                 <h3 className="text-2xl font-black tracking-tight">Add Channel</h3>
                 <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mt-1">Connect a new social media profile</p>
@@ -247,31 +247,31 @@ export default function SocialMediaPage() {
                 <div className="space-y-6">
                   <div>
                     <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Brand Name</label>
-                    <input required type="text" value={platformForm.name} onChange={e => setPlatformForm({...platformForm, name: e.target.value})} placeholder="Instagram, Twitter, etc." className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-0 focus:border-black outline-none font-bold text-sm transition-all" />
+                    <input required type="text" value={platformForm.name} onChange={e => setPlatformForm({...platformForm, name: e.target.value})} placeholder="Instagram, Twitter, etc." className="w-full px-5 py-4 bg-gray-50 dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 rounded-2xl focus:ring-0 focus:border-black outline-none font-bold text-sm transition-all dark:text-gray-100" />
                   </div>
                   <div>
                     <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Account URL</label>
-                    <input type="url" value={platformForm.url} onChange={e => setPlatformForm({...platformForm, url: e.target.value})} placeholder="https://..." className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-0 focus:border-black outline-none font-bold text-sm transition-all" />
+                    <input type="url" value={platformForm.url} onChange={e => setPlatformForm({...platformForm, url: e.target.value})} placeholder="https://..." className="w-full px-5 py-4 bg-gray-50 dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 rounded-2xl focus:ring-0 focus:border-black outline-none font-bold text-sm transition-all dark:text-gray-100" />
                   </div>
                   <div>
                     <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Email Address</label>
-                    <input type="email" value={platformForm.email} onChange={e => setPlatformForm({...platformForm, email: e.target.value})} placeholder="social@brand.com" className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-0 focus:border-black outline-none font-bold text-sm transition-all" />
+                    <input type="email" value={platformForm.email} onChange={e => setPlatformForm({...platformForm, email: e.target.value})} placeholder="social@brand.com" className="w-full px-5 py-4 bg-gray-50 dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 rounded-2xl focus:ring-0 focus:border-black outline-none font-bold text-sm transition-all dark:text-gray-100" />
                   </div>
                 </div>
                 
                 <div className="space-y-6">
                    <div>
                     <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Handle / Username</label>
-                    <input type="text" value={platformForm.handle} onChange={e => setPlatformForm({...platformForm, handle: e.target.value})} placeholder="@username" className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-0 focus:border-black outline-none font-bold text-sm transition-all" />
+                    <input type="text" value={platformForm.handle} onChange={e => setPlatformForm({...platformForm, handle: e.target.value})} placeholder="@username" className="w-full px-5 py-4 bg-gray-50 dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 rounded-2xl focus:ring-0 focus:border-black outline-none font-bold text-sm transition-all dark:text-gray-100" />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Password (Opt)</label>
-                      <input type="password" value={platformForm.password} onChange={e => setPlatformForm({...platformForm, password: e.target.value})} className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-0 focus:border-black outline-none font-bold text-sm transition-all" />
+                      <input type="password" value={platformForm.password} onChange={e => setPlatformForm({...platformForm, password: e.target.value})} className="w-full px-5 py-4 bg-gray-50 dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 rounded-2xl focus:ring-0 focus:border-black outline-none font-bold text-sm transition-all dark:text-gray-100" />
                     </div>
                     <div>
                       <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Phone (Opt)</label>
-                      <input type="tel" value={platformForm.phone_number} onChange={e => setPlatformForm({...platformForm, phone_number: e.target.value})} className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-0 focus:border-black outline-none font-bold text-sm transition-all" />
+                      <input type="tel" value={platformForm.phone_number} onChange={e => setPlatformForm({...platformForm, phone_number: e.target.value})} className="w-full px-5 py-4 bg-gray-50 dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 rounded-2xl focus:ring-0 focus:border-black outline-none font-bold text-sm transition-all dark:text-gray-100" />
                     </div>
                   </div>
                   
@@ -307,8 +307,8 @@ export default function SocialMediaPage() {
       {/* Activity Modal */}
       {isActivityModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-[2.5rem] w-full max-w-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
-            <div className="px-10 py-8 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
+          <div className="bg-white dark:bg-neutral-900 rounded-[2.5rem] w-full max-w-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
+            <div className="px-10 py-8 border-b border-gray-50 dark:border-neutral-800 flex justify-between items-center bg-gray-50/50 dark:bg-neutral-800/50">
               <div>
                 <h3 className="text-2xl font-black tracking-tight">Post Analysis</h3>
                 <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mt-1">Record report & engagement stats</p>
@@ -322,14 +322,14 @@ export default function SocialMediaPage() {
                 <div className="space-y-6">
                   <div>
                     <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Channel</label>
-                    <select required value={activityForm.platform_id} onChange={e => setActivityForm({...activityForm, platform_id: e.target.value})} className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-0 focus:border-black outline-none font-bold text-sm transition-all appearance-none cursor-pointer">
+                    <select required value={activityForm.platform_id} onChange={e => setActivityForm({...activityForm, platform_id: e.target.value})} className="w-full px-5 py-4 bg-gray-50 dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 rounded-2xl focus:ring-0 focus:border-black outline-none font-bold text-sm transition-all appearance-none cursor-pointer dark:text-gray-100">
                       <option value="">Select Platform</option>
                       {platforms.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                     </select>
                   </div>
                   <div>
                     <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Activity Name / Subject</label>
-                    <input required type="text" value={activityForm.name} onChange={e => setActivityForm({...activityForm, name: e.target.value})} placeholder="e.g. Summer Campaign Week 1" className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-0 focus:border-black outline-none font-bold text-sm transition-all" />
+                    <input required type="text" value={activityForm.name} onChange={e => setActivityForm({...activityForm, name: e.target.value})} placeholder="e.g. Summer Campaign Week 1" className="w-full px-5 py-4 bg-gray-50 dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 rounded-2xl focus:ring-0 focus:border-black outline-none font-bold text-sm transition-all dark:text-gray-100" />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -344,7 +344,7 @@ export default function SocialMediaPage() {
                     </div>
                     <div>
                       <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Date</label>
-                      <input required type="date" value={activityForm.date} onChange={e => setActivityForm({...activityForm, date: e.target.value})} className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-0 focus:border-black outline-none font-bold text-sm transition-all" />
+                      <input required type="date" value={activityForm.date} onChange={e => setActivityForm({...activityForm, date: e.target.value})} className="w-full px-5 py-4 bg-gray-50 dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 rounded-2xl focus:ring-0 focus:border-black outline-none font-bold text-sm transition-all dark:text-gray-100" />
                     </div>
                   </div>
                   <div>
@@ -375,26 +375,26 @@ export default function SocialMediaPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Followers</label>
-                      <input type="number" value={activityForm.followers} onChange={e => setActivityForm({...activityForm, followers: parseInt(e.target.value) || 0})} className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-0 focus:border-black outline-none font-bold text-sm transition-all" />
+                      <input type="number" value={activityForm.followers} onChange={e => setActivityForm({...activityForm, followers: parseInt(e.target.value) || 0})} className="w-full px-5 py-4 bg-gray-50 dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 rounded-2xl focus:ring-0 focus:border-black outline-none font-bold text-sm transition-all dark:text-gray-100" />
                     </div>
                     <div>
                       <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Posts</label>
-                      <input type="number" value={activityForm.posts_count} onChange={e => setActivityForm({...activityForm, posts_count: parseInt(e.target.value) || 0})} className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-0 focus:border-black outline-none font-bold text-sm transition-all" />
+                      <input type="number" value={activityForm.posts_count} onChange={e => setActivityForm({...activityForm, posts_count: parseInt(e.target.value) || 0})} className="w-full px-5 py-4 bg-gray-50 dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 rounded-2xl focus:ring-0 focus:border-black outline-none font-bold text-sm transition-all dark:text-gray-100" />
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Likes</label>
-                      <input type="number" value={activityForm.likes_count} onChange={e => setActivityForm({...activityForm, likes_count: parseInt(e.target.value) || 0})} className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-0 focus:border-black outline-none font-bold text-sm transition-all" />
+                      <input type="number" value={activityForm.likes_count} onChange={e => setActivityForm({...activityForm, likes_count: parseInt(e.target.value) || 0})} className="w-full px-5 py-4 bg-gray-50 dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 rounded-2xl focus:ring-0 focus:border-black outline-none font-bold text-sm transition-all dark:text-gray-100" />
                     </div>
                     <div>
                       <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Comments</label>
-                      <input type="number" value={activityForm.comments_count} onChange={e => setActivityForm({...activityForm, comments_count: parseInt(e.target.value) || 0})} className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-0 focus:border-black outline-none font-bold text-sm transition-all" />
+                      <input type="number" value={activityForm.comments_count} onChange={e => setActivityForm({...activityForm, comments_count: parseInt(e.target.value) || 0})} className="w-full px-5 py-4 bg-gray-50 dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 rounded-2xl focus:ring-0 focus:border-black outline-none font-bold text-sm transition-all dark:text-gray-100" />
                     </div>
                   </div>
                   <div>
                     <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Notes / Description</label>
-                    <textarea rows={4} value={activityForm.description} onChange={e => setActivityForm({...activityForm, description: e.target.value})} placeholder="Key takeaways from this period..." className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-0 focus:border-black outline-none font-bold text-sm transition-all resize-none" />
+                    <textarea rows={4} value={activityForm.description} onChange={e => setActivityForm({...activityForm, description: e.target.value})} placeholder="Key takeaways from this period..." className="w-full px-5 py-4 bg-gray-50 dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 rounded-2xl focus:ring-0 focus:border-black outline-none font-bold text-sm transition-all resize-none dark:text-gray-100" />
                   </div>
                 </div>
               </div>

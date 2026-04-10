@@ -16,20 +16,27 @@ const PER_PAGE = 8;
 
 export default function Home() {
   const { products, loading: productsLoading, fetchProducts } = useProductStore();
-  const { banners, fetchBanners } = useBannerStore();
+  const { banners: allBanners, loading: bannersLoading, fetchBanners } = useBannerStore();
+  const banners = allBanners.filter(b => !b.category || b.category === 'Home');
   const [page, setPage] = useState(1);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("All Products");
+  const [selectedColors, setSelectedColors] = useState<string[]>([]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, Infinity]);
 
   useEffect(() => {
     fetchProducts();
     fetchBanners();
   }, [fetchProducts, fetchBanners]);
 
-  // Filter by selected category
-  const filtered = selectedCategory === "All Products"
-    ? products
-    : products.filter((p) => p.category?.toLowerCase() === selectedCategory.toLowerCase());
+  // Filter by category, colors and price
+  const filtered = products.filter((p) => {
+    if (selectedCategory !== "All Products" && p.category?.toLowerCase() !== selectedCategory.toLowerCase()) return false;
+    if (selectedColors.length > 0 && !selectedColors.includes((p.color || "").trim().toLowerCase())) return false;
+    const price = parseFloat(p.price);
+    if (!isNaN(price) && price > priceRange[1]) return false;
+    return true;
+  });
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
   const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
@@ -45,12 +52,16 @@ export default function Home() {
   };
 
   return (
-    <main className="w-full min-h-screen bg-white dark:bg-neutral-900 transition-colors duration-300">
+    <main className="w-full min-h-screen bg-gray-50 dark:bg-neutral-950 transition-colors duration-300">
       <Header />
 
       {/* Immersive Hero Section with Swiper */}
       <section className="w-full h-[75vh] bg-neutral-900 relative">
-        {banners.length > 0 ? (
+        {bannersLoading ? (
+          <div className="w-full h-full flex items-center justify-center">
+            <div className="w-12 h-12 border-4 border-white/20 border-t-white rounded-full animate-spin" />
+          </div>
+        ) : banners.length > 0 ? (
           <Swiper
             modules={[Autoplay, Pagination, EffectFade]}
             effect="fade"
@@ -115,12 +126,17 @@ export default function Home() {
       </section>
 
       {/* Main Content Area */}
-      <section id="products" className="max-w-[1600px] mx-auto px-4 md:px-8 py-12 md:py-20 flex gap-12">
+      <section id="products" className="max-w-[1600px] mx-auto px-4 md:px-8 py-8 md:py-12 flex gap-6 items-start">
         <Sidebar
           isOpen={isSidebarOpen}
           onClose={() => setIsSidebarOpen(false)}
           selectedCategory={selectedCategory}
           onCategoryChange={handleCategoryChange}
+          selectedColors={selectedColors}
+          onColorsChange={(colors) => { setSelectedColors(colors); setPage(1); }}
+          priceRange={priceRange}
+          onPriceRangeChange={(range) => { setPriceRange(range); setPage(1); }}
+          allProducts={products}
         />
 
         <div className="flex-1 min-w-0">
@@ -150,7 +166,7 @@ export default function Home() {
                   <line x1="11" y1="18" x2="13" y2="18"/>
                 </svg>
                 Filter
-                {selectedCategory !== "All Products" && (
+                {(selectedCategory !== "All Products" || selectedColors.length > 0) && (
                   <span className="w-2 h-2 rounded-full bg-black dark:bg-white" />
                 )}
               </button>
@@ -180,10 +196,10 @@ export default function Home() {
                   <div className="col-span-full py-20 text-center">
                     <p className="text-gray-400 font-bold uppercase tracking-widest text-sm">No products found</p>
                     <button
-                      onClick={() => handleCategoryChange("All Products")}
+                      onClick={() => { handleCategoryChange("All Products"); setSelectedColors([]); setPriceRange([0, Infinity]); }}
                       className="mt-4 text-xs font-bold underline text-gray-500 hover:text-black dark:hover:text-white transition-colors"
                     >
-                      Clear filter
+                      Clear filters
                     </button>
                   </div>
                 )

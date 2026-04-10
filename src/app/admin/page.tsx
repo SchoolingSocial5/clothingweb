@@ -11,8 +11,8 @@ interface RecentCustomer {
   id: number;
   name: string;
   email: string;
-  role?: string;
-  status: string;
+  phone?: string;
+  orders_sum_total_amount?: number;
   created_at: string;
 }
 
@@ -66,7 +66,7 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
         {loading ? (
           Array(4).fill(0).map((_, i) => (
-            <div key={i} className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm animate-pulse">
+            <div key={i} className="bg-white dark:bg-neutral-900 p-6 rounded-2xl border border-gray-100 dark:border-neutral-800 shadow-sm animate-pulse">
               <div className="h-4 w-24 bg-gray-100 rounded mb-4"></div>
               <div className="h-8 w-32 bg-gray-100 rounded"></div>
             </div>
@@ -79,47 +79,49 @@ export default function AdminDashboard() {
       </div>
 
       {/* Recent Customers List */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center">
-          <h3 className="font-bold text-lg">Recent Customers</h3>
-          <button className="text-sm font-semibold text-gray-500 hover:text-black transition-colors">View All</button>
+      <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-gray-100 dark:border-neutral-800 shadow-sm overflow-hidden">
+        <div className="px-6 py-5 border-b border-gray-100 dark:border-neutral-800 flex justify-between items-center">
+          <h3 className="font-bold text-lg text-gray-900 dark:text-gray-100">Recent Customers</h3>
+          <button className="text-sm font-semibold text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors">View All</button>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-gray-50/50 text-gray-500 text-xs uppercase tracking-wider">
+              <tr className="bg-gray-50/50 dark:bg-neutral-800/50 text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wider">
                 <th className="px-6 py-4 font-semibold">Customer</th>
-                <th className="px-6 py-4 font-semibold">Status</th>
+                <th className="px-6 py-4 font-semibold">Phone</th>
+                <th className="px-6 py-4 font-semibold text-right">Total Spent</th>
                 <th className="px-6 py-4 font-semibold text-right">Joined</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-gray-50 dark:divide-neutral-800">
               {recentUsers.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50/50 transition-colors text-sm">
+                <tr key={user.id} className="hover:bg-gray-50/50 dark:hover:bg-neutral-800/30 transition-colors text-sm">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-600">
+                      <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-neutral-800 flex items-center justify-center text-xs font-bold text-gray-600 dark:text-gray-300">
                         {user.name.charAt(0).toUpperCase()}
                       </div>
                       <div>
-                        <p className="font-bold text-gray-900">{user.name}</p>
-                        <p className="text-xs text-gray-500">{user.email}</p>
+                        <p className="font-bold text-gray-900 dark:text-gray-100">{user.name}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{user.email}</p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4">
-                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border bg-green-50 text-green-700 border-green-200">
-                      Customer
-                    </span>
+                  <td className="px-6 py-4 text-gray-500 dark:text-gray-400 font-medium">
+                    {user.phone || '—'}
                   </td>
-                  <td className="px-6 py-4 text-right text-gray-500 font-medium">
+                  <td className="px-6 py-4 text-right font-black text-gray-900 dark:text-gray-100">
+                    {currency}{Number(user.orders_sum_total_amount || 0).toLocaleString()}
+                  </td>
+                  <td className="px-6 py-4 text-right text-gray-500 dark:text-gray-400 font-medium">
                     {new Date(user.created_at).toLocaleDateString()}
                   </td>
                 </tr>
               ))}
               {recentUsers.length === 0 && (
                 <tr>
-                  <td colSpan={3} className="px-6 py-12 text-center text-gray-400 font-medium">
+                  <td colSpan={4} className="px-6 py-12 text-center text-gray-400 font-medium">
                     No customers found
                   </td>
                 </tr>

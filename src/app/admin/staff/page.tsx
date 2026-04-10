@@ -55,8 +55,8 @@ export default function StaffPage() {
         stats={{ label: "Total Users", value: users.length }}
       />
 
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center">
+      <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-gray-100 dark:border-neutral-800 shadow-sm overflow-hidden">
+        <div className="px-6 py-5 border-b border-gray-100 dark:border-neutral-800 flex justify-between items-center">
           <h3 className="font-bold text-lg">Platform Users</h3>
         </div>
         
@@ -68,23 +68,23 @@ export default function StaffPage() {
           ) : (
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-gray-50/50 text-gray-500 text-xs uppercase tracking-wider">
+                <tr className="bg-gray-50/50 dark:bg-neutral-800/50 text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wider">
                   <th className="px-6 py-4 font-semibold">User details</th>
                   <th className="px-6 py-4 font-semibold">Status</th>
                   <th className="px-6 py-4 font-semibold">Role</th>
                   <th className="px-6 py-4 font-semibold text-center">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody className="divide-y divide-gray-50 dark:divide-neutral-800">
                 {users.map((user) => (
-                  <tr key={user.id} className="hover:bg-gray-50/50 transition-colors">
+                  <tr key={user.id} className="hover:bg-gray-50/50 dark:hover:bg-neutral-800/30 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-black text-white flex items-center justify-center font-bold text-sm uppercase">
                           {user.name.charAt(0)}
                         </div>
                         <div>
-                          <p className="font-bold text-sm text-gray-900">{user.name}</p>
+                          <p className="font-bold text-sm text-gray-900 dark:text-gray-100">{user.name}</p>
                           <p className="text-xs text-gray-500">{user.email}</p>
                         </div>
                       </div>
@@ -122,8 +122,8 @@ export default function StaffPage() {
       {/* Role Management Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center">
+          <div className="bg-white dark:bg-neutral-900 rounded-3xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="px-8 py-6 border-b border-gray-100 dark:border-neutral-800 flex justify-between items-center">
               <h3 className="text-xl font-bold">Manage Role</h3>
               <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-black">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
@@ -137,7 +137,7 @@ export default function StaffPage() {
                   <select 
                     value={editForm.status}
                     onChange={(e) => setEditForm({...editForm, status: e.target.value})}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black"
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-black dark:text-gray-100"
                   >
                     <option value="user">User (Customer)</option>
                     <option value="staff">Staff</option>
@@ -152,7 +152,7 @@ export default function StaffPage() {
                     value={editForm.role}
                     onChange={(e) => setEditForm({...editForm, role: e.target.value})}
                     placeholder="e.g. Sales Manager, Inventory Specialist"
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black"
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-black dark:text-gray-100"
                   />
                   <p className="text-[10px] text-gray-400 font-medium">Internal title for staff members.</p>
                 </div>

@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import Link from 'next/link';
+import { useSettings } from '@/context/SettingsContext';
 import { apiClient } from '@/utils/api';
+import { useState, useEffect } from 'react';
+
 
 interface SocialPlatform {
   id: number;
@@ -12,38 +14,24 @@ interface SocialPlatform {
   icon: string;
 }
 
-interface Settings {
-  company_name: string;
-}
-
 export default function Footer() {
   const pathname = usePathname();
-  const [settings, setSettings] = useState<Settings | null>(null);
+  const { settings, loading: settingsLoading } = useSettings();
   const [platforms, setPlatforms] = useState<SocialPlatform[]>([]);
   const currentYear = new Date().getFullYear();
 
   useEffect(() => {
-    // Fetch Settings
-    apiClient('/settings').then(data => {
-      if (data && data.company_name) setSettings(data);
-    }).catch(err => {
-      // Fail silently for non-critical footer data
-    });
-
-    // Fetch Social Platforms
     apiClient('/social-media').then(data => {
       if (Array.isArray(data)) setPlatforms(data);
-    }).catch(err => {
-      // Fail silently for non-critical footer data
-    });
+    }).catch(() => {});
   }, []);
 
   // Hide footer on admin and dashboard pages
   if (pathname?.startsWith('/admin') || pathname?.startsWith('/dashboard')) {
     return null;
   }
-
   const companyName = settings?.company_name || 'Wink Ecommerce';
+  const logoSrc = settings?.logo ? `/store-logo.png?v=${encodeURIComponent(settings.logo)}` : null;
 
   // Helper to render social icons
   const renderIcon = (platformName: string) => {
@@ -56,13 +44,19 @@ export default function Footer() {
   };
 
   return (
-    <footer className="w-full bg-white dark:bg-neutral-950 border-t border-gray-100 dark:border-neutral-900 py-12 transition-colors duration-300">
+    <footer className="w-full bg-white dark:bg-neutral-900 border-t border-gray-100 dark:border-neutral-800 py-12 transition-colors duration-300">
       <div className="max-w-[1400px] mx-auto px-8">
         <div className="flex flex-col md:flex-row justify-between items-center gap-8 mb-12">
           {/* Brand/Logo Section */}
           <div className="flex flex-col items-center md:items-start gap-4">
             <Link href="/" className="group">
-              <img src="/clothinglog.png" alt="Logo" className="h-10 w-auto object-contain dark:invert transition-transform group-hover:scale-105" />
+              {settingsLoading ? (
+                <div className="h-8 w-24 bg-gray-100 dark:bg-neutral-800 animate-pulse rounded-lg" />
+              ) : logoSrc ? (
+                <img src={logoSrc} alt={companyName} className="h-10 max-w-[140px] w-auto object-contain dark:invert transition-transform group-hover:scale-105" />
+              ) : (
+                <span className="text-xl font-black uppercase tracking-tight">{companyName}</span>
+              )}
             </Link>
             <p className="text-sm font-medium text-gray-500 dark:text-gray-400 max-w-xs text-center md:text-left">
               Elevating your style with curated collections and premium quality essentials.
@@ -77,7 +71,7 @@ export default function Footer() {
                 href={platform.url} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-50 dark:bg-neutral-900 text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-neutral-800 transition-all active:scale-95"
+                className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 dark:bg-neutral-800 text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-200 dark:hover:bg-neutral-700 transition-all active:scale-95"
                 title={platform.name}
               >
                 {renderIcon(platform.name)}
@@ -89,7 +83,7 @@ export default function Footer() {
         </div>
 
         {/* Bottom Bar */}
-        <div className="pt-8 border-t border-gray-50 dark:border-neutral-900 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="pt-8 border-t border-gray-100 dark:border-neutral-800 flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex flex-col md:flex-row items-center gap-2 md:gap-4">
             <p className="text-[11px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">
               © {currentYear} {companyName}. All rights reserved.

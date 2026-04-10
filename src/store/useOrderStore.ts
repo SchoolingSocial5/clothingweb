@@ -35,7 +35,7 @@ interface OrderState {
   selectedOrderIds: number[];
   loading: boolean;
   error: string | null;
-  fetchOrders: (page?: number) => Promise<void>;
+  fetchOrders: (page?: number, from?: string, to?: string, search?: string) => Promise<void>;
   updateOrderStatus: (id: number, data: Partial<Order>) => Promise<void>;
   bulkUpdateStatus: (ids: number[], data: Partial<Order>) => Promise<void>;
   bulkDeleteOrders: (ids: number[]) => Promise<void>;
@@ -58,15 +58,15 @@ export const useOrderStore = create<OrderState>((set, get) => ({
   loading: false,
   error: null,
 
-  fetchOrders: async (page = 1) => {
-    set({ loading: true, error: null });
+  fetchOrders: async (page = 1, from = '', to = '', search = '') => {
+    if (get().orders.length === 0) set({ loading: true });
     try {
-      const response = await apiClient<any>(`/admin/orders?page=${page}&limit=10`);
-      set({ 
-        orders: response.orders, 
-        pagination: response.pagination,
-        loading: false 
-      });
+      const params = new URLSearchParams({ page: String(page), limit: '10' });
+      if (from) params.set('from', from);
+      if (to) params.set('to', to);
+      if (search) params.set('search', search);
+      const response = await apiClient<any>(`/admin/orders?${params.toString()}`);
+      set({ orders: response.orders, pagination: response.pagination, loading: false, error: null });
     } catch (err: any) {
       set({ error: err.message, loading: false });
     }

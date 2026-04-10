@@ -116,6 +116,13 @@ export default function SignUp() {
                 </div>
               </div>
 
+              <p className="text-xs text-gray-400 leading-relaxed">
+                By signing up, you agree to our{" "}
+                <Link href="/terms" className="text-black font-bold underline underline-offset-2 hover:text-gray-600 transition-colors">
+                  Terms &amp; Conditions
+                </Link>.
+              </p>
+
               <button
                 disabled={loading}
                 className="btn btn-primary btn-lg w-full"
