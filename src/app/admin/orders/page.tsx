@@ -370,7 +370,7 @@ export default function OrdersPage() {
       <AdminPageHeader
         title="Orders"
         description="Manage and track all customer orders"
-        stats={{ label: "Total", value: pagination.total }}
+        stats={{ label: "Total", value: pagination?.total || 0 }}
       />
 
       {/* Filter Bar */}
@@ -478,7 +478,7 @@ export default function OrdersPage() {
                     onClick={() => setDetailsOrder(order as any)}
                   >
                     <td className="pl-4 py-5 font-black text-gray-400 text-[11px]">
-                      {(pagination.page - 1) * pagination.per_page + index + 1}
+                      {((pagination?.page || 1) - 1) * (pagination?.per_page || 10) + index + 1}
                     </td>
                     <td className="px-2 py-5" onClick={e => e.stopPropagation()}>
                       <input
@@ -568,8 +568,8 @@ export default function OrdersPage() {
 
           <div className="bg-gray-50 dark:bg-neutral-800/50 border-t border-gray-100 dark:border-neutral-800">
             <Pagination
-              currentPage={pagination.page}
-              totalPages={pagination.last_page}
+              currentPage={pagination?.page || 1}
+              totalPages={pagination?.last_page || 1}
               onPageChange={(page) => fetchOrders(page, from, to, search)}
             />
           </div>

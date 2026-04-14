@@ -6,7 +6,9 @@ import AdminPageHeader from "@/components/admin/AdminPageHeader";
 
 export default function StaffPage() {
   const { token } = useAuth();
-  const { users, loading, fetchUsers, updateUserRole } = useUserStore();
+  const { users, loading, fetchUsers, fetchStaff, updateUserRole } = useUserStore();
+  const [view, setView] = useState<'staff' | 'all'>('staff');
+  // ... rest of state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [editForm, setEditForm] = useState({
@@ -22,9 +24,13 @@ export default function StaffPage() {
 
   useEffect(() => {
     if (token) {
-      fetchUsers();
+      if (view === 'staff') {
+        fetchStaff();
+      } else {
+        fetchUsers();
+      }
     }
-  }, [token, fetchUsers]);
+  }, [token, fetchStaff, fetchUsers, view]);
 
   const handleOpenModal = (user: User) => {
     setSelectedUser(user);
@@ -42,6 +48,8 @@ export default function StaffPage() {
       await updateUserRole(selectedUser.id, editForm.status, editForm.role);
       setIsModalOpen(false);
       showToast("User role updated successfully");
+      // Refresh the current view
+      if (view === 'staff') fetchStaff(); else fetchUsers();
     } catch (err) {
       showToast("Failed to update user role", "error");
     }
@@ -50,14 +58,30 @@ export default function StaffPage() {
   return (
     <div className="p-[10px] md:p-8">
       <AdminPageHeader 
-        title="Staff & Users" 
-        description="Manage your team and assign roles to registered users."
-        stats={{ label: "Total Users", value: users.length }}
+        title={view === 'staff' ? "Staff Management" : "Staff & Users"} 
+        description={view === 'staff' ? "Manage your team and their assigned roles." : "Manage all registered platform users."}
+        stats={{ label: view === 'staff' ? "Total Staff" : "Total Users", value: users.length }}
       />
 
       <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-gray-100 dark:border-neutral-800 shadow-sm overflow-hidden">
-        <div className="px-6 py-5 border-b border-gray-100 dark:border-neutral-800 flex justify-between items-center">
-          <h3 className="font-bold text-lg">Platform Users</h3>
+        <div className="px-6 py-5 border-b border-gray-100 dark:border-neutral-800 flex justify-between items-center group">
+          <div className="flex gap-1 p-1 bg-gray-50 dark:bg-neutral-800 rounded-xl">
+            <button 
+              onClick={() => setView('staff')}
+              className={`px-4 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${view === 'staff' ? 'bg-white shadow-sm text-black' : 'text-gray-400 hover:text-gray-600'}`}
+            >
+              Staff Only
+            </button>
+            <button 
+              onClick={() => setView('all')}
+              className={`px-4 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${view === 'all' ? 'bg-white shadow-sm text-black' : 'text-gray-400 hover:text-gray-600'}`}
+            >
+              All Users
+            </button>
+          </div>
+          <h3 className="font-bold text-sm text-gray-400 group-hover:text-black transition-colors uppercase tracking-widest">
+            {view === 'staff' ? 'Team Members' : 'Platform Users'}
+          </h3>
         </div>
         
         <div className="overflow-x-auto min-h-[400px]">

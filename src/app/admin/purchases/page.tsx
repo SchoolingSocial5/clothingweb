@@ -45,7 +45,7 @@ export default function PurchasesPage() {
       <AdminPageHeader
         title="Purchase History"
         description="View all product acquisitions and stock intake records."
-        stats={{ label: "Total Purchases", value: pagination.total }}
+        stats={{ label: "Total Purchases", value: pagination?.total || 0 }}
       />
 
       {/* Date Range Filter */}
@@ -118,7 +118,7 @@ export default function PurchasesPage() {
                   return (
                     <tr key={purchase.id} className="hover:bg-gray-50/30 dark:hover:bg-neutral-800/30 transition-colors group">
                       <td className="px-6 py-5 font-black text-gray-400 text-[11px]">
-                        {(pagination.page - 1) * pagination.per_page + index + 1}
+                        {((pagination?.page || 1) - 1) * (pagination?.per_page || 10) + index + 1}
                       </td>
                       <td className="px-6 py-5">
                         <div className="flex items-center gap-3">
@@ -173,11 +173,11 @@ export default function PurchasesPage() {
           </table>
         </div>
 
-        {pagination.last_page > 1 && (
+        {pagination?.last_page > 1 && (
           <div className="bg-gray-50 dark:bg-neutral-800/50 border-t border-gray-100 dark:border-neutral-800">
             <Pagination
-              currentPage={pagination.page}
-              totalPages={pagination.last_page}
+              currentPage={pagination?.page || 1}
+              totalPages={pagination?.last_page || 1}
               onPageChange={(page) => fetchPurchases(page, from, to)}
             />
           </div>

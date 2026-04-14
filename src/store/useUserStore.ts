@@ -17,6 +17,8 @@ interface UserState {
   loading: boolean;
   error: string | null;
   fetchUsers: () => Promise<void>;
+  fetchStaff: () => Promise<void>;
+  fetchCustomers: () => Promise<void>;
   updateUserRole: (id: number, status: string, role?: string) => Promise<void>;
 }
 
@@ -29,6 +31,26 @@ export const useUserStore = create<UserState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const data = await apiClient<User[]>('/admin/users');
+      set({ users: data, loading: false });
+    } catch (err: any) {
+      set({ error: err.message, loading: false });
+    }
+  },
+
+  fetchStaff: async () => {
+    set({ loading: true, error: null });
+    try {
+      const data = await apiClient<User[]>('/admin/users/staff');
+      set({ users: data, loading: false });
+    } catch (err: any) {
+      set({ error: err.message, loading: false });
+    }
+  },
+
+  fetchCustomers: async () => {
+    set({ loading: true, error: null });
+    try {
+      const data = await apiClient<User[]>('/admin/users/customers');
       set({ users: data, loading: false });
     } catch (err: any) {
       set({ error: err.message, loading: false });
