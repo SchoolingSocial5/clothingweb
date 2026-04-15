@@ -3,8 +3,8 @@ import { apiClient } from '@/utils/api';
 
 interface OrderItem {
   id: number;
-  product_name: string;
-  product_image: string | null;
+  productName: string;
+  productImage: string | null;
   price: number;
   quantity: number;
 }
@@ -20,6 +20,7 @@ interface Order {
   payment_status: 'unpaid' | 'paid';
   receipt_path: string | null;
   receipt_number?: string | null;
+  approved_by?: string | null;
   created_at: string;
   items: OrderItem[];
 }

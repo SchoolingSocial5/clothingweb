@@ -4,11 +4,28 @@
  */
 export function getImageUrl(path?: string | null): string | null {
   if (!path) return null;
-  const base = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api').replace('/api', '');
+  
+  // If it's already a full URL (S3, etc.), return as is
   if (path.startsWith('http')) {
-    // Normalise old localhost URLs that might reference the wrong port
-    return path.replace(/^http:\/\/localhost(?::\d+)?\//, `${base}/`);
+    // Only normalise if it's pointing to a local dev server that might have a different port
+    if (path.includes('localhost')) {
+      const base = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api').replace('/api', '');
+      return path.replace(/^http:\/\/localhost(?::\d+)?\//, `${base}/`);
+    }
+    return path;
   }
+  
+  // For relative paths, check if S3 is configured
+  const s3Base = process.env.NEXT_PUBLIC_S3_BASE_URL;
+  if (s3Base) {
+    // Ensure one slash between base and path
+    const normalizedBase = s3Base.endsWith('/') ? s3Base : `${s3Base}/`;
+    const normalizedPath = path.startsWith('/') ? path.substring(1) : path;
+    return `${normalizedBase}${normalizedPath}`;
+  }
+
+  // Prepend the API base URL for relative paths as fallback
+  const base = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api').replace('/api', '');
   return `${base}${path.startsWith('/') ? '' : '/'}${path}`;
 }
 

@@ -8,12 +8,7 @@ import { apiClient } from '@/utils/api';
 import { compressImage } from '@/utils/image';
 import DeleteConfirmModal from '@/components/admin/DeleteConfirmModal';
 
-const BASE_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api').replace('/api', '');
-function buildImageUrl(path: string): string {
-  if (!path) return '';
-  if (path.startsWith('http')) return path.replace(/^http:\/\/localhost(?::\d+)?\//, `${BASE_URL}/`);
-  return `${BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`;
-}
+import { getImageUrl } from '@/utils/image';
 
 interface Settings {
   company_name: string;
@@ -417,7 +412,7 @@ export default function SettingsPage() {
                     <label className={labelClass}>Store Logo</label>
                     <div className="relative group overflow-hidden rounded-xl border-2 border-dashed border-gray-200 dark:border-neutral-700 hover:border-black dark:hover:border-white transition-colors w-24 h-24 bg-gray-50 dark:bg-neutral-800 flex items-center justify-center p-2">
                       {(previews.logo || formData.logo) ? (
-                        <img src={previews.logo || buildImageUrl(formData.logo || '')} alt="Logo" className="max-w-full max-h-full object-contain" />
+                        <img src={previews.logo || getImageUrl(formData.logo) || ''} alt="Logo" className="max-w-full max-h-full object-contain" />
                       ) : (
                         <div className="text-center">
                           <svg className="mx-auto text-gray-300 dark:text-neutral-600 mb-1" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
@@ -435,7 +430,7 @@ export default function SettingsPage() {
                     <label className={labelClass}>Favicon</label>
                     <div className="relative group overflow-hidden rounded-xl border-2 border-dashed border-gray-200 dark:border-neutral-700 hover:border-black dark:hover:border-white transition-colors w-20 h-20 bg-gray-50 dark:bg-neutral-800 flex items-center justify-center p-4">
                       {(previews.favicon || formData.favicon) ? (
-                        <img src={previews.favicon || buildImageUrl(formData.favicon || '')} alt="Favicon" className="w-6 h-6 object-contain" />
+                        <img src={previews.favicon || getImageUrl(formData.favicon) || ''} alt="Favicon" className="w-6 h-6 object-contain" />
                       ) : (
                         <div className="text-center">
                           <svg className="mx-auto text-gray-300 dark:text-neutral-600 mb-1" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>
@@ -497,7 +492,7 @@ export default function SettingsPage() {
                     <tr key={banner.id} className="hover:bg-gray-50/30 dark:hover:bg-neutral-800/30 transition-colors">
                       <td className="px-8 py-4">
                         <div className="w-24 h-12 rounded-lg bg-gray-100 dark:bg-neutral-800 overflow-hidden border border-gray-100 dark:border-neutral-700">
-                          <img src={buildImageUrl(banner.image_path)} alt="" className="w-full h-full object-cover" />
+                          <img src={getImageUrl(banner.image_url) || ''} alt="" className="w-full h-full object-cover" />
                         </div>
                       </td>
                       <td className="px-8 py-4 text-sm font-black text-gray-900 dark:text-gray-100">{banner.title}</td>

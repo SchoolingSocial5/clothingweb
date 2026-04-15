@@ -11,6 +11,7 @@ import Toast from "@/components/admin/Toast";
 import ProductModal from "@/components/admin/ProductModal";
 import { usePurchaseStore } from "@/store/usePurchaseStore";
 import TableLoader from "@/components/admin/TableLoader";
+import { getImageUrl } from "@/utils/image";
 
 export default function ProductsPage() {
   const { token } = useAuth();
@@ -75,11 +76,7 @@ export default function ProductsPage() {
       image: null
     });
     if (product.image_url) {
-      const base = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:8000';
-      const url = product.image_url.startsWith('http')
-        ? product.image_url.replace(/^http:\/\/localhost(?::\d+)?\//, `${base}/`)
-        : `${base}${product.image_url.startsWith('/') ? '' : '/'}${product.image_url}`;
-      setImagePreview(url);
+      setImagePreview(getImageUrl(product.image_url));
     } else {
       setImagePreview(null);
     }
@@ -262,20 +259,12 @@ export default function ProductsPage() {
                           className={`w-12 h-12 rounded-lg bg-gray-100 flex-shrink-0 overflow-hidden flex items-center justify-center border border-gray-100 ${product.image_url ? 'cursor-pointer hover:ring-2 hover:ring-black transition-all' : ''}`}
                           onClick={() => {
                             if (!product.image_url) return;
-                            const base = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:8000';
-                            const url = product.image_url.startsWith('http')
-                              ? product.image_url.replace(/^http:\/\/localhost(?::\d+)?\//, `${base}/`)
-                              : `${base}${product.image_url.startsWith('/') ? '' : '/'}${product.image_url}`;
-                            setPreviewImage(url);
+                            setPreviewImage(getImageUrl(product.image_url));
                           }}
                         >
                           {product.image_url ? (
                             <img
-                              src={(() => {
-                                const base = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:8000';
-                                if (product.image_url!.startsWith('http')) return product.image_url!.replace(/^http:\/\/localhost(?::\d+)?\//, `${base}/`);
-                                return `${base}${product.image_url!.startsWith('/') ? '' : '/'}${product.image_url}`;
-                              })()}
+                              src={getImageUrl(product.image_url) || ""}
                               alt={product.name}
                               className="w-full h-full object-cover"
                               onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}

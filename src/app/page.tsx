@@ -11,6 +11,7 @@ import { useBannerStore } from "@/store/useBannerStore";
 import Header from "@/components/Header";
 import Sidebar from "@/components/Sidebar";
 import ProductCard from "@/components/ProductCard";
+import { getImageUrl } from "@/utils/image";
 
 const PER_PAGE = 8;
 
@@ -73,12 +74,7 @@ export default function Home() {
               <SwiperSlide key={banner.id}>
                 <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
                   <img
-                    src={(() => {
-                      const base = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:8000';
-                      const p = banner.image_path;
-                      if (p.startsWith('http')) return p.replace(/^http:\/\/localhost(?::\d+)?\//, `${base}/`);
-                      return `${base}${p.startsWith('/') ? '' : '/'}${p}`;
-                    })()}
+                    src={getImageUrl(banner.image_url) || "/menstore3.jpg"}
                     alt={banner.title}
                     className="absolute inset-0 w-full h-full object-cover"
                   />

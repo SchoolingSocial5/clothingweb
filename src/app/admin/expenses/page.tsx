@@ -5,8 +5,7 @@ import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import DeleteConfirmModal from "@/components/admin/DeleteConfirmModal";
 import Toast from "@/components/admin/Toast";
 import TableLoader from "@/components/admin/TableLoader";
-
-const BASE_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api').replace('/api', '');
+import { getImageUrl } from "@/utils/image";
 
 export default function ExpensesPage() {
   const { expenses, loading, fetchExpenses, createExpense, deleteExpense } = useExpenseStore();
@@ -179,11 +178,11 @@ export default function ExpensesPage() {
                       <span className="font-black text-sm text-gray-900 dark:text-gray-100">₦{parseFloat(expense.amount).toLocaleString()}</span>
                     </td>
                     <td className="px-6 py-4 text-center">
-                      {expense.receipt_path ? (
+                      {expense.receipt_url ? (
                         <a
-                          href={expense.receipt_path.startsWith('/') ? `${BASE_URL}${expense.receipt_path}` : `${BASE_URL}/storage/${expense.receipt_path}`}
+                          href={getImageUrl(expense.receipt_url) || "#"}
                           target="_blank"
-                          className="text-black hover:scale-110 transition-transform inline-block"
+                          className="text-black dark:text-white hover:scale-110 transition-transform inline-block"
                         >
                           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
                         </a>

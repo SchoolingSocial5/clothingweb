@@ -8,7 +8,7 @@ export interface Expense {
   category: string;
   description?: string;
   date: string;
-  receipt_path?: string;
+  receipt_url?: string;
   created_at: string;
 }
 

@@ -7,21 +7,13 @@ import Pagination from '@/components/common/Pagination';
 import TableLoader from '@/components/admin/TableLoader';
 import DeleteConfirmModal from '@/components/admin/DeleteConfirmModal';
 
-const BASE_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api').replace('/api', '');
-
-function buildImageUrl(path: string | null): string {
-  if (!path) return '';
-  if (path.startsWith('http')) {
-    // Normalize old localhost URLs that may have wrong port
-    return path.replace(/^http:\/\/localhost(?::\d+)?\//, `${BASE_URL}/`);
-  }
-  return `${BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`;
-}
+import { getImageUrl } from '@/utils/image';
 
 interface OrderItem {
-  id: number;
-  product_name: string;
-  product_image: string | null;
+  id?: number;
+  _id?: string;
+  productName: string;
+  productImage: string | null;
   price: number;
   quantity: number;
 }
@@ -38,6 +30,7 @@ interface Order {
   created_at: string;
   receipt_path: string | null;
   receipt_number?: string | null;
+  approved_by?: string | null;
   items: OrderItem[];
 }
 
@@ -48,12 +41,12 @@ const paymentColors: Record<string, string> = {
 
 function ItemImage({ item }: { item: OrderItem }) {
   const [error, setError] = useState(false);
-  const src = buildImageUrl(item.product_image);
+  const src = getImageUrl(item.productImage);
   if (src && !error) {
     return (
       <img
-        src={src}
-        alt={item.product_name}
+        src={src || undefined}
+        alt={item.productName}
         className="w-full h-full object-cover"
         onError={() => setError(true)}
       />
@@ -77,7 +70,7 @@ function OrderDetailsModal({ order, onClose }: { order: Order; onClose: () => vo
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="sticky top-0 bg-white dark:bg-neutral-900 px-8 py-6 border-b border-gray-100 dark:border-neutral-800 flex items-center justify-between rounded-t-3xl z-10">
+        <div className="sticky top-0 bg-white dark:bg-neutral-900 px-[10px] md:px-8 py-6 border-b border-gray-100 dark:border-neutral-800 flex items-center justify-between rounded-t-3xl z-10">
           <div>
             <h3 className="text-lg font-black text-gray-900 dark:text-gray-100">{order.customer_name}</h3>
             <p className="text-xs text-gray-400 mt-0.5">{order.customer_email}</p>
@@ -92,28 +85,30 @@ function OrderDetailsModal({ order, onClose }: { order: Order; onClose: () => vo
           </button>
         </div>
 
-        <div className="px-8 py-6 space-y-8">
+        <div className="px-[10px] md:px-8 py-6 space-y-8">
           {/* Cart Items */}
           <div>
             <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-4 flex items-center gap-2">
               Order Items
               <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-md text-[10px] font-black">{order.items.length}</span>
             </h4>
-            <div className="space-y-3">
-              {order.items.map(item => (
-                <div key={item.id} className="flex items-center gap-4 bg-gray-50 rounded-2xl p-4">
-                  <div className="w-14 h-14 rounded-xl overflow-hidden bg-white flex-shrink-0 border border-gray-100">
-                    <ItemImage item={item} />
+            <div className="bg-black text-white rounded-3xl p-4 md:p-6">
+              <div className="divide-y divide-white/10">
+                {order.items.map((item, idx) => (
+                  <div key={item.id || item._id || idx} className="flex items-center gap-4 py-4 px-2">
+                    <div className="w-14 h-14 rounded-xl overflow-hidden bg-white dark:bg-neutral-800 flex-shrink-0 border border-white/10">
+                      <ItemImage item={item} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-white text-sm leading-tight truncate">{item.productName}</p>
+                      <p className="text-[11px] text-white/50 font-semibold mt-0.5">Qty: {item.quantity}</p>
+                    </div>
+                    <p className="font-black text-white text-sm flex-shrink-0">
+                      ₦{(parseFloat(item.price as any) * item.quantity).toLocaleString()}
+                    </p>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-bold text-gray-900 text-sm leading-tight truncate">{item.product_name}</p>
-                    <p className="text-[11px] text-gray-400 font-semibold mt-0.5">Qty: {item.quantity}</p>
-                  </div>
-                  <p className="font-black text-gray-900 text-sm flex-shrink-0">
-                    ₦{(Number(item.price) * item.quantity).toLocaleString()}
-                  </p>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
 
@@ -121,27 +116,34 @@ function OrderDetailsModal({ order, onClose }: { order: Order; onClose: () => vo
           {(order.customer_phone || order.delivery_address) && (
             <div>
               <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-4">Delivery Info</h4>
-              <div className="bg-gray-50 rounded-2xl p-5 space-y-4">
-                {order.customer_phone && (
-                  <div>
-                    <label className="text-[9px] font-black uppercase tracking-widest text-gray-400 block mb-1">Phone</label>
-                    <p className="text-sm font-bold text-gray-900">{order.customer_phone}</p>
-                  </div>
-                )}
-                {order.delivery_address && (
-                  <div>
-                    <label className="text-[9px] font-black uppercase tracking-widest text-gray-400 block mb-1">Address</label>
-                    <p className="text-sm font-bold text-gray-900 leading-relaxed">{order.delivery_address}</p>
-                  </div>
-                )}
+              <div className="bg-black text-white rounded-2xl p-4 md:p-6 space-y-5">
+                  {order.customer_phone && (
+                    <div>
+                      <label className="text-[9px] font-black uppercase tracking-widest opacity-50 block mb-1">Phone</label>
+                      <p className="text-sm font-bold">{order.customer_phone}</p>
+                    </div>
+                  )}
+                  {order.delivery_address && (
+                    <div>
+                      <label className="text-[9px] font-black uppercase tracking-widest opacity-50 block mb-1">Address</label>
+                      <p className="text-sm font-bold leading-relaxed">{order.delivery_address}</p>
+                    </div>
+                  )}
               </div>
             </div>
           )}
 
-          {/* Total */}
-          <div className="flex items-center justify-between bg-black text-white rounded-2xl px-6 py-5">
-            <span className="text-[10px] font-black uppercase tracking-widest">Total Payment</span>
-            <span className="text-xl font-black">₦{Number(order.total_amount).toLocaleString()}</span>
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-between bg-black text-white rounded-2xl px-[10px] md:px-6 py-5">
+              <span className="text-[10px] font-black uppercase tracking-widest">Total Payment</span>
+              <span className="text-xl font-black">₦{parseFloat(order.total_amount as any).toLocaleString()}</span>
+            </div>
+            {order.approved_by && (
+              <div className="flex items-center justify-between bg-gray-50 dark:bg-neutral-800 rounded-2xl px-6 py-4">
+                <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Processed By</span>
+                <span className="text-xs font-bold text-gray-900 dark:text-gray-100">{order.approved_by}</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -152,7 +154,7 @@ function OrderDetailsModal({ order, onClose }: { order: Order; onClose: () => vo
 function PrintSlipModal({ order, onClose }: { order: Order; onClose: () => void }) {
   const handlePrint = () => {
     const items = order.items.map(item =>
-      `<div class="row"><span>${item.product_name} &times;${item.quantity}</span><span>&#8358;${(Number(item.price) * item.quantity).toLocaleString()}</span></div>`
+      `<div class="row"><span>${item.productName} &times;${item.quantity}</span><span>&#8358;${(parseFloat(item.price as any) * item.quantity).toLocaleString()}</span></div>`
     ).join('');
 
     const w = window.open('', '_blank', 'width=420,height=680');
@@ -185,7 +187,7 @@ ${order.delivery_address ? `<div class="label">Delivery Address</div><div class=
 <div class="label">Items</div>
 ${items}
 <hr class="divider">
-<div class="total-row"><span>TOTAL</span><span>&#8358;${Number(order.total_amount).toLocaleString()}</span></div>
+<div class="total-row"><span>TOTAL</span><span>&#8358;${parseFloat(order.total_amount as any).toLocaleString()}</span></div>
 <div class="footer">Thank you for your purchase!</div>
 <button class="btn" onclick="window.print()">&#128438; Print</button>
 </body></html>`);
@@ -223,16 +225,16 @@ ${items}
           <div><span className="text-gray-400 uppercase text-[9px] tracking-widest">Customer</span><p className="font-bold">{order.customer_name}</p></div>
           {order.delivery_address && <div><span className="text-gray-400 uppercase text-[9px] tracking-widest">Address</span><p className="font-bold leading-tight">{order.delivery_address}</p></div>}
           <div className="border-t border-dashed border-gray-300 my-2" />
-          {order.items.map(item => (
-            <div key={item.id} className="flex justify-between">
-              <span className="text-gray-700 truncate max-w-[60%]">{item.product_name} &times;{item.quantity}</span>
-              <span className="font-bold">&#8358;{(Number(item.price) * item.quantity).toLocaleString()}</span>
+          {order.items.map((item, idx) => (
+            <div key={item.id || item._id || idx} className="flex justify-between">
+              <span className="text-gray-700 truncate max-w-[60%]">{item.productName} &times;{item.quantity}</span>
+              <span className="font-bold">&#8358;{(parseFloat(item.price as any) * item.quantity).toLocaleString()}</span>
             </div>
           ))}
           <div className="border-t border-dashed border-gray-300 my-2" />
           <div className="flex justify-between font-black text-sm">
             <span>TOTAL</span>
-            <span>&#8358;{Number(order.total_amount).toLocaleString()}</span>
+            <span>&#8358;{parseFloat(order.total_amount as any).toLocaleString()}</span>
           </div>
         </div>
 
@@ -262,7 +264,7 @@ ${items}
 }
 
 function ReceiptModal({ order, onClose }: { order: Order; onClose: () => void }) {
-  const receiptUrl = buildImageUrl(order.receipt_path);
+  const receiptUrl = getImageUrl(order.receipt_path);
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={onClose}>
       <div
@@ -285,14 +287,14 @@ function ReceiptModal({ order, onClose }: { order: Order; onClose: () => void })
         </div>
         <div className="p-4">
           <img
-            src={receiptUrl}
+            src={receiptUrl || undefined}
             alt="Payment Receipt"
             className="w-full rounded-2xl object-contain max-h-[70vh]"
           />
         </div>
         <div className="px-6 pb-6">
           <a
-            href={receiptUrl}
+            href={receiptUrl || undefined}
             target="_blank"
             rel="noreferrer"
             className="w-full flex items-center justify-center gap-2 py-3 bg-gray-50 hover:bg-gray-100 text-gray-700 font-bold text-xs uppercase tracking-widest rounded-xl transition-colors"
@@ -455,6 +457,7 @@ export default function OrdersPage() {
                   <th className="px-4 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">Customer</th>
                   <th className="px-4 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 text-right">Amount</th>
                   <th className="px-4 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 text-center">Receipt ID</th>
+                  <th className="px-4 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">Staff</th>
                   <th className="px-4 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">Payment</th>
                   <th className="px-4 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 text-right">Date/Time</th>
                 </tr>
@@ -462,7 +465,7 @@ export default function OrdersPage() {
               <tbody>
                 {orders.length === 0 && !loading && (
                   <tr>
-                    <td colSpan={7} className="px-6 py-20 text-center">
+                    <td colSpan={8} className="px-6 py-20 text-center">
                       <svg className="mx-auto mb-4 text-gray-200" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
                         <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" />
                         <path d="M16 10a4 4 0 0 1-8 0" />
@@ -508,7 +511,7 @@ export default function OrdersPage() {
                       </div>
                     </td>
                     <td className="px-4 py-5 text-right">
-                      <span className="font-black text-gray-900 dark:text-gray-100">₦{Number(order.total_amount).toLocaleString()}</span>
+                      <span className="font-black text-gray-900 dark:text-gray-100">₦{parseFloat(order.total_amount as any).toLocaleString()}</span>
                     </td>
                     <td className="px-4 py-5 text-center" onClick={e => e.stopPropagation()}>
                       <div className="flex flex-col items-center gap-1.5">
@@ -537,6 +540,16 @@ export default function OrdersPage() {
                       </div>
                     </td>
                     <td className="px-4 py-5" onClick={e => e.stopPropagation()}>
+                      {order.approved_by ? (
+                        <div className="flex flex-col">
+                          <span className="text-[11px] font-bold text-gray-900 dark:text-gray-100 leading-tight">{order.approved_by}</span>
+                          <span className="text-[9px] font-black uppercase tracking-widest text-gray-400">Approved</span>
+                        </div>
+                      ) : (
+                        <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest italic">—</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-5" onClick={e => e.stopPropagation()}>
                       {updatingId === order.id ? (
                         <div className="flex items-center gap-2 px-3 py-1.5">
                           <div className="w-3.5 h-3.5 border-2 border-gray-300 border-t-gray-700 rounded-full animate-spin" />
@@ -561,7 +574,7 @@ export default function OrdersPage() {
                     </td>
                   </tr>
                 ))}
-              {loading && <TableLoader colSpan={7} />}
+              {loading && <TableLoader colSpan={8} />}
               </tbody>
             </table>
           </div>

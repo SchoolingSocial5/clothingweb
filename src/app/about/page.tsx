@@ -12,7 +12,7 @@ interface Blog {
   category: string | null;
   subtitle: string | null;
   content: string;
-  image_path: string | null;
+  image_url: string | null;
 }
 
 export default function AboutPage() {
@@ -40,7 +40,7 @@ export default function AboutPage() {
         {aboutBanner ? (
           <>
             <img
-              src={getImageUrl(aboutBanner.image_path) || ''}
+              src={getImageUrl(aboutBanner.image_url) || ''}
               alt={aboutBanner.title || 'About'}
               className="absolute inset-0 w-full h-full object-cover opacity-60"
             />
@@ -91,9 +91,9 @@ export default function AboutPage() {
               )}
             </div>
             <div className="w-full md:w-80 lg:w-96 flex-shrink-0 aspect-square bg-gray-100 dark:bg-neutral-800 rounded-3xl overflow-hidden shadow-2xl">
-              {aboutBlog?.image_path ? (
+              {aboutBlog?.image_url ? (
                 <img
-                  src={getImageUrl(aboutBlog.image_path) || ''}
+                  src={getImageUrl(aboutBlog.image_url) || ''}
                   alt={aboutBlog.title}
                   className="w-full h-full object-cover"
                 />

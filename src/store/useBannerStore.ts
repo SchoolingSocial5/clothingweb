@@ -3,7 +3,7 @@ import { apiClient } from '@/utils/api';
 
 export interface Banner {
   id: number;
-  image_path: string;
+  image_url: string;
   title: string;
   subtitle: string;
   category: string;

@@ -7,7 +7,7 @@ export interface Blog {
   category: string | null;
   subtitle: string | null;
   content: string;
-  image_path: string | null;
+  image_url: string | null;
   created_at: string;
 }
 

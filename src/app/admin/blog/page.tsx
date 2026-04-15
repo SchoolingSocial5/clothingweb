@@ -10,14 +10,16 @@ import "react-quill-new/dist/quill.snow.css";
 // Dynamic import to avoid SSR issues
 const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
 
-const BASE_URL = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api").replace("/api", "");
-function buildImageUrl(path: string | null): string {
-  if (!path) return "";
-  if (path.startsWith("http")) return path.replace(/^http:\/\/localhost(?::\d+)?\//, `${BASE_URL}/`);
-  return `${BASE_URL}${path.startsWith("/") ? "" : "/"}${path}`;
+import { getImageUrl } from "@/utils/image";
+
+interface BlogForm {
+  title: string;
+  category: string;
+  subtitle: string;
+  content: string;
 }
 
-const EMPTY_FORM = { title: "", category: "", subtitle: "", content: "" };
+const EMPTY_FORM: BlogForm = { title: "", category: "", subtitle: "", content: "" };
 
 const quillModules = {
   toolbar: {
@@ -78,7 +80,7 @@ export default function BlogPage() {
       content: blog.content,
     });
     setImageFile(null);
-    setImagePreview(blog.image_path ? buildImageUrl(blog.image_path) : null);
+    setImagePreview(getImageUrl(blog.image_url));
     setShowModal(true);
   };
 
@@ -182,9 +184,9 @@ export default function BlogPage() {
                   <td className="px-4 py-4 font-black text-gray-400 text-[11px]">{index + 1}</td>
                   <td className="px-6 py-4 max-w-[180px]">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0 border border-gray-100 flex items-center justify-center">
-                        {blog.image_path ? (
-                          <img src={buildImageUrl(blog.image_path)} alt="" className="w-full h-full object-cover" />
+                      <div className="w-9 h-9 rounded-lg bg-gray-100 dark:bg-neutral-800 overflow-hidden flex-shrink-0 border border-gray-100 dark:border-neutral-700 flex items-center justify-center">
+                        {blog.image_url ? (
+                          <img src={getImageUrl(blog.image_url) || ""} alt="" className="w-full h-full object-cover" />
                         ) : (
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-gray-300"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
                         )}

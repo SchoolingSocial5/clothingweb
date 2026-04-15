@@ -7,15 +7,7 @@ import { formatPrice } from "@/utils/format";
 import Pagination from "@/components/common/Pagination";
 import TableLoader from "@/components/admin/TableLoader";
 
-const BASE_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api').replace('/api', '');
-
-function buildImageUrl(path: string | null): string {
-  if (!path) return '';
-  if (path.startsWith('http')) {
-    return path.replace(/^http:\/\/localhost(?::\d+)?\//, `${BASE_URL}/`);
-  }
-  return `${BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`;
-}
+import { getImageUrl } from "@/utils/image";
 
 export default function PurchasesPage() {
   const { purchases, pagination, loading, fetchPurchases } = usePurchaseStore();
@@ -114,7 +106,7 @@ export default function PurchasesPage() {
                 </tr>
               )}
               {purchases.map((purchase, index) => {
-                  const imgSrc = buildImageUrl(purchase.product_image);
+                  const imgSrc = getImageUrl(purchase.product_image);
                   return (
                     <tr key={purchase.id} className="hover:bg-gray-50/30 dark:hover:bg-neutral-800/30 transition-colors group">
                       <td className="px-6 py-5 font-black text-gray-400 text-[11px]">
@@ -125,7 +117,7 @@ export default function PurchasesPage() {
                           <div className="w-10 h-10 rounded-lg bg-gray-100 flex-shrink-0 overflow-hidden flex items-center justify-center border border-gray-100">
                             {imgSrc ? (
                               <img
-                                src={imgSrc}
+                                src={imgSrc || undefined}
                                 alt={purchase.product_name}
                                 className="w-full h-full object-cover"
                                 onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
