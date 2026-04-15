@@ -6,6 +6,7 @@ import { useSettings } from '@/context/SettingsContext';
 import { useEffect, useState } from 'react';
 import AdminTopHeader from '@/components/admin/AdminTopHeader';
 import ThemeToggle from '@/components/ThemeToggle';
+import { getImageUrl } from '@/utils/image';
 
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -16,7 +17,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [contentOpen, setContentOpen] = useState(pathname.startsWith('/admin/faq') || pathname.startsWith('/admin/blog') || pathname.startsWith('/admin/terms'));
   const [settingsOpen, setSettingsOpen] = useState(pathname.startsWith('/admin/settings') || pathname.startsWith('/admin/staff'));
-  const logoSrc = settings?.logo ? `/store-logo.png?v=${encodeURIComponent(settings.logo)}` : null;
+  const logoSrc = getImageUrl(settings?.logo);
 
   useEffect(() => {
     if (!loading && (!user || (user.status !== 'staff' && user.status !== 'admin'))) {
@@ -59,7 +60,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             {settingsLoading ? (
                 <div className="h-8 w-24 bg-gray-100 dark:bg-neutral-800 animate-pulse rounded-lg" />
               ) : logoSrc ? (
-                <img src={logoSrc} alt={settings?.company_name || "Logo"} className="h-10 max-w-[130px] w-auto object-contain dark:invert" />
+                <img src={logoSrc} alt={settings?.company_name || "Logo"} className="h-10 max-w-[130px] w-auto object-contain" />
               ) : (
                 <span className="text-lg font-black uppercase tracking-tight">{settings?.company_name || "Store"}</span>
               )}

@@ -1,29 +1,7 @@
 import { create } from 'zustand';
 import { apiClient } from '@/utils/api';
 
-interface OrderItem {
-  id: number;
-  productName: string;
-  productImage: string | null;
-  price: number;
-  quantity: number;
-}
-
-interface Order {
-  id: number;
-  customer_name: string;
-  customer_email: string;
-  customer_phone: string | null;
-  delivery_address: string | null;
-  total_amount: number;
-  status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
-  payment_status: 'unpaid' | 'paid';
-  receipt_path: string | null;
-  receipt_number?: string | null;
-  approved_by?: string | null;
-  created_at: string;
-  items: OrderItem[];
-}
+import { Order, OrderItem } from '@/components/admin/orders/types';
 
 interface OrderState {
   orders: Order[];

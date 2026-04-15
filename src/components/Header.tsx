@@ -20,7 +20,7 @@ export default function Header() {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const headerRef = useRef<HTMLElement>(null);
 
-  const logoSrc = settings?.logo ? `/store-logo.png?v=${encodeURIComponent(settings.logo)}` : null;
+  const logoSrc = getImageUrl(settings?.logo);
 
   const navLinks = [
     { name: 'About', href: '/about' },
@@ -66,7 +66,7 @@ export default function Header() {
           {settingsLoading ? (
             <div className="h-8 w-24 bg-gray-100 dark:bg-neutral-800 animate-pulse rounded-lg" />
           ) : logoSrc ? (
-            <img src={logoSrc} alt={settings?.company_name || "Logo"} className="h-10 max-w-[140px] w-auto object-contain transition-transform group-hover:scale-105 dark:invert" />
+            <img src={logoSrc} alt={settings?.company_name || "Logo"} className="h-10 max-w-[140px] w-auto object-contain transition-transform group-hover:scale-105" />
           ) : (
             <span className="text-xl font-black uppercase tracking-tight">{settings?.company_name || "Store"}</span>
           )}

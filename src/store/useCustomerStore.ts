@@ -1,22 +1,7 @@
 import { create } from 'zustand';
 import { apiClient } from '@/utils/api';
 
-interface OrderItem {
-  id: number;
-  product_name: string;
-  product_image: string | null;
-  price: number;
-  quantity: number;
-}
-
-interface Order {
-  id: number;
-  total_amount: number;
-  status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
-  payment_status: 'unpaid' | 'paid';
-  created_at: string;
-  items: OrderItem[];
-}
+import { Order, OrderItem } from '@/components/admin/orders/types';
 
 interface Customer {
   id: number;
@@ -26,8 +11,10 @@ interface Customer {
   status: 'admin' | 'customer' | 'user' | 'staff';
   created_at: string;
   orders?: Order[];
+  totalOrders: number;
+  totalSpent: number;
   orders_count?: number;
-  orders_sum_total_amount?: string | number;
+  orders_sum_total_amount?: number;
 }
 
 interface Pagination {
