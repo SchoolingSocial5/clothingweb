@@ -148,6 +148,7 @@ export default function ExpensesPage() {
                 <th className="px-6 py-4 font-semibold">Category</th>
                 <th className="px-6 py-4 font-semibold">Date</th>
                 <th className="px-6 py-4 font-semibold text-right">Amount</th>
+                <th className="px-6 py-4 font-semibold">Staff</th>
                 <th className="px-6 py-4 font-semibold text-center">Receipt</th>
                 <th className="px-6 py-4 font-semibold text-center">Actions</th>
               </tr>
@@ -155,7 +156,7 @@ export default function ExpensesPage() {
             <tbody className="divide-y divide-gray-50 dark:divide-neutral-800">
               {expenses.length === 0 && !loading ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-20 text-center text-gray-300 font-bold uppercase tracking-widest italic text-sm">
+                  <td colSpan={7} className="px-6 py-20 text-center text-gray-300 font-bold uppercase tracking-widest italic text-sm">
                     No expenses found
                   </td>
                 </tr>
@@ -176,6 +177,12 @@ export default function ExpensesPage() {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <span className="font-black text-sm text-gray-900 dark:text-gray-100">₦{parseFloat(expense.amount).toLocaleString()}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col">
+                        <span className="text-[11px] font-bold text-gray-900 dark:text-gray-100 leading-tight">{expense.recorded_by || 'System'}</span>
+                        <span className="text-[9px] font-black uppercase tracking-widest text-gray-400">Recorder</span>
+                      </div>
                     </td>
                     <td className="px-6 py-4 text-center">
                       {expense.receipt_url ? (
@@ -200,7 +207,7 @@ export default function ExpensesPage() {
                   </tr>
                 ))
               )}
-              {loading && <TableLoader colSpan={6} />}
+              {loading && <TableLoader colSpan={7} />}
             </tbody>
           </table>
         </div>

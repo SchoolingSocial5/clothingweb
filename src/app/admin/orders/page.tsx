@@ -151,47 +151,79 @@ function OrderDetailsModal({ order, onClose }: { order: Order; onClose: () => vo
   );
 }
 
-function PrintSlipModal({ order, onClose }: { order: Order; onClose: () => void }) {
+function PrintSlipModal({ order, onClose, settings }: { order: Order; onClose: () => void; settings: any }) {
   const handlePrint = () => {
     const items = order.items.map(item =>
       `<div class="row"><span>${item.productName} &times;${item.quantity}</span><span>&#8358;${(parseFloat(item.price as any) * item.quantity).toLocaleString()}</span></div>`
     ).join('');
 
-    const w = window.open('', '_blank', 'width=420,height=680');
+    const w = window.open('', '_blank', 'width=380,height=680,scrollbars=yes');
     if (!w) return;
     w.document.write(`<!DOCTYPE html><html><head><title>Receipt #${order.id}</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Courier New',monospace;font-size:13px;padding:24px;color:#111;background:#fff}
-  h2{text-align:center;font-size:18px;font-weight:900;letter-spacing:2px;margin-bottom:4px}
-  .center{text-align:center;color:#555;font-size:11px;margin-bottom:2px}
-  .divider{border:none;border-top:1px dashed #aaa;margin:12px 0}
-  .label{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px}
-  .value{font-weight:700;margin-bottom:8px}
-  .row{display:flex;justify-content:space-between;margin:5px 0;font-size:12px}
-  .total-row{display:flex;justify-content:space-between;font-weight:900;font-size:15px;margin-top:4px}
-  .footer{text-align:center;margin-top:16px;font-size:11px;color:#888}
-  .btn{display:block;margin:20px auto 0;padding:10px 32px;background:#000;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:1px}
-  @media print{.btn{display:none}}
+  body{font-family:'Courier New',monospace;font-size:12px;padding:20px;color:#111;background:#fff;width:100%;max-width:340px;margin:0 auto}
+  .header{text-align:center;margin-bottom:15px}
+  .header h2{font-size:16px;font-weight:900;letter-spacing:1px;margin-bottom:2px;text-transform:uppercase}
+  .header p{font-size:10px;color:#444;margin-bottom:1px}
+  .receipt-title{text-align:center;font-size:14px;font-weight:900;margin:10px 0;border-top:1px dashed #000;border-bottom:1px dashed #000;padding:5px 0}
+  .center{text-align:center;color:#555;font-size:10px;margin-bottom:2px}
+  .divider{border:none;border-top:1px dashed #aaa;margin:10px 0}
+  .section-label{font-size:9px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px}
+  .section-value{font-weight:700;margin-bottom:6px}
+  .row{display:flex;justify-content:space-between;margin:4px 0;font-size:11px}
+  .total-row{display:flex;justify-content:space-between;font-weight:900;font-size:14px;margin-top:4px;border-top:1px solid #000;padding-top:4px}
+  .footer{text-align:center;margin-top:20px;font-size:10px;color:#666;font-style:italic}
+  .btn-print{display:block;margin:20px auto 0;padding:10px 24px;background:#000;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer}
+  @media print{.btn-print{display:none}}
 </style></head><body>
-<h2>RECEIPT</h2>
-<p class="center">Order #${order.id}</p>
-${order.receipt_number ? `<p class="center">Receipt ID: <strong>${order.receipt_number}</strong></p>` : ''}
-<p class="center">${new Date(order.created_at).toLocaleString()}</p>
-<hr class="divider">
-<div class="label">Customer</div><div class="value">${order.customer_name}</div>
-<div class="label">Email</div><div class="value">${order.customer_email}</div>
-${order.customer_phone ? `<div class="label">Phone</div><div class="value">${order.customer_phone}</div>` : ''}
-${order.delivery_address ? `<div class="label">Delivery Address</div><div class="value">${order.delivery_address}</div>` : ''}
-<hr class="divider">
-<div class="label">Items</div>
-${items}
-<hr class="divider">
-<div class="total-row"><span>TOTAL</span><span>&#8358;${parseFloat(order.total_amount as any).toLocaleString()}</span></div>
-<div class="footer">Thank you for your purchase!</div>
-<button class="btn" onclick="window.print()">&#128438; Print</button>
+  <div class="header">
+    <h2>${settings?.companyName || 'Receipt'}</h2>
+    ${settings?.address ? `<p>${settings.address}</p>` : ''}
+    ${settings?.phone ? `<p>Tel: ${settings.phone}</p>` : ''}
+  </div>
+  <div class="receipt-title">ORDER RECEIPT</div>
+  <p class="center">Order #${order.id}</p>
+  ${order.receipt_number ? `<p class="center">Receipt ID: <strong>${order.receipt_number}</strong></p>` : ''}
+  <p class="center">${new Date().toLocaleString()}</p>
+  <div class="divider"></div>
+  <div class="section-label">Customer</div><div class="section-value">${order.customer_name}</div>
+  ${order.customer_phone ? `<div class="section-label">Phone</div><div class="section-value">${order.customer_phone}</div>` : ''}
+  ${order.delivery_address ? `<div class="section-label">Address</div><div class="section-value">${order.delivery_address}</div>` : ''}
+  <div class="divider"></div>
+  <div class="section-label">Items</div>
+  ${items}
+  <div class="total-row"><span>TOTAL</span><span>&#8358;${parseFloat(order.total_amount as any).toLocaleString()}</span></div>
+  <div class="footer">~ Thank you for your business! ~</div>
+  <button class="btn-print" onclick="window.print()">Print Receipt</button>
 </body></html>`);
     w.document.close();
+  };
+
+  const handleShare = async () => {
+    const text = `Order #${order.id}\nReceipt ID: ${order.receipt_number || 'N/A'}\nTotal: ₦${parseFloat(order.total_amount as any).toLocaleString()}\n\nThank you for shopping with ${settings?.companyName || 'us'}!`;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `Receipt - Order #${order.id}`,
+          text: text,
+          // url: window.location.href // Optional: share current URL
+        });
+      } catch (err: any) {
+        if (err.name !== 'AbortError') {
+          console.error('Error sharing:', err);
+        }
+      }
+    } else {
+      // Fallback: Copy to clipboard
+      try {
+        await navigator.clipboard.writeText(text);
+        alert('Receipt details copied to clipboard!');
+      } catch (err) {
+        console.error('Failed to copy:', err);
+      }
+    }
   };
 
   return (
@@ -215,24 +247,33 @@ ${items}
 
         {/* Slip Preview */}
         <div className="px-6 py-5 font-mono text-xs space-y-1 border-b border-dashed border-gray-200 dark:border-neutral-700 bg-gray-50/50 dark:bg-neutral-800/50">
-          <p className="text-center font-black text-sm tracking-widest uppercase mb-1">Receipt</p>
-          <p className="text-center text-gray-900 text-[10px] font-black">Order #{order.id}</p>
+          {/* Company Branding */}
+          <div className="text-center mb-3">
+            <p className="font-black text-sm uppercase tracking-wider">{settings?.companyName || 'Store Receipt'}</p>
+            {settings?.address && <p className="text-[9px] text-gray-500 leading-tight mt-0.5">{settings.address}</p>}
+            {settings?.phone && <p className="text-[9px] text-gray-500 mt-0.5">Tel: {settings.phone}</p>}
+          </div>
+
+          <div className="border-t border-dashed border-gray-300 dark:border-neutral-600 my-2" />
+          
+          <p className="text-center font-black text-[10px] tracking-widest uppercase mb-1">Receipt Summary</p>
+          <p className="text-center text-gray-900 dark:text-gray-100 text-[10px] font-black">Order #{order.id}</p>
           {order.receipt_number && (
-            <p className="text-center text-[10px] font-black text-gray-500">Receipt ID: <span className="text-black">{order.receipt_number}</span></p>
+            <p className="text-center text-[10px] font-black text-gray-500">Receipt ID: <span className="text-black dark:text-white">{order.receipt_number}</span></p>
           )}
-          <p className="text-center text-gray-400 text-[10px]">{new Date(order.created_at).toLocaleString()}</p>
-          <div className="border-t border-dashed border-gray-300 my-2" />
-          <div><span className="text-gray-400 uppercase text-[9px] tracking-widest">Customer</span><p className="font-bold">{order.customer_name}</p></div>
-          {order.delivery_address && <div><span className="text-gray-400 uppercase text-[9px] tracking-widest">Address</span><p className="font-bold leading-tight">{order.delivery_address}</p></div>}
-          <div className="border-t border-dashed border-gray-300 my-2" />
+          <div className="border-t border-dashed border-gray-300 dark:border-neutral-600 my-2" />
+          <div><span className="text-gray-400 uppercase text-[9px] tracking-widest">Customer</span><p className="font-bold dark:text-gray-200">{order.customer_name}</p></div>
+          {order.customer_phone && <div><span className="text-gray-400 uppercase text-[9px] tracking-widest">Phone</span><p className="font-bold dark:text-gray-200">{order.customer_phone}</p></div>}
+          {order.delivery_address && <div><span className="text-gray-400 uppercase text-[9px] tracking-widest">Address</span><p className="font-bold leading-tight dark:text-gray-200">{order.delivery_address}</p></div>}
+          <div className="border-t border-dashed border-gray-300 dark:border-neutral-600 my-2" />
           {order.items.map((item, idx) => (
             <div key={item.id || item._id || idx} className="flex justify-between">
-              <span className="text-gray-700 truncate max-w-[60%]">{item.productName} &times;{item.quantity}</span>
-              <span className="font-bold">&#8358;{(parseFloat(item.price as any) * item.quantity).toLocaleString()}</span>
+              <span className="text-gray-700 dark:text-gray-300 truncate max-w-[60%]">{item.productName} &times;{item.quantity}</span>
+              <span className="font-bold dark:text-white">&#8358;{(parseFloat(item.price as any) * item.quantity).toLocaleString()}</span>
             </div>
           ))}
-          <div className="border-t border-dashed border-gray-300 my-2" />
-          <div className="flex justify-between font-black text-sm">
+          <div className="border-t border-dashed border-gray-300 dark:border-neutral-600 my-2" />
+          <div className="flex justify-between font-black text-sm dark:text-white">
             <span>TOTAL</span>
             <span>&#8358;{parseFloat(order.total_amount as any).toLocaleString()}</span>
           </div>
@@ -241,10 +282,13 @@ ${items}
         {/* Actions */}
         <div className="px-6 py-4 flex gap-3">
           <button
-            onClick={onClose}
-            className="flex-1 py-2.5 border border-gray-200 rounded-xl text-xs font-black uppercase tracking-widest text-gray-600 hover:bg-gray-50 transition-colors"
+            onClick={handleShare}
+            className="p-2.5 border border-gray-200 dark:border-neutral-800 rounded-xl text-gray-400 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 transition-colors"
+            title="Share Receipt"
           >
-            Cancel
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" y1="2" x2="12" y2="15" />
+            </svg>
           </button>
           <button
             onClick={handlePrint}
@@ -255,7 +299,7 @@ ${items}
               <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
               <rect x="6" y="14" width="12" height="8" />
             </svg>
-            Print
+            Print Slip
           </button>
         </div>
       </div>
@@ -325,6 +369,7 @@ export default function OrdersPage() {
     toggleAllSelection
   } = useOrderStore();
 
+  const [settings, setSettings] = useState<any>(null);
   const [detailsOrder, setDetailsOrder] = useState<Order | null>(null);
   const [receiptOrder, setReceiptOrder] = useState<Order | null>(null);
   const [printOrder, setPrintOrder] = useState<Order | null>(null);
@@ -338,7 +383,14 @@ export default function OrdersPage() {
   const today = new Date().toISOString().split('T')[0];
 
   useEffect(() => {
-    if (token) fetchOrders(1, '', '', '');
+    fetchOrders(1);
+
+    // Fetch store settings for receipt info
+    const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+    fetch(`${apiBase}/settings`)
+      .then(r => r.json())
+      .then(data => setSettings(data))
+      .catch(err => console.error('Error fetching settings:', err));
   }, [token, fetchOrders]);
 
   const handleFilter = () => fetchOrders(1, from, to, search);
@@ -493,17 +545,6 @@ export default function OrdersPage() {
                     </td>
                     <td className="px-4 py-5">
                       <div className="flex items-center gap-3">
-                        {order.receipt_path && (
-                          <button
-                            onClick={e => { e.stopPropagation(); setReceiptOrder(order as any); }}
-                            className="p-1.5 bg-gray-100 rounded-lg text-gray-400 hover:text-black hover:bg-gray-200 transition-colors flex-shrink-0"
-                            title="View Payment Receipt"
-                          >
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
-                            </svg>
-                          </button>
-                        )}
                         <div>
                           <p className="font-bold text-gray-900 dark:text-gray-100 leading-tight">{order.customer_name}</p>
                           <p className="text-[11px] text-gray-400">{order.customer_email}</p>
@@ -516,10 +557,12 @@ export default function OrdersPage() {
                     <td className="px-4 py-5 text-center" onClick={e => e.stopPropagation()}>
                       <div className="flex flex-col items-center gap-1.5">
                         {order.receipt_number ? (
-                          <span className="text-[10px] font-black bg-black text-white px-2.5 py-1.5 rounded-lg uppercase tracking-tighter shadow-sm inline-flex items-center gap-1.5">
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M20 6L9 17l-5-5" /></svg>
-                            {order.receipt_number}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-black bg-black text-white px-2.5 py-1.5 rounded-lg uppercase tracking-tighter shadow-sm inline-flex items-center gap-1.5">
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M20 6L9 17l-5-5" /></svg>
+                              {order.receipt_number}
+                            </span>
+                          </div>
                         ) : (
                           <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest italic">Pending</span>
                         )}
@@ -632,7 +675,7 @@ export default function OrdersPage() {
       {receiptOrder && <ReceiptModal order={receiptOrder} onClose={() => setReceiptOrder(null)} />}
 
       {/* Print Slip Modal */}
-      {printOrder && <PrintSlipModal order={printOrder} onClose={() => setPrintOrder(null)} />}
+      {printOrder && <PrintSlipModal order={printOrder} settings={settings} onClose={() => setPrintOrder(null)} />}
     </div>
   );
 }

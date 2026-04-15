@@ -9,6 +9,7 @@ export interface Expense {
   description?: string;
   date: string;
   receipt_url?: string;
+  recorded_by?: string;
   created_at: string;
 }
 
