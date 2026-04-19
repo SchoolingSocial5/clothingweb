@@ -22,12 +22,12 @@ interface BlogStore {
   bulkDeleteBlogs: (ids: string[]) => Promise<void>;
 }
 
-export const useBlogStore = create<BlogStore>((set, get) => ({
+export const useBlogStore = create<BlogStore>((set) => ({
   blogs: [],
   loading: false,
 
   fetchBlogs: async () => {
-    if (get().blogs.length === 0) set({ loading: true });
+    set({ loading: true });
     try {
       const data = await apiClient('/admin/blogs');
       set({ blogs: data, loading: false });

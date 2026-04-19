@@ -118,6 +118,7 @@ export default function BlogPage() {
         await createBlog(fd);
         showToast("Blog post published successfully");
       }
+      await fetchBlogs();
       setShowModal(false);
     } catch (err: any) {
       showToast(err.message || "Failed to save blog post", "error");

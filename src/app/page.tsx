@@ -32,17 +32,16 @@ export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState("All Products");
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, Infinity]);
-  const [aboutBlog, setAboutBlog] = useState<Blog | null>(null);
+  const [homeBlog, setHomeBlog] = useState<Blog | null>(null);
 
   useEffect(() => {
     fetchProducts();
     fetchBanners();
-    
-    // Fetch Vision/About section
+
     fetchPublicBlogs()
       .then(data => {
-        const blog = data.find(b => b.category?.toLowerCase() === 'about');
-        if (blog) setAboutBlog(blog);
+        const blog = data.find(b => b.category?.toLowerCase() === 'home');
+        if (blog) setHomeBlog(blog);
       })
       .catch(() => {});
   }, [fetchProducts, fetchBanners, fetchPublicBlogs]);
@@ -74,7 +73,7 @@ export default function Home() {
       <Header />
 
       {/* Immersive Hero Section with Swiper */}
-      <section className="w-full h-[75vh] bg-neutral-900 relative">
+      <section className="w-full h-[50vh] bg-neutral-900 relative">
         {bannersLoading ? (
           <div className="w-full h-full flex items-center justify-center">
             <div className="w-12 h-12 border-4 border-white/20 border-t-white rounded-full animate-spin" />
@@ -101,7 +100,7 @@ export default function Home() {
                     <h2 className="text-white text-sm md:text-base font-bold tracking-[0.4em] uppercase mb-6">
                       {banner.subtitle || "New Arrival"}
                     </h2>
-                    <h1 className="text-5xl md:text-8xl font-sans font-black text-white uppercase tracking-tighter mb-10 leading-[0.9]">
+                    <h1 className="text-3xl md:text-5xl font-sans font-black text-white uppercase tracking-tighter mb-10 leading-[0.9]">
                       {banner.title || "The New Collection"}
                     </h1>
                     <button
@@ -124,7 +123,7 @@ export default function Home() {
             />
             <div className="z-20 text-center px-4">
               <h2 className="text-white text-sm font-bold tracking-[0.3em] uppercase mb-4">Fall / Winter 2026</h2>
-              <h1 className="text-5xl md:text-7xl font-sans font-black text-white uppercase tracking-tighter mb-8 max-w-4xl leading-none">
+              <h1 className="text-3xl md:text-5xl font-sans font-black text-white uppercase tracking-tighter mb-8 max-w-4xl leading-none">
                 The New Definition<br />of Elegance
               </h1>
               <button
@@ -149,12 +148,12 @@ export default function Home() {
         <div className="flex flex-col md:flex-row gap-8 lg:gap-12 items-stretch">
           <div className="flex-1 min-w-0 bg-white dark:bg-neutral-900 border border-gray-100 dark:border-neutral-800 p-8 md:p-12 rounded-[2.5rem] shadow-sm transition-colors">
             <h2 className="text-3xl font-bold mb-8 tracking-tight text-gray-900 dark:text-gray-100 uppercase italic">
-              {aboutBlog?.title || 'The Vision'}
+              {homeBlog?.title || 'The Vision'}
             </h2>
-            {aboutBlog ? (
+            {homeBlog ? (
               <div
                 className="about-content prose prose-sm dark:prose-invert max-w-none text-gray-600 dark:text-gray-400 leading-relaxed space-y-4"
-                dangerouslySetInnerHTML={{ __html: aboutBlog.content }}
+                dangerouslySetInnerHTML={{ __html: homeBlog.content }}
               />
             ) : (
               <div className="space-y-6">
@@ -168,10 +167,10 @@ export default function Home() {
             )}
           </div>
           <div className="w-full md:w-80 lg:w-96 flex-shrink-0 aspect-square bg-gray-100 dark:bg-neutral-800 rounded-[2.5rem] overflow-hidden shadow-2xl">
-            {aboutBlog?.image_url ? (
+            {homeBlog?.image_url ? (
               <img
-                src={getImageUrl(aboutBlog.image_url) || ''}
-                alt={aboutBlog.title || "Vision"}
+                src={getImageUrl(homeBlog.image_url) || ''}
+                alt={homeBlog.title || "Vision"}
                 className="w-full h-full object-cover"
               />
             ) : (
