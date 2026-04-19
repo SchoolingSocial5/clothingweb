@@ -11,11 +11,10 @@ import { useSettings } from "@/context/SettingsContext";
 import { useWishlistStore } from "@/store/useWishlistStore";
 import { formatPrice } from "@/utils/format";
 import { getImageUrl } from "@/utils/image";
-import { apiClient } from "@/utils/api";
 
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { products, fetchProducts } = useProductStore();
+  const { products, fetchProducts, fetchProductById } = useProductStore();
   const { addToCart, cart, updateQuantity, removeFromCart } = useCart();
   const { settings } = useSettings();
   const { hydrated, hydrate, toggle, isWishlisted } = useWishlistStore();
@@ -32,24 +31,17 @@ export default function ProductDetailPage() {
     const load = async () => {
       setLoading(true);
       setImgError(false);
-      // Try from store first
-      const fromStore = products.find((p) => p.id === Number(id));
-      if (fromStore) {
-        setProduct(fromStore);
-        setLoading(false);
-        return;
-      }
-      try {
-        const data = await apiClient<Product>(`/products/${id}`);
+      
+      const data = await fetchProductById(id);
+      if (data) {
         setProduct(data);
-      } catch {
+      } else {
         setProduct(null);
-      } finally {
-        setLoading(false);
       }
+      setLoading(false);
     };
     load();
-  }, [id, products]);
+  }, [id, fetchProductById]);
 
   // Ensure store is populated for related products
   useEffect(() => {

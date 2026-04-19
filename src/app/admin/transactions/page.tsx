@@ -1,9 +1,9 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { useSettings } from '@/context/SettingsContext';
 import { useOrderStore } from '@/store/useOrderStore';
 import { useProductStore, Product as StoreProduct } from '@/store/useProductStore';
+import { useSettings } from '@/context/SettingsContext';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import Pagination from '@/components/common/Pagination';
 import TableLoader from '@/components/admin/TableLoader';
@@ -32,7 +32,7 @@ const paymentMethodColors: Record<string, string> = {
   online: 'bg-gray-50 text-gray-600 border-gray-100',
 };
 
-export default function OrdersPage() {
+export default function TransactionsPage() {
   const { token } = useAuth();
   const orders = useOrderStore(state => state.orders);
   const pagination = useOrderStore(state => state.pagination);
@@ -88,7 +88,7 @@ export default function OrdersPage() {
   const onOrderCreated = () => {
     setCartItems([]);
     setShowCheckout(false);
-    fetchOrders(1);
+    fetchOrders(1, '', '', '', 'paid');
     setToast({ message: 'Order created successfully!', type: 'success' });
   };
 
@@ -97,16 +97,16 @@ export default function OrdersPage() {
   const { settings, refreshSettings } = useSettings();
 
   useEffect(() => {
-    fetchOrders(1, '', '', '', 'unpaid');
+    fetchOrders(1, '', '', '', 'paid');
   }, [token, fetchOrders]);
 
-  const handleFilter = () => fetchOrders(1, from, to, search, 'unpaid');
+  const handleFilter = () => fetchOrders(1, from, to, search, 'paid');
 
   const handleClear = () => {
     setFrom('');
     setTo('');
     setSearch('');
-    fetchOrders(1, '', '', '', 'unpaid');
+    fetchOrders(1, '', '', '', 'paid');
   };
 
   const updateStatus = async (id: number, field: 'status' | 'payment_status', value: string) => {
@@ -129,16 +129,16 @@ export default function OrdersPage() {
   return (
     <div className="p-[10px] md:p-8 w-full">
       <AdminPageHeader
-        title="Orders"
-        description="Manage and track all customer orders"
-        stats={{ label: "Total", value: pagination?.total || 0 }}
+        title="Financial Transactions"
+        description="Review and manage paid orders and completed business transactions"
+        stats={{ label: "Processed", value: pagination?.total || 0 }}
       >
         <button
           onClick={() => setShowProductPicker(true)}
           className="bg-black text-white px-6 py-3 rounded-xl text-sm font-bold shadow-lg shadow-black/20 hover:bg-gray-900 transition-all flex items-center gap-2"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
-          Create Order
+          Record Order
         </button>
       </AdminPageHeader>
 
@@ -150,7 +150,7 @@ export default function OrdersPage() {
             <input
               type="text"
               value={search}
-              onChange={e => { setSearch(e.target.value); fetchOrders(1, from, to, e.target.value); }}
+              onChange={e => { setSearch(e.target.value); fetchOrders(1, from, to, e.target.value, 'paid'); }}
               placeholder="Name, email, phone, receipt..."
               className="w-full pl-9 pr-9 py-2 bg-gray-50 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-black dark:text-gray-100 dark:placeholder-gray-500"
             />
@@ -207,10 +207,10 @@ export default function OrdersPage() {
             onChange={() => toggleAllSelection()}
             className="w-5 h-5 rounded-lg border-gray-200 text-black focus:ring-black cursor-pointer transition-all"
           />
-          <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 group-hover:text-black transition-colors">Select All Orders</span>
+          <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 group-hover:text-black transition-colors">Select All Records</span>
         </label>
         <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">
-          Showing {orders.length} of {pagination.total} Orders
+          Showing {orders.length} of {pagination.total} Transactions
         </div>
       </div>
 
@@ -235,10 +235,9 @@ export default function OrdersPage() {
                   <tr>
                     <td colSpan={9} className="px-6 py-20 text-center">
                       <svg className="mx-auto mb-4 text-gray-200" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
-                        <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" />
-                        <path d="M16 10a4 4 0 0 1-8 0" />
+                        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
                       </svg>
-                      <p className="text-gray-400 font-bold uppercase tracking-widest text-sm">No orders yet</p>
+                      <p className="text-gray-400 font-bold uppercase tracking-widest text-sm">No transactions yet</p>
                     </td>
                   </tr>
                 )}
@@ -347,7 +346,7 @@ export default function OrdersPage() {
             <Pagination
               currentPage={pagination?.page || 1}
               totalPages={pagination?.last_page || 1}
-              onPageChange={(page) => fetchOrders(page, from, to, search)}
+              onPageChange={(page) => fetchOrders(page, from, to, search, 'paid')}
             />
           </div>
         </div>
@@ -385,8 +384,8 @@ export default function OrdersPage() {
         isOpen={showBulkDeleteConfirm}
         onClose={() => setShowBulkDeleteConfirm(false)}
         onConfirm={() => useOrderStore.getState().bulkDeleteOrders(selectedOrderIds)}
-        title="Delete Orders"
-        message={`Are you sure you want to delete ${selectedOrderIds.length} selected order${selectedOrderIds.length !== 1 ? 's' : ''}? This action cannot be undone.`}
+        title="Delete Records"
+        message={`Are you sure you want to delete ${selectedOrderIds.length} selected transaction${selectedOrderIds.length !== 1 ? 's' : ''}? This action cannot be undone.`}
       />
 
       {/* Order Details Modal */}

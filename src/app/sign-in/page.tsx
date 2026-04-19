@@ -1,53 +1,37 @@
 "use client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import Header from "@/components/Header";
 import { useState } from "react";
+import Header from "@/components/Header";
 import { useAuth } from "@/context/AuthContext";
+import { useAuthStore } from "@/store/useAuthStore";
 
 export default function SignIn() {
   const { login } = useAuth();
+  const { login: storeLogin, loading, error: storeError } = useAuthStore();
   const router = useRouter();
   const [formData, setFormData] = useState({
     email: "",
     password: ""
   });
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError("");
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json"
-        },
-        body: JSON.stringify(formData),
-      });
+      const data = await storeLogin(formData);
 
-      const data = await response.json();
-
-      if (response.ok) {
-        login(data.access_token, data.user);
-        if (data.user.status === 'staff') {
-          router.push('/admin');
-        } else {
-          router.push('/dashboard');
-        }
+      login(data.access_token, data.user);
+      if (data.user.status === 'staff') {
+        router.push('/admin');
       } else {
-        setError(data.message || "Invalid credentials");
+        router.push('/dashboard');
       }
-    } catch (err) {
-      console.error("Sign in error:", err);
-      setError("An unexpected error occurred. Please check the console for details.");
-    } finally {
-      setLoading(false);
+    } catch (err: any) {
+      setError(err.message || "Invalid credentials");
     }
   };
 

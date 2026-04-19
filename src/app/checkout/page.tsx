@@ -23,11 +23,16 @@ export default function CheckoutPage() {
   const router = useRouter();
   const { cart, getCartTotal, clearCart, updateQuantity } = useCart();
   const { user, login } = useAuth();
-  const { settings: globalSettings } = useSettings();
+  const { settings: globalSettings, refreshSettings: fetchSettings } = useSettings();
   const { createOrder, loading: submitting, error: storeError } = useOrderStore();
-  const [settings, setSettings] = useState<Settings | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [done, setDone] = useState(false);
+
+  useEffect(() => {
+    fetchSettings();
+  }, [fetchSettings]);
+
+  const settings = globalSettings;
   const [orderId, setOrderId] = useState<number | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
@@ -54,14 +59,6 @@ export default function CheckoutPage() {
       }));
     }
   }, [user]);
-
-  useEffect(() => {
-    const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
-    fetch(`${apiBase}/settings`, { headers: { Accept: 'application/json' } })
-      .then(r => r.json())
-      .then(data => { if (data && data.bank_name) setSettings(data); })
-      .catch(console.error);
-  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -281,10 +278,10 @@ export default function CheckoutPage() {
         </div>
       </div>
 
-      {showPaymentModal && (settings || globalSettings) && (
+      {showPaymentModal && (
         <PaymentConfirmModal
           total={total}
-          settings={settings || { company_name: globalSettings?.company_name || 'Store', bank_name: 'Bank Transfer', account_name: 'Payment Instructions', account_number: 'Contact Support' }}
+          settings={globalSettings ?? { company_name: 'Store', bank_name: 'Bank Transfer', account_name: 'Payment Instructions', account_number: 'Contact Support' }}
           onConfirm={handleConfirmOrder}
           onClose={() => setShowPaymentModal(false)}
           submitting={submitting}

@@ -1,11 +1,11 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import AdminStatCard from "@/components/admin/AdminStatCard";
 import { useSettings } from "@/context/SettingsContext";
 import { formatPrice } from "@/utils/format";
-import { apiClient } from "@/utils/api";
 import { useAuth } from "@/context/AuthContext";
+import { useAnalyticsStore } from "@/store/useAnalyticsStore";
 
 interface RecentCustomer {
   id: number;
@@ -16,41 +16,43 @@ interface RecentCustomer {
   created_at: string;
 }
 
-interface DashboardStats {
-  total_customers: number;
-  total_revenue: number;
-  total_orders: number;
-  total_sales: number;
-  recent_customers: RecentCustomer[];
-}
-
 export default function AdminDashboard() {
   const { settings } = useSettings();
   const { token } = useAuth();
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { stats, loading, fetchDashboardStats } = useAnalyticsStore();
   const currency = settings?.currency_symbol || "₦";
 
   useEffect(() => {
-    if (!token) return;
-    const loadData = async () => {
-      try {
-        const statsData = await apiClient<DashboardStats>("/admin/analytics");
-        setStats(statsData);
-      } catch (error) {
-        console.error("Dashboard data load error:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadData();
-  }, [token]);
+    if (token) {
+      fetchDashboardStats();
+    }
+  }, [token, fetchDashboardStats]);
 
   const statItems = [
-    { label: "Total Revenue", value: formatPrice(stats?.total_revenue || 0, currency), trend: "+12.5%", positive: true },
-    { label: "Active Customers", value: (stats?.total_customers || 0).toLocaleString(), trend: "+5.2%", positive: true },
-    { label: "Total Orders", value: (stats?.total_orders || 0).toLocaleString(), trend: "+8.1%", positive: true },
-    { label: "Items Sold", value: (stats?.total_sales || 0).toLocaleString(), trend: "+10.4%", positive: true },
+    { 
+      label: "Total Revenue", 
+      value: formatPrice(stats?.total_revenue || 0, currency), 
+      trend: stats?.revenue_trend || "0%", 
+      positive: stats?.revenue_positive ?? true 
+    },
+    { 
+      label: "Active Customers", 
+      value: (stats?.total_customers || 0).toLocaleString(), 
+      trend: stats?.customers_trend || "0%", 
+      positive: stats?.customers_positive ?? true 
+    },
+    { 
+      label: "Total Orders", 
+      value: (stats?.total_orders || 0).toLocaleString(), 
+      trend: stats?.orders_trend || "0%", 
+      positive: stats?.orders_positive ?? true 
+    },
+    { 
+      label: "Items Sold", 
+      value: (stats?.total_sales || 0).toLocaleString(), 
+      trend: stats?.sales_trend || "0%", 
+      positive: stats?.sales_positive ?? true 
+    },
   ];
 
   const recentUsers = stats?.recent_customers || [];

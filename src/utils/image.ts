@@ -9,7 +9,7 @@ export function getImageUrl(path?: string | null): string | null {
   if (path.startsWith('http')) {
     // Only normalise if it's pointing to a local dev server that might have a different port
     if (path.includes('localhost')) {
-      const base = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api').replace('/api', '');
+      const base = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api').replace('/api', '');
       return path.replace(/^http:\/\/localhost(?::\d+)?\//, `${base}/`);
     }
     return path;
@@ -25,7 +25,7 @@ export function getImageUrl(path?: string | null): string | null {
   }
 
   // Prepend the API base URL for relative paths as fallback
-  const base = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api').replace('/api', '');
+  const base = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api').replace('/api', '');
   return `${base}${path.startsWith('/') ? '' : '/'}${path}`;
 }
 

@@ -7,19 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { useSettings } from "@/context/SettingsContext";
 import { formatPrice } from "@/utils/format";
-import { apiClient } from "@/utils/api";
-
-interface OrderItem { id: number; product_name: string; quantity: number; price: number; }
-interface Order {
-  id: number;
-  receipt_number?: string;
-  total_amount: number;
-  status: string;
-  payment_status: string;
-  delivery_address?: string;
-  created_at: string;
-  items: OrderItem[];
-}
+import { useOrderStore } from "@/store/useOrderStore";
 
 const statusColors: Record<string, string> = {
   pending:   "bg-yellow-50 text-yellow-600",
@@ -38,8 +26,7 @@ export default function CustomerOrdersPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const { settings } = useSettings();
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [ordersLoading, setOrdersLoading] = useState(true);
+  const { orders, loading: ordersLoading, fetchCustomerOrders } = useOrderStore();
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
   useEffect(() => {
@@ -47,12 +34,10 @@ export default function CustomerOrdersPage() {
   }, [user, loading, router]);
 
   useEffect(() => {
-    if (!user) return;
-    apiClient<Order[]>("/customer/orders")
-      .then((data) => setOrders(Array.isArray(data) ? data : []))
-      .catch(() => setOrders([]))
-      .finally(() => setOrdersLoading(false));
-  }, [user]);
+    if (user) {
+      fetchCustomerOrders();
+    }
+  }, [user, fetchCustomerOrders]);
 
   if (loading || !user) {
     return (

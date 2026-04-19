@@ -6,12 +6,12 @@ export interface Faq {
   question: string;
   answer: string;
   order: number;
-  created_at: string;
 }
 
-interface FaqStore {
+interface FaqState {
   faqs: Faq[];
   loading: boolean;
+  error: string | null;
   fetchFaqs: () => Promise<void>;
   createFaq: (data: { question: string; answer: string }) => Promise<void>;
   updateFaq: (id: number, data: { question: string; answer: string }) => Promise<void>;
@@ -19,37 +19,38 @@ interface FaqStore {
   bulkDeleteFaqs: (ids: number[]) => Promise<void>;
 }
 
-export const useFaqStore = create<FaqStore>((set, get) => ({
+export const useFaqStore = create<FaqState>((set, get) => ({
   faqs: [],
   loading: false,
+  error: null,
 
   fetchFaqs: async () => {
-    if (get().faqs.length === 0) set({ loading: true });
+    set({ loading: true, error: null });
     try {
-      const data = await apiClient('/admin/faqs');
+      const data = await apiClient<Faq[]>('/faqs');
       set({ faqs: data, loading: false });
-    } catch {
-      set({ loading: false });
+    } catch (err: any) {
+      set({ error: err.message, loading: false });
     }
   },
 
   createFaq: async (data) => {
-    const faq = await apiClient('/admin/faqs', { method: 'POST', body: data });
-    set((s) => ({ faqs: [...s.faqs, faq] }));
+    const created = await apiClient<Faq>('/admin/faqs', { method: 'POST', body: JSON.stringify(data) });
+    set({ faqs: [...get().faqs, created] });
   },
 
   updateFaq: async (id, data) => {
-    const faq = await apiClient(`/admin/faqs/${id}`, { method: 'PUT', body: data });
-    set((s) => ({ faqs: s.faqs.map((f) => (f.id === id ? faq : f)) }));
+    const updated = await apiClient<Faq>(`/admin/faqs/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+    set({ faqs: get().faqs.map((f) => (f.id === id ? updated : f)) });
   },
 
   deleteFaq: async (id) => {
     await apiClient(`/admin/faqs/${id}`, { method: 'DELETE' });
-    set((s) => ({ faqs: s.faqs.filter((f) => f.id !== id) }));
+    set({ faqs: get().faqs.filter((f) => f.id !== id) });
   },
 
   bulkDeleteFaqs: async (ids) => {
-    await apiClient('/admin/faqs', { method: 'DELETE', body: JSON.stringify({ ids }) });
-    set((s) => ({ faqs: s.faqs.filter((f) => !ids.includes(f.id)) }));
+    await apiClient('/admin/faqs/bulk-delete', { method: 'DELETE', body: JSON.stringify({ ids }) });
+    set({ faqs: get().faqs.filter((f) => !ids.includes(f.id)) });
   },
 }));

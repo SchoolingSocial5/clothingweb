@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { apiClient } from '@/utils/api';
 
 export interface Blog {
-  id: number;
+  id: string;
   title: string;
   category: string | null;
   subtitle: string | null;
@@ -15,10 +15,11 @@ interface BlogStore {
   blogs: Blog[];
   loading: boolean;
   fetchBlogs: () => Promise<void>;
+  fetchPublicBlogs: () => Promise<Blog[]>;
   createBlog: (data: FormData) => Promise<void>;
-  updateBlog: (id: number, data: FormData) => Promise<void>;
-  deleteBlog: (id: number) => Promise<void>;
-  bulkDeleteBlogs: (ids: number[]) => Promise<void>;
+  updateBlog: (id: string, data: FormData) => Promise<void>;
+  deleteBlog: (id: string) => Promise<void>;
+  bulkDeleteBlogs: (ids: string[]) => Promise<void>;
 }
 
 export const useBlogStore = create<BlogStore>((set, get) => ({
@@ -32,6 +33,18 @@ export const useBlogStore = create<BlogStore>((set, get) => ({
       set({ blogs: data, loading: false });
     } catch {
       set({ loading: false });
+    }
+  },
+
+  fetchPublicBlogs: async () => {
+    set({ loading: true });
+    try {
+      const data = await apiClient<Blog[]>('/blogs');
+      set({ blogs: data, loading: false });
+      return data;
+    } catch (err) {
+      set({ loading: false });
+      return [];
     }
   },
 

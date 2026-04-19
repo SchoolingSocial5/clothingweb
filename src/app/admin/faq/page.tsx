@@ -59,7 +59,7 @@ export default function FaqPage() {
   };
 
   return (
-    <div className="p-[10px] md:p-8 w-full max-w-7xl mx-auto">
+    <div className="p-[10px] md:p-8 w-full">
       <AdminPageHeader
         title="FAQ"
         description="Manage frequently asked questions shown to customers."

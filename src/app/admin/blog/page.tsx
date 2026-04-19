@@ -5,6 +5,7 @@ import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import TableLoader from "@/components/admin/TableLoader";
 import DeleteConfirmModal from "@/components/admin/DeleteConfirmModal";
 import { useBlogStore, Blog } from "@/store/useBlogStore";
+import Toast from "@/components/admin/Toast";
 import "react-quill-new/dist/quill.snow.css";
 
 // Dynamic import to avoid SSR issues
@@ -43,16 +44,21 @@ const quillModules = {
 export default function BlogPage() {
   const { blogs, loading, fetchBlogs, createBlog, updateBlog, deleteBlog, bulkDeleteBlogs } = useBlogStore();
 
-  const [selected, setSelected] = useState<number[]>([]);
+  const [selected, setSelected] = useState<string[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [editBlog, setEditBlog] = useState<Blog | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+  const [toast, setToast] = useState({ visible: false, message: '', type: 'success' as 'success' | 'error' });
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToast({ visible: true, message, type });
+  };
 
   useEffect(() => {
     fetchBlogs();
@@ -60,7 +66,7 @@ export default function BlogPage() {
 
   const allSelected = blogs.length > 0 && selected.length === blogs.length;
   const toggleAll = () => setSelected(allSelected ? [] : blogs.map((b) => b.id));
-  const toggleOne = (id: number) =>
+  const toggleOne = (id: string) =>
     setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
 
   const openCreate = () => {
@@ -107,10 +113,14 @@ export default function BlogPage() {
 
       if (editBlog) {
         await updateBlog(editBlog.id, fd);
+        showToast("Blog post updated successfully");
       } else {
         await createBlog(fd);
+        showToast("Blog post published successfully");
       }
       setShowModal(false);
+    } catch (err: any) {
+      showToast(err.message || "Failed to save blog post", "error");
     } finally {
       setSaving(false);
     }
@@ -121,7 +131,7 @@ export default function BlogPage() {
   const labelClass = "block text-xs font-black uppercase tracking-widest text-gray-400 mb-2";
 
   return (
-    <div className="p-[10px] md:p-8 w-full max-w-7xl mx-auto">
+    <div className="p-[10px] md:p-8 w-full">
       <AdminPageHeader
         title="Blog"
         description="Manage blog posts and articles published on your store."
@@ -375,6 +385,13 @@ export default function BlogPage() {
         }}
         title="Delete Posts"
         message={`Are you sure you want to delete ${selected.length} selected post${selected.length !== 1 ? "s" : ""}? This action cannot be undone.`}
+      />
+
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        visible={toast.visible}
+        onClose={() => setToast({ ...toast, visible: false })}
       />
     </div>
   );

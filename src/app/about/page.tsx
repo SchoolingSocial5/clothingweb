@@ -4,30 +4,22 @@ import Header from "@/components/Header";
 import { useBannerStore } from "@/store/useBannerStore";
 import { useEffect, useState } from "react";
 import { getImageUrl } from "@/utils/image";
-import { apiClient } from "@/utils/api";
-
-interface Blog {
-  id: number;
-  title: string;
-  category: string | null;
-  subtitle: string | null;
-  content: string;
-  image_url: string | null;
-}
+import { useBlogStore, Blog } from "@/store/useBlogStore";
 
 export default function AboutPage() {
   const { banners: allBanners, fetchBanners } = useBannerStore();
+  const { fetchPublicBlogs } = useBlogStore();
   const [aboutBlog, setAboutBlog] = useState<Blog | null>(null);
 
   useEffect(() => {
     fetchBanners();
-    apiClient<Blog[]>('/blogs')
+    fetchPublicBlogs()
       .then(data => {
         const blog = data.find(b => b.category?.toLowerCase() === 'about');
         if (blog) setAboutBlog(blog);
       })
       .catch(() => {});
-  }, [fetchBanners]);
+  }, [fetchBanners, fetchPublicBlogs]);
 
   const aboutBanner = allBanners.find(b => b.category === 'About');
 

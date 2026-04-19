@@ -1,30 +1,20 @@
 "use client";
 
+import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useSettings } from '@/context/SettingsContext';
-import { apiClient } from '@/utils/api';
-import { useState, useEffect } from 'react';
-
-
-interface SocialPlatform {
-  id: number;
-  name: string;
-  url: string;
-  icon: string;
-}
+import { useSocialMediaStore } from '@/store/useSocialMediaStore';
 
 export default function Footer() {
   const pathname = usePathname();
   const { settings, loading: settingsLoading } = useSettings();
-  const [platforms, setPlatforms] = useState<SocialPlatform[]>([]);
+  const { platforms, fetchData } = useSocialMediaStore();
   const currentYear = new Date().getFullYear();
 
   useEffect(() => {
-    apiClient('/social-media').then(data => {
-      if (Array.isArray(data)) setPlatforms(data);
-    }).catch(() => {});
-  }, []);
+    fetchData();
+  }, [fetchData]);
 
   // Hide footer on admin and dashboard pages
   if (pathname?.startsWith('/admin') || pathname?.startsWith('/dashboard')) {
@@ -67,7 +57,7 @@ export default function Footer() {
           <div className="flex items-center gap-4">
             {platforms.length > 0 ? platforms.map(platform => (
               <a 
-                key={platform.id} 
+                key={platform.name} 
                 href={platform.url} 
                 target="_blank" 
                 rel="noopener noreferrer"

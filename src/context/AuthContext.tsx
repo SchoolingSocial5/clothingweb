@@ -4,12 +4,20 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 interface User {
-  id: number;
+  id: string | number;
   name: string;
   email: string;
   status: string;
   phone?: string;
   address?: string;
+  position?: string;
+  role?: string;
+  staffPosition?: string;
+  staffRole?: string;
+  staffDuties?: string;
+  staffSalary?: string | number;
+  duties?: string;
+  salary?: string | number;
 }
 
 interface AuthContextType {
@@ -61,8 +69,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     router.push("/sign-in");
   };
 
+  const value = React.useMemo(() => ({ user, token, isAuthenticated: !!token, loading, login, logout }), [user, token, loading]);
+
   return (
-    <AuthContext.Provider value={{ user, token, isAuthenticated: !!token, loading, login, logout }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

@@ -76,7 +76,7 @@ export default function SocialMediaPage() {
     : activities.filter(a => a.platform_id === activeTab);
 
   return (
-    <div className="p-[10px] md:p-8 pb-32 md:pb-32 max-w-7xl mx-auto">
+    <div className="p-[10px] md:p-8 pb-32 md:pb-32 w-full">
       <AdminPageHeader 
         title="Social Media Hub" 
         description="Monitor engagement, manage accounts, and track multi-channel growth."

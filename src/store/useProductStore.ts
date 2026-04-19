@@ -18,6 +18,7 @@ interface ProductState {
   loading: boolean;
   error: string | null;
   fetchProducts: () => Promise<void>;
+  fetchProductById: (id: string) => Promise<Product | null>;
   createProduct: (formData: FormData) => Promise<Product>;
   updateProduct: (id: number, formData: FormData) => Promise<Product>;
   deleteProduct: (id: number) => Promise<void>;
@@ -35,6 +36,18 @@ export const useProductStore = create<ProductState>((set, get) => ({
       set({ products: data, loading: false, error: null });
     } catch (err: any) {
       set({ error: err.message, loading: false });
+    }
+  },
+
+  fetchProductById: async (id: string) => {
+    set({ loading: true, error: null });
+    try {
+      const data = await apiClient<Product>(`/products/${id}`);
+      set({ loading: false });
+      return data;
+    } catch (err: any) {
+      set({ error: err.message, loading: false });
+      return null;
     }
   },
 

@@ -2,25 +2,15 @@
 
 import Header from "@/components/Header";
 import { useState, useEffect } from "react";
-import { apiClient } from "@/utils/api";
-
-interface Faq {
-  id: number;
-  question: string;
-  answer: string;
-}
+import { useFaqStore } from "@/store/useFaqStore";
 
 export default function FAQPage() {
-  const [faqs, setFaqs] = useState<Faq[]>([]);
+  const { faqs, loading, fetchFaqs } = useFaqStore();
   const [openIndex, setOpenIndex] = useState<number | null>(0);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    apiClient<Faq[]>('/faqs')
-      .then(data => setFaqs(data))
-      .catch(() => setFaqs([]))
-      .finally(() => setLoading(false));
-  }, []);
+    fetchFaqs();
+  }, [fetchFaqs]);
 
   return (
     <main className="min-h-screen bg-gray-50 dark:bg-neutral-950 transition-colors duration-300">

@@ -2,35 +2,29 @@
 import Link from "next/link";
 import Header from "@/components/Header";
 import { useState } from "react";
+import { useAuthStore } from "@/store/useAuthStore";
+import { useRouter } from "next/navigation";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
-  const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
+  const { forgotPassword, loading } = useAuthStore();
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError("");
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/forgot-password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Accept": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-
-      if (response.ok) {
-        setSent(true);
-      } else {
-        const data = await response.json();
-        setError(data.message || "Something went wrong. Please try again.");
-      }
-    } catch {
-      setError("Unable to connect. Please check your connection and try again.");
-    } finally {
-      setLoading(false);
+      await forgotPassword(email);
+      setSent(true);
+      // Wait a moment to show success message then navigate
+      setTimeout(() => {
+        router.push(`/forgot-password/verify?email=${encodeURIComponent(email)}`);
+      }, 2000);
+    } catch (err: any) {
+      setError(err.message || "Something went wrong. Please try again.");
     }
   };
 
@@ -49,12 +43,12 @@ export default function ForgotPasswordPage() {
                   </svg>
                 </div>
                 <h1 className="text-2xl font-black uppercase tracking-tight text-gray-900 dark:text-gray-100 mb-3">Check Your Email</h1>
-                <p className="text-gray-500 dark:text-gray-400 mb-8 leading-relaxed">
-                  If an account exists for <span className="font-bold text-gray-900 dark:text-gray-100">{email}</span>, we&apos;ve sent a password reset link.
+                <p className="text-gray-500 dark:text-gray-400 mb-8 leading-relaxed text-sm">
+                  We&apos;ve sent a <span className="font-bold text-black dark:text-white">6-digit verification code</span> to your email address. Please enter the code on the next screen to reset your password.
                 </p>
-                <Link href="/sign-in" className="inline-block bg-black dark:bg-white text-white dark:text-black px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-sm hover:opacity-85 transition-all">
-                  Back to Sign In
-                </Link>
+                <div className="flex flex-col gap-4">
+                  <div className="animate-pulse text-[10px] font-black uppercase tracking-widest text-black/40">Redirecting to verification...</div>
+                </div>
               </div>
             ) : (
               <>

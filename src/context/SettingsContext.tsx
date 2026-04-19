@@ -1,20 +1,10 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { apiClient } from "@/utils/api";
-
-interface Settings {
-  company_name: string;
-  currency_symbol: string;
-  logo?: string;
-  favicon?: string;
-  email?: string;
-  phone_number?: string;
-  address?: string;
-}
+import { createContext, useContext, useEffect, useMemo, ReactNode, useCallback } from "react";
+import { useSettingStore, Setting } from "@/store/useSettingStore";
 
 interface SettingsContextType {
-  settings: Settings | null;
+  settings: Setting | null;
   loading: boolean;
   refreshSettings: () => Promise<void>;
 }
@@ -22,42 +12,20 @@ interface SettingsContextType {
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 export const SettingsProvider = ({ children }: { children: ReactNode }) => {
-  const [settings, setSettings] = useState<Settings | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { settings, loading, fetchSettings } = useSettingStore();
 
-  const fetchSettings = async () => {
-    try {
-      // Direct fetch to ensure we get the latest settings
-      const data = await apiClient("/settings");
-      if (data && typeof data === 'object') {
-        setSettings({
-          company_name: data.company_name || "Wink",
-          currency_symbol: data.currency_symbol || "₦",
-          logo: data.logo,
-          favicon: data.favicon,
-          email: data.email,
-          phone_number: data.phone_number,
-          address: data.address,
-        });
-      }
-    } catch (err) {
-      console.error("Failed to fetch settings:", err);
-      // Fallback settings if the API is unreachable
-      setSettings(prev => prev || {
-        company_name: "Wink",
-        currency_symbol: "₦",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const refreshSettings = useCallback(async () => {
+    await fetchSettings();
+  }, [fetchSettings]);
 
   useEffect(() => {
     fetchSettings();
-  }, []);
+  }, [fetchSettings]);
+
+  const value = useMemo(() => ({ settings, loading, refreshSettings }), [settings, loading, refreshSettings]);
 
   return (
-    <SettingsContext.Provider value={{ settings, loading, refreshSettings: fetchSettings }}>
+    <SettingsContext.Provider value={value}>
       {children}
     </SettingsContext.Provider>
   );

@@ -16,6 +16,7 @@ interface BannerState {
   error: string | null;
   fetchBanners: () => Promise<void>;
   addBanner: (formData: FormData) => Promise<Banner>;
+  updateBanner: (id: number, formData: FormData) => Promise<Banner>;
   deleteBanner: (id: number) => Promise<void>;
 }
 
@@ -44,6 +45,25 @@ export const useBannerStore = create<BannerState>((set, get) => ({
       });
       set({ 
         banners: [...get().banners, banner],
+        loading: false 
+      });
+      return banner;
+    } catch (err: any) {
+      set({ error: err.message, loading: false });
+      throw err;
+    }
+  },
+
+  updateBanner: async (id: number, formData: FormData) => {
+    set({ loading: true, error: null });
+    try {
+      const banner = await apiClient<Banner>(`/admin/banners/${id}`, {
+        method: 'PATCH',
+        body: formData,
+        isFormData: true,
+      });
+      set({ 
+        banners: get().banners.map(b => b.id === id ? banner : b),
         loading: false 
       });
       return banner;

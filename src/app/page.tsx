@@ -12,23 +12,40 @@ import Header from "@/components/Header";
 import Sidebar from "@/components/Sidebar";
 import ProductCard from "@/components/ProductCard";
 import { getImageUrl } from "@/utils/image";
+import { useBlogStore, Blog } from "@/store/useBlogStore";
 
-const PER_PAGE = 8;
+const PER_PAGE = 12;
 
 export default function Home() {
-  const { products, loading: productsLoading, fetchProducts } = useProductStore();
-  const { banners: allBanners, loading: bannersLoading, fetchBanners } = useBannerStore();
+  const products = useProductStore(state => state.products);
+  const productsLoading = useProductStore(state => state.loading);
+  const fetchProducts = useProductStore(state => state.fetchProducts);
+  
+  const allBanners = useBannerStore(state => state.banners);
+  const bannersLoading = useBannerStore(state => state.loading);
+  const fetchBanners = useBannerStore(state => state.fetchBanners);
+  
+  const fetchPublicBlogs = useBlogStore(state => state.fetchPublicBlogs);
   const banners = allBanners.filter(b => !b.category || b.category === 'Home');
   const [page, setPage] = useState(1);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("All Products");
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, Infinity]);
+  const [aboutBlog, setAboutBlog] = useState<Blog | null>(null);
 
   useEffect(() => {
     fetchProducts();
     fetchBanners();
-  }, [fetchProducts, fetchBanners]);
+    
+    // Fetch Vision/About section
+    fetchPublicBlogs()
+      .then(data => {
+        const blog = data.find(b => b.category?.toLowerCase() === 'about');
+        if (blog) setAboutBlog(blog);
+      })
+      .catch(() => {});
+  }, [fetchProducts, fetchBanners, fetchPublicBlogs]);
 
   // Filter by category, colors and price
   const filtered = products.filter((p) => {
@@ -81,10 +98,10 @@ export default function Home() {
                   <div className="absolute inset-0 bg-black/40 z-10 transition-opacity group-hover:bg-black/50"></div>
 
                   <div className="z-20 text-center px-4 max-w-5xl">
-                    <h2 className="text-white text-sm md:text-base font-bold tracking-[0.4em] uppercase mb-6 animate-in slide-in-from-bottom-4 duration-700">
+                    <h2 className="text-white text-sm md:text-base font-bold tracking-[0.4em] uppercase mb-6">
                       {banner.subtitle || "New Arrival"}
                     </h2>
-                    <h1 className="text-5xl md:text-8xl font-sans font-black text-white uppercase tracking-tighter mb-10 leading-[0.9] animate-in slide-in-from-bottom-8 duration-1000">
+                    <h1 className="text-5xl md:text-8xl font-sans font-black text-white uppercase tracking-tighter mb-10 leading-[0.9]">
                       {banner.title || "The New Collection"}
                     </h1>
                     <button
@@ -119,6 +136,51 @@ export default function Home() {
             </div>
           </div>
         )}
+      </section>
+
+      {/* Brand Vision / About Section */}
+      <section className="max-w-[1600px] mx-auto px-4 md:px-8 py-16 md:py-24">
+        <style>{`
+          .about-content * { max-width: 100% !important; word-break: break-word !important; overflow-wrap: break-word !important; box-sizing: border-box !important; }
+          .about-content table { table-layout: fixed !important; width: 100% !important; }
+          .about-content img { height: auto !important; }
+          .about-content pre { white-space: pre-wrap !important; }
+        `}</style>
+        <div className="flex flex-col md:flex-row gap-8 lg:gap-12 items-stretch">
+          <div className="flex-1 min-w-0 bg-white dark:bg-neutral-900 border border-gray-100 dark:border-neutral-800 p-8 md:p-12 rounded-[2.5rem] shadow-sm transition-colors">
+            <h2 className="text-3xl font-bold mb-8 tracking-tight text-gray-900 dark:text-gray-100 uppercase italic">
+              {aboutBlog?.title || 'The Vision'}
+            </h2>
+            {aboutBlog ? (
+              <div
+                className="about-content prose prose-sm dark:prose-invert max-w-none text-gray-600 dark:text-gray-400 leading-relaxed space-y-4"
+                dangerouslySetInnerHTML={{ __html: aboutBlog.content }}
+              />
+            ) : (
+              <div className="space-y-6">
+                <p className="text-gray-600 dark:text-gray-400 leading-relaxed text-lg">
+                  Wink was founded on the belief that clothing is more than just fabric—it&apos;s an expression of identity. We curate collections that balance timeless silhouettes with contemporary edge.
+                </p>
+                <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
+                  Our mission is to provide high-quality, sustainable fashion that empowers individuals to feel confident and stylish in every moment of their lives.
+                </p>
+              </div>
+            )}
+          </div>
+          <div className="w-full md:w-80 lg:w-96 flex-shrink-0 aspect-square bg-gray-100 dark:bg-neutral-800 rounded-[2.5rem] overflow-hidden shadow-2xl">
+            {aboutBlog?.image_url ? (
+              <img
+                src={getImageUrl(aboutBlog.image_url) || ''}
+                alt={aboutBlog.title || "Vision"}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-gray-200 dark:from-neutral-700 to-gray-50 dark:to-neutral-900 flex items-center justify-center">
+                <span className="text-gray-300 dark:text-neutral-600 font-black text-6xl uppercase transform -rotate-12">Artistry</span>
+              </div>
+            )}
+          </div>
+        </div>
       </section>
 
       {/* Main Content Area */}

@@ -18,6 +18,7 @@ import ThemeProvider from "@/components/ThemeProvider";
 import Footer from "@/components/Footer";
 import { SettingsProvider } from "@/context/SettingsContext";
 import DynamicBranding from "@/components/DynamicBranding";
+import WhatsAppButton from "@/components/common/WhatsAppButton";
 
 export default function RootLayout({
   children,
@@ -36,6 +37,7 @@ export default function RootLayout({
                   {children}
                 </div>
                 <Footer />
+                <WhatsAppButton />
               </ThemeProvider>
             </CartProvider>
           </AuthProvider>

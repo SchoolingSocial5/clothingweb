@@ -6,12 +6,9 @@ export interface SocialMediaPlatform {
   name: string;
   url?: string;
   handle?: string;
-  email?: string;
-  password?: string;
-  phone_number?: string;
   icon?: string;
-  is_active: boolean;
-  activities?: SocialMediaActivity[];
+  email?: string;
+  phone_number?: string;
 }
 
 export interface SocialMediaActivity {
@@ -20,12 +17,12 @@ export interface SocialMediaActivity {
   name: string;
   activity_type: string;
   description?: string;
-  image_url?: string;
   followers: number;
   posts_count: number;
   likes_count: number;
   comments_count: number;
   date: string;
+  image_url?: string;
   platform?: SocialMediaPlatform;
 }
 
@@ -35,10 +32,10 @@ interface SocialMediaState {
   loading: boolean;
   error: string | null;
   fetchData: () => Promise<void>;
-  createPlatform: (data: any) => Promise<void>;
-  updatePlatform: (id: number, data: any) => Promise<void>;
+  createPlatform: (formData: FormData) => Promise<void>;
+  updatePlatform: (id: number, formData: FormData) => Promise<void>;
   deletePlatform: (id: number) => Promise<void>;
-  createActivity: (data: any) => Promise<void>;
+  createActivity: (formData: FormData) => Promise<void>;
   deleteActivity: (id: number) => Promise<void>;
 }
 
@@ -61,89 +58,40 @@ export const useSocialMediaStore = create<SocialMediaState>((set, get) => ({
     }
   },
 
-  createPlatform: async (data: any) => {
-    set({ loading: true });
-    try {
-      const isFormData = data instanceof FormData;
-      const platform = await apiClient<SocialMediaPlatform>('/admin/social-media/platforms', {
-        method: 'POST',
-        body: data,
-        isFormData: isFormData,
-      });
-      set({ platforms: [...get().platforms, platform], loading: false });
-    } catch (err: any) {
-      set({ error: err.message, loading: false });
-      throw err;
-    }
+  createPlatform: async (formData) => {
+    const created = await apiClient<SocialMediaPlatform>('/admin/social-media/platforms', {
+      method: 'POST',
+      body: formData,
+      isFormData: true,
+    });
+    set({ platforms: [...get().platforms, created] });
   },
 
-  updatePlatform: async (id, data: any) => {
-    set({ loading: true });
-    try {
-      const isFormData = data instanceof FormData;
-      // Handle Laravel's PUT method for FormData (use _method spoofing if needed)
-      let method: any = 'PUT';
-      if (isFormData) {
-        method = 'POST';
-        if (!data.has('_method')) data.append('_method', 'PUT');
-      }
-
-      const updated = await apiClient<SocialMediaPlatform>(`/admin/social-media/platforms/${id}`, {
-        method: method,
-        body: data,
-        isFormData: isFormData,
-      });
-      set({
-        platforms: get().platforms.map((p) => (p.id === id ? updated : p)),
-        loading: false,
-      });
-    } catch (err: any) {
-      set({ error: err.message, loading: false });
-      throw err;
-    }
+  updatePlatform: async (id, formData) => {
+    const updated = await apiClient<SocialMediaPlatform>(`/admin/social-media/platforms/${id}`, {
+      method: 'POST',
+      body: formData,
+      isFormData: true,
+    });
+    set({ platforms: get().platforms.map((p) => (p.id === id ? updated : p)) });
   },
 
   deletePlatform: async (id) => {
-    set({ loading: true });
-    try {
-      await apiClient(`/admin/social-media/platforms/${id}`, { method: 'DELETE' });
-      set({
-        platforms: get().platforms.filter((p) => p.id !== id),
-        loading: false,
-      });
-    } catch (err: any) {
-      set({ error: err.message, loading: false });
-      throw err;
-    }
+    await apiClient(`/admin/social-media/platforms/${id}`, { method: 'DELETE' });
+    set({ platforms: get().platforms.filter((p) => p.id !== id) });
   },
 
-  createActivity: async (data: any) => {
-    set({ loading: true });
-    try {
-      const isFormData = data instanceof FormData;
-      const activity = await apiClient<SocialMediaActivity>('/admin/social-media/activities', {
-        method: 'POST',
-        body: data,
-        isFormData: isFormData,
-      });
-      set({ activities: [activity, ...get().activities], loading: false });
-    } catch (err: any) {
-      set({ error: err.message, loading: false });
-      throw err;
-    }
+  createActivity: async (formData) => {
+    const created = await apiClient<SocialMediaActivity>('/admin/social-media/activities', {
+      method: 'POST',
+      body: formData,
+      isFormData: true,
+    });
+    set({ activities: [...get().activities, created] });
   },
 
   deleteActivity: async (id) => {
-    set({ loading: true });
-    try {
-      await apiClient(`/admin/social-media/activities/${id}`, { method: 'DELETE' });
-      set({
-        activities: get().activities.filter((a) => a.id !== id),
-        loading: false,
-      });
-    } catch (err: any) {
-      set({ error: err.message, loading: false });
-      throw err;
-    }
+    await apiClient(`/admin/social-media/activities/${id}`, { method: 'DELETE' });
+    set({ activities: get().activities.filter((a) => a.id !== id) });
   },
 }));

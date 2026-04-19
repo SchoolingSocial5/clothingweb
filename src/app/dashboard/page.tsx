@@ -10,23 +10,11 @@ import { useProductStore } from "@/store/useProductStore";
 import { useWishlistStore } from "@/store/useWishlistStore";
 import { useSettings } from "@/context/SettingsContext";
 import { formatPrice } from "@/utils/format";
-import { apiClient } from "@/utils/api";
-
-interface OrderItem { id: number; product_name: string; quantity: number; price: number; }
-interface Order {
-  id: number;
-  receipt_number?: string;
-  total_amount: number;
-  status: string;
-  payment_status: string;
-  created_at: string;
-  items: OrderItem[];
-}
-
+import { useOrderStore } from "@/store/useOrderStore";
 const statusColors: Record<string, string> = {
-  pending:   "bg-yellow-50 text-yellow-600",
+  pending: "bg-yellow-50 text-yellow-600",
   confirmed: "bg-blue-50 text-blue-600",
-  shipped:   "bg-purple-50 text-purple-600",
+  shipped: "bg-purple-50 text-purple-600",
   delivered: "bg-green-50 text-green-600",
   cancelled: "bg-red-50 text-red-500",
 };
@@ -35,11 +23,9 @@ export default function UserDashboard() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const { products, fetchProducts } = useProductStore();
+  const { orders, loading: ordersLoading, fetchCustomerOrders } = useOrderStore();
   const { ids: wishlistIds, hydrate, hydrated } = useWishlistStore();
   const { settings } = useSettings();
-
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [ordersLoading, setOrdersLoading] = useState(true);
 
   useEffect(() => {
     if (!loading && !user) router.push("/sign-in");
@@ -54,12 +40,10 @@ export default function UserDashboard() {
   }, [fetchProducts]);
 
   useEffect(() => {
-    if (!user) return;
-    apiClient<Order[]>("/customer/orders")
-      .then((data) => setOrders(Array.isArray(data) ? data : []))
-      .catch(() => setOrders([]))
-      .finally(() => setOrdersLoading(false));
-  }, [user]);
+    if (user) {
+      fetchCustomerOrders();
+    }
+  }, [user, fetchCustomerOrders]);
 
   if (loading || !user) {
     return (
@@ -90,10 +74,10 @@ export default function UserDashboard() {
         {/* Quick Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { label: "Orders", value: orders.length, href: "/dashboard/orders", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg> },
-            { label: "Wishlist", value: wishlistIds.length, href: "/dashboard/wishlist", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> },
-            { label: "Pending", value: orders.filter(o => o.status === "pending").length, href: "/dashboard/orders", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> },
-            { label: "Delivered", value: orders.filter(o => o.status === "delivered").length, href: "/dashboard/orders", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg> },
+            { label: "Orders", value: orders.length, href: "/dashboard/orders", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" /><path d="M3 6h18" /><path d="M16 10a4 4 0 0 1-8 0" /></svg> },
+            { label: "Wishlist", value: wishlistIds.length, href: "/dashboard/wishlist", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg> },
+            { label: "Pending", value: orders.filter(o => o.status === "pending").length, href: "/dashboard/orders", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg> },
+            { label: "Delivered", value: orders.filter(o => o.status === "delivered").length, href: "/dashboard/orders", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12" /></svg> },
           ].map(({ label, value, href, icon }) => (
             <Link key={label} href={href} className="bg-white dark:bg-neutral-900 rounded-2xl border border-gray-100 dark:border-neutral-800 p-5 flex items-center gap-4 hover:shadow-md transition-shadow">
               <div className="w-10 h-10 bg-gray-50 dark:bg-neutral-800 rounded-xl flex items-center justify-center text-gray-600 dark:text-gray-300 flex-shrink-0">{icon}</div>
@@ -121,7 +105,7 @@ export default function UserDashboard() {
               </div>
             ) : recentOrders.length === 0 ? (
               <div className="py-16 text-center">
-                <svg className="mx-auto mb-3 text-gray-200" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                <svg className="mx-auto mb-3 text-gray-200" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" /><path d="M3 6h18" /><path d="M16 10a4 4 0 0 1-8 0" /></svg>
                 <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">No orders yet</p>
                 <Link href="/" className="mt-3 inline-block text-xs font-black uppercase tracking-widest text-black dark:text-white underline">Start Shopping</Link>
               </div>

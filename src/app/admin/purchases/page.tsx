@@ -33,7 +33,7 @@ export default function PurchasesPage() {
   };
 
   return (
-    <div className="p-[10px] md:p-8 w-full max-w-7xl mx-auto">
+    <div className="p-[10px] md:p-8 w-full">
       <AdminPageHeader
         title="Purchase History"
         description="View all product acquisitions and stock intake records."
