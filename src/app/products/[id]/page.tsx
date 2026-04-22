@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import Header from "@/components/Header";
 import ProductCard from "@/components/ProductCard";
+import ProductImageModal from "@/components/ProductImageModal";
 import { useProductStore, Product } from "@/store/useProductStore";
 import { useCart } from "@/context/CartContext";
 import { useSettings } from "@/context/SettingsContext";
@@ -22,6 +23,9 @@ export default function ProductDetailPage() {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [imgError, setImgError] = useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [previewInitialIndex, setPreviewInitialIndex] = useState(0);
+  const [previewProducts, setPreviewProducts] = useState<Product[]>([]);
 
   useEffect(() => {
     if (!hydrated) hydrate();
@@ -116,14 +120,23 @@ export default function ProductDetailPage() {
         {/* Main product area */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-16 mb-16 md:mb-24">
           {/* Image */}
-          <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-gray-100 dark:bg-neutral-800 shadow-sm">
+          <div 
+            onClick={() => {
+              if (product) {
+                setPreviewProducts([product]);
+                setPreviewInitialIndex(0);
+                setIsPreviewOpen(true);
+              }
+            }}
+            className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-gray-100 dark:bg-neutral-800 shadow-sm cursor-pointer group"
+          >
             {!inStock && (
               <div className="absolute top-4 left-4 z-10 bg-black dark:bg-white text-white dark:text-black text-[10px] font-black px-3 py-1.5 uppercase tracking-widest rounded-full shadow-xl">
                 Sold Out
               </div>
             )}
             <button
-              onClick={() => toggle(product.id)}
+              onClick={(e) => { e.stopPropagation(); toggle(product.id); }}
               className="absolute top-4 right-4 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-white/80 dark:bg-neutral-900/80 backdrop-blur shadow-sm hover:scale-110 active:scale-95 transition-transform cursor-pointer"
             >
               {isWishlisted(product.id) ? (
@@ -140,11 +153,11 @@ export default function ProductDetailPage() {
               <img
                 src={resolvedImg}
                 alt={product.name}
-                className="absolute inset-0 w-full h-full object-cover"
+                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                 onError={() => setImgError(true)}
               />
             ) : (
-              <div className="absolute inset-0 bg-gradient-to-tr from-gray-200 to-gray-100 dark:from-neutral-800 dark:to-neutral-700" />
+              <div className="absolute inset-0 bg-gradient-to-tr from-gray-200 to-gray-100 dark:from-neutral-800 dark:to-neutral-700 hover:scale-105 transition-transform duration-700" />
             )}
           </div>
 
@@ -252,13 +265,28 @@ export default function ProductDetailPage() {
               </Link>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-              {related.map((p) => (
-                <ProductCard key={p.id} {...p} />
+              {related.map((p, index) => (
+                <ProductCard 
+                  key={p.id} 
+                  {...p} 
+                  onImageClick={() => {
+                    setPreviewProducts(related);
+                    setPreviewInitialIndex(index);
+                    setIsPreviewOpen(true);
+                  }}
+                />
               ))}
             </div>
           </section>
         )}
       </div>
+
+      <ProductImageModal
+        isOpen={isPreviewOpen}
+        onClose={() => setIsPreviewOpen(false)}
+        products={previewProducts}
+        initialIndex={previewInitialIndex}
+      />
     </main>
   );
 }

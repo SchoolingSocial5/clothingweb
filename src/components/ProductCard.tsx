@@ -16,9 +16,10 @@ interface ProductCardProps {
   color: string;
   quantity: number;
   image_url?: string;
+  onImageClick?: () => void;
 }
 
-export default function ProductCard({ id, name, category, price, color, quantity, image_url }: ProductCardProps) {
+export default function ProductCard({ id, name, category, price, color, quantity, image_url, onImageClick }: ProductCardProps) {
   const { cart, addToCart, removeFromCart, updateQuantity } = useCart();
   const { settings } = useSettings();
   const { hydrated, hydrate, toggle, isWishlisted } = useWishlistStore();
@@ -58,7 +59,16 @@ export default function ProductCard({ id, name, category, price, color, quantity
   return (
     <Link href={`/products/${id}`} className={`group flex flex-col ${quantity <= 0 ? 'opacity-70' : ''} transition-colors duration-300`}>
       {/* Image container */}
-      <div className="relative aspect-[3/4] overflow-hidden bg-gray-100 dark:bg-neutral-800 mb-3 rounded-xl">
+      <div 
+        onClick={(e) => {
+          if (onImageClick) {
+            e.preventDefault();
+            e.stopPropagation();
+            onImageClick();
+          }
+        }}
+        className={`relative aspect-[3/4] overflow-hidden bg-gray-100 dark:bg-neutral-800 mb-3 rounded-xl ${onImageClick ? 'cursor-pointer' : ''}`}
+      >
         {/* Sold out badge */}
         {quantity <= 0 && (
           <div className="absolute top-3 left-3 z-20 bg-black dark:bg-white text-white dark:text-black text-[10px] font-black px-3 py-1.5 uppercase tracking-widest rounded-full shadow-xl">

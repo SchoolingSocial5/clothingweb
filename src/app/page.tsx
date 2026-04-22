@@ -11,6 +11,7 @@ import { useBannerStore } from "@/store/useBannerStore";
 import Header from "@/components/Header";
 import Sidebar from "@/components/Sidebar";
 import ProductCard from "@/components/ProductCard";
+import ProductImageModal from "@/components/ProductImageModal";
 import { getImageUrl } from "@/utils/image";
 import { useBlogStore, Blog } from "@/store/useBlogStore";
 
@@ -33,6 +34,8 @@ export default function Home() {
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, Infinity]);
   const [homeBlog, setHomeBlog] = useState<Blog | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [previewIndex, setPreviewIndex] = useState(0);
 
   useEffect(() => {
     fetchProducts();
@@ -246,8 +249,15 @@ export default function Home() {
                 <div key={i} className="bg-gray-100 dark:bg-neutral-800 rounded-2xl h-80 animate-pulse" />
               ))
               : paginated.length > 0
-                ? paginated.map((p) => (
-                  <ProductCard key={p.id} {...p} />
+                ? paginated.map((p, index) => (
+                  <ProductCard 
+                    key={p.id} 
+                    {...p} 
+                    onImageClick={() => {
+                      setPreviewIndex((page - 1) * PER_PAGE + index);
+                      setIsPreviewOpen(true);
+                    }}
+                  />
                 ))
                 : (
                   <div className="col-span-full py-20 text-center">
@@ -305,6 +315,12 @@ export default function Home() {
           )}
         </div>
       </section>
+      <ProductImageModal
+        isOpen={isPreviewOpen}
+        onClose={() => setIsPreviewOpen(false)}
+        products={filtered}
+        initialIndex={previewIndex}
+      />
     </main>
   );
 }

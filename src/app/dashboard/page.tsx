@@ -4,9 +4,10 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Header from "@/components/Header";
 import ProductCard from "@/components/ProductCard";
+import ProductImageModal from "@/components/ProductImageModal";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { useProductStore } from "@/store/useProductStore";
+import { Product, useProductStore } from "@/store/useProductStore";
 import { useWishlistStore } from "@/store/useWishlistStore";
 import { useSettings } from "@/context/SettingsContext";
 import { formatPrice } from "@/utils/format";
@@ -26,6 +27,9 @@ export default function UserDashboard() {
   const { orders, loading: ordersLoading, fetchCustomerOrders } = useOrderStore();
   const { ids: wishlistIds, hydrate, hydrated } = useWishlistStore();
   const { settings } = useSettings();
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [previewInitialIndex, setPreviewInitialIndex] = useState(0);
+  const [previewProducts, setPreviewProducts] = useState<Product[]>([]);
 
   useEffect(() => {
     if (!loading && !user) router.push("/sign-in");
@@ -146,8 +150,16 @@ export default function UserDashboard() {
               </Link>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5">
-              {wishlistProducts.slice(0, 4).map((p) => (
-                <ProductCard key={p.id} {...p} />
+              {wishlistProducts.slice(0, 4).map((p, index) => (
+                <ProductCard
+                  key={p.id}
+                  {...p}
+                  onImageClick={() => {
+                    setPreviewProducts(wishlistProducts.slice(0, 4));
+                    setPreviewInitialIndex(index);
+                    setIsPreviewOpen(true);
+                  }}
+                />
               ))}
             </div>
           </section>
@@ -162,13 +174,28 @@ export default function UserDashboard() {
             </Link>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5">
-            {recentProducts.map((p) => (
-              <ProductCard key={p.id} {...p} />
+            {recentProducts.map((p, index) => (
+              <ProductCard
+                key={p.id}
+                {...p}
+                onImageClick={() => {
+                  setPreviewProducts(recentProducts);
+                  setPreviewInitialIndex(index);
+                  setIsPreviewOpen(true);
+                }}
+              />
             ))}
           </div>
         </section>
 
       </div>
+
+      <ProductImageModal
+        isOpen={isPreviewOpen}
+        onClose={() => setIsPreviewOpen(false)}
+        products={previewProducts}
+        initialIndex={previewInitialIndex}
+      />
     </main>
   );
 }

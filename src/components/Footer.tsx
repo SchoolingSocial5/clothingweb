@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useSettings } from '@/context/SettingsContext';
 import { useSocialMediaStore } from '@/store/useSocialMediaStore';
+import { getImageUrl } from '@/utils/image';
 
 export default function Footer() {
   const pathname = usePathname();
@@ -21,7 +22,7 @@ export default function Footer() {
     return null;
   }
   const companyName = settings?.company_name || 'Wink Ecommerce';
-  const logoSrc = settings?.logo ? `/store-logo.png?v=${encodeURIComponent(settings.logo)}` : null;
+  const logoSrc = getImageUrl(settings?.logo);
 
   // Helper to render social icons
   const renderIcon = (platformName: string) => {
