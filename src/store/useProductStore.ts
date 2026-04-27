@@ -22,10 +22,16 @@ interface ProductState {
   createProduct: (formData: FormData) => Promise<Product>;
   updateProduct: (id: number, formData: FormData) => Promise<Product>;
   deleteProduct: (id: number) => Promise<void>;
+  selectedProductIds: number[];
+  toggleProductSelection: (id: number) => void;
+  toggleAllProducts: () => void;
+  clearProductSelection: () => void;
+  bulkDeleteProducts: (ids: number[]) => Promise<void>;
 }
 
 export const useProductStore = create<ProductState>((set, get) => ({
   products: [],
+  selectedProductIds: [],
   loading: false,
   error: null,
 
@@ -95,6 +101,41 @@ export const useProductStore = create<ProductState>((set, get) => ({
       await apiClient(`/products/${id}`, { method: 'DELETE' });
       set({ 
         products: get().products.filter(p => p.id !== id),
+        loading: false 
+      });
+    } catch (err: any) {
+      set({ error: err.message, loading: false });
+      throw err;
+    }
+  },
+
+  toggleProductSelection: (id) => {
+    const { selectedProductIds } = get();
+    if (selectedProductIds.includes(id)) {
+      set({ selectedProductIds: selectedProductIds.filter(pid => pid !== id) });
+    } else {
+      set({ selectedProductIds: [...selectedProductIds, id] });
+    }
+  },
+
+  toggleAllProducts: () => {
+    const { products, selectedProductIds } = get();
+    if (selectedProductIds.length === products.length && products.length > 0) {
+      set({ selectedProductIds: [] });
+    } else {
+      set({ selectedProductIds: products.map(p => p.id) });
+    }
+  },
+
+  clearProductSelection: () => set({ selectedProductIds: [] }),
+
+  bulkDeleteProducts: async (ids) => {
+    set({ loading: true, error: null });
+    try {
+      await Promise.all(ids.map(id => apiClient(`/products/${id}`, { method: 'DELETE' })));
+      set({ 
+        products: get().products.filter(p => !ids.includes(p.id)),
+        selectedProductIds: [],
         loading: false 
       });
     } catch (err: any) {

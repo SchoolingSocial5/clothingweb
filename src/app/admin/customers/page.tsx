@@ -11,11 +11,16 @@ import AssignPositionModal from '@/components/admin/AssignPositionModal';
 import Toast from '@/components/admin/Toast';
 
 export default function CustomersPage() {
-  const { token } = useAuth();
-  const { customers, pagination, loading, fetchCustomers, deleteCustomer } = useCustomerStore();
+  const { token, user } = useAuth();
+  const { 
+    customers, pagination, loading, fetchCustomers, deleteCustomer,
+    selectedCustomerIds, toggleCustomerSelection, toggleAllCustomers, clearCustomerSelection, bulkDeleteCustomers
+  } = useCustomerStore();
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [pendingStaffUser, setPendingStaffUser] = useState<{id: string, name: string, email: string} | null>(null);
   const [search, setSearch] = useState('');
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+  const [bulkUpdating, setBulkUpdating] = useState(false);
   const [toast, setToast] = useState({ visible: false, message: '', type: 'success' as 'success' | 'error' });
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
@@ -53,9 +58,25 @@ export default function CustomersPage() {
             {loading && <div className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 border-2 border-gray-300 border-t-black rounded-full animate-spin" />}
           </div>
         </div>
-          <table className="w-full text-left border-collapse">
+
+        {/* Bulk Actions Header */}
+        <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between px-6 py-4 bg-white dark:bg-neutral-900 border-b border-gray-100 dark:border-neutral-800 gap-3">
+          <label className="flex items-center gap-4 cursor-pointer group">
+            <input
+              type="checkbox"
+              checked={customers.length > 0 && customers.every(c => selectedCustomerIds.includes(c.id))}
+              onChange={() => toggleAllCustomers()}
+              className="w-5 h-5 rounded-lg border-gray-200 text-black focus:ring-black cursor-pointer transition-all"
+            />
+            <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 group-hover:text-black transition-colors">Select All Customers</span>
+          </label>
+        </div>
+
+        <div className="overflow-x-auto min-h-[400px]">
+          <table className="w-full text-left border-collapse min-w-[800px]">
             <thead>
               <tr className="bg-gray-50 dark:bg-neutral-800/50 border-b border-gray-100 dark:border-neutral-800">
+                <th className="px-2 py-4 w-8"></th>
                 <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">Name</th>
                 <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">Email</th>
                 <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 text-center">Orders</th>
@@ -67,6 +88,14 @@ export default function CustomersPage() {
             <tbody className="divide-y divide-gray-50 dark:divide-neutral-800">
               {customers.map((customer) => (
                 <tr key={customer.id} className="hover:bg-gray-50/50 dark:hover:bg-neutral-800/30 transition-colors">
+                  <td className="px-2 py-5" onClick={e => e.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      checked={selectedCustomerIds.includes(customer.id)}
+                      onChange={() => toggleCustomerSelection(customer.id)}
+                      className="w-5 h-5 rounded-lg border-gray-200 text-black focus:ring-black cursor-pointer transition-all"
+                    />
+                  </td>
                   <td className="px-6 py-5">
                     <Link href={`/admin/customers/${customer.id}`} className="flex items-center gap-3 cursor-pointer group">
                       <div className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center text-xs font-bold group-hover:scale-110 transition-transform">
@@ -116,10 +145,11 @@ export default function CustomersPage() {
                   </td>
                 </tr>
               ))}
-              {loading && <TableLoader colSpan={6} />}
+              {loading && <TableLoader colSpan={7} />}
             </tbody>
           </table>
-          {customers.length === 0 && !loading && (
+        </div>
+        {customers.length === 0 && !loading && (
             <div className="py-20 text-center bg-gray-50/30 dark:bg-neutral-800/30">
               <p className="text-gray-400 font-medium italic">No customers found.</p>
             </div>
@@ -135,12 +165,57 @@ export default function CustomersPage() {
           )}
         </div>
 
+      {selectedCustomerIds.length > 0 && user?.position === 'Director' && (
+        <div className="mt-8 bg-black text-white px-8 py-5 rounded-3xl shadow-2xl flex items-center justify-between animate-in fade-in slide-in-from-bottom-4 duration-500 ring-1 ring-white/10 flex-wrap gap-4">
+          <div className="flex items-center gap-8">
+            <span className="text-[10px] font-black uppercase tracking-widest bg-white/20 px-3 py-1.5 rounded-lg">
+              {selectedCustomerIds.length} Selected
+            </span>
+            <div className="hidden sm:block h-6 w-px bg-white/10"></div>
+            <div className="flex items-center gap-4">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-white/50">Actions</span>
+              <button
+                onClick={() => setShowBulkDeleteConfirm(true)}
+                disabled={bulkUpdating}
+                className="text-[10px] font-black uppercase tracking-widest px-6 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all disabled:opacity-50 flex items-center gap-2 active:scale-95"
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
+                Delete
+              </button>
+            </div>
+          </div>
+          <button onClick={clearCustomerSelection} className="text-white/40 hover:text-white transition-all p-2 flex items-center gap-2 group active:scale-90">
+            <span className="text-[10px] font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Clear</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+          </button>
+        </div>
+      )}
+
       <DeleteConfirmModal
         isOpen={pendingDeleteId !== null}
         onClose={() => setPendingDeleteId(null)}
         onConfirm={() => { if (pendingDeleteId) deleteCustomer(pendingDeleteId); }}
         title="Delete Customer"
         message="Are you sure you want to delete this customer? This action cannot be undone."
+      />
+
+      <DeleteConfirmModal
+        isOpen={showBulkDeleteConfirm}
+        onClose={() => setShowBulkDeleteConfirm(false)}
+        onConfirm={async () => {
+          setBulkUpdating(true);
+          try {
+            await bulkDeleteCustomers(selectedCustomerIds);
+            setShowBulkDeleteConfirm(false);
+            showToast(`Successfully deleted ${selectedCustomerIds.length} customers`);
+          } catch {
+            showToast("Failed to delete customers", "error");
+          } finally {
+            setBulkUpdating(false);
+          }
+        }}
+        title="Delete Customers"
+        message={`Are you sure you want to delete ${selectedCustomerIds.length} selected customer${selectedCustomerIds.length !== 1 ? 's' : ''}? This action cannot be undone.`}
       />
 
       <AssignPositionModal 

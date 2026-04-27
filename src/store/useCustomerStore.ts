@@ -43,6 +43,11 @@ interface CustomerState {
   fetchCustomerDetails: (id: string) => Promise<void>;
   updateCustomer: (id: string, data: Partial<Customer>) => Promise<void>;
   deleteCustomer: (id: string) => Promise<void>;
+  selectedCustomerIds: string[];
+  toggleCustomerSelection: (id: string) => void;
+  toggleAllCustomers: () => void;
+  clearCustomerSelection: () => void;
+  bulkDeleteCustomers: (ids: string[]) => Promise<void>;
 }
 
 export const useCustomerStore = create<CustomerState>((set, get) => ({
@@ -51,6 +56,7 @@ export const useCustomerStore = create<CustomerState>((set, get) => ({
   userOrders: [],
   userOrdersPagination: { total: 0, page: 1, last_page: 1, per_page: 10 },
   selectedCustomer: null,
+  selectedCustomerIds: [],
   loading: false,
   error: null,
 
@@ -119,6 +125,41 @@ export const useCustomerStore = create<CustomerState>((set, get) => ({
       });
     } catch (err: any) {
       set({ error: err.message });
+      throw err;
+    }
+  },
+
+  toggleCustomerSelection: (id) => {
+    const { selectedCustomerIds } = get();
+    if (selectedCustomerIds.includes(id)) {
+      set({ selectedCustomerIds: selectedCustomerIds.filter(cid => cid !== id) });
+    } else {
+      set({ selectedCustomerIds: [...selectedCustomerIds, id] });
+    }
+  },
+
+  toggleAllCustomers: () => {
+    const { customers, selectedCustomerIds } = get();
+    if (selectedCustomerIds.length === customers.length && customers.length > 0) {
+      set({ selectedCustomerIds: [] });
+    } else {
+      set({ selectedCustomerIds: customers.map(c => c.id) });
+    }
+  },
+
+  clearCustomerSelection: () => set({ selectedCustomerIds: [] }),
+
+  bulkDeleteCustomers: async (ids) => {
+    set({ loading: true, error: null });
+    try {
+      await Promise.all(ids.map(id => apiClient(`/admin/users/${id}`, { method: 'DELETE' })));
+      set({ 
+        customers: get().customers.filter(c => !ids.includes(c.id)),
+        selectedCustomerIds: [],
+        loading: false 
+      });
+    } catch (err: any) {
+      set({ error: err.message, loading: false });
       throw err;
     }
   },

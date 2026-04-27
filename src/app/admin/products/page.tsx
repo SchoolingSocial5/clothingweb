@@ -14,8 +14,11 @@ import TableLoader from "@/components/admin/TableLoader";
 import { getImageUrl } from "@/utils/image";
 
 export default function ProductsPage() {
-  const { token } = useAuth();
-  const { products, loading, fetchProducts, createProduct, updateProduct, deleteProduct } = useProductStore();
+  const { token, user } = useAuth();
+  const { 
+    products, loading, fetchProducts, createProduct, updateProduct, deleteProduct,
+    selectedProductIds, toggleProductSelection, toggleAllProducts, clearProductSelection, bulkDeleteProducts
+  } = useProductStore();
   const { categories, fetchCategories } = useCategoryStore();
   const { addPurchase } = usePurchaseStore();
   const { settings } = useSettings();
@@ -41,6 +44,8 @@ export default function ProductsPage() {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+  const [bulkUpdating, setBulkUpdating] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [search, setSearch] = useState('');
   const [isSearching, setIsSearching] = useState(false);
@@ -234,11 +239,25 @@ export default function ProductsPage() {
           </div>
         </div>
 
+        {/* Bulk Actions Header (Mobile/Desktop wrapper) */}
+        <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between px-6 py-4 bg-white dark:bg-neutral-900 border-b border-gray-100 dark:border-neutral-800 gap-3">
+          <label className="flex items-center gap-4 cursor-pointer group">
+            <input
+              type="checkbox"
+              checked={products.length > 0 && products.every(p => selectedProductIds.includes(p.id))}
+              onChange={() => toggleAllProducts()}
+              className="w-5 h-5 rounded-lg border-gray-200 text-black focus:ring-black cursor-pointer transition-all"
+            />
+            <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 group-hover:text-black transition-colors">Select All Products</span>
+          </label>
+        </div>
+
         <div className="overflow-x-auto min-h-[400px]">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-gray-50/50 dark:bg-neutral-800/50 text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wider">
                   <th className="px-6 py-4 font-semibold text-center w-16">S/N</th>
+                  <th className="px-2 py-4 w-8"></th>
                   <th className="px-6 py-4 font-semibold">Product Name</th>
                   <th className="px-6 py-4 font-semibold">Category</th>
                   <th className="px-6 py-4 font-semibold">Color</th>
@@ -252,6 +271,14 @@ export default function ProductsPage() {
                   <tr key={product.id} className="hover:bg-gray-50/50 dark:hover:bg-neutral-800/30 transition-colors">
                     <td className="px-6 py-4 text-center text-sm text-gray-500 font-medium">
                       {(currentPage - 1) * itemsPerPage + index + 1}
+                    </td>
+                    <td className="px-2 py-4" onClick={e => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={selectedProductIds.includes(product.id)}
+                        onChange={() => toggleProductSelection(product.id)}
+                        className="w-5 h-5 rounded-lg border-gray-200 text-black focus:ring-black cursor-pointer transition-all"
+                      />
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-4">
@@ -319,18 +346,18 @@ export default function ProductsPage() {
                     </td>
                   </tr>
                 ))}
-              {loading && <TableLoader colSpan={7} />}
+              {loading && <TableLoader colSpan={8} />}
             </tbody>
             </table>
         </div>
 
         {/* Pagination Controls */}
         {filteredProducts.length > itemsPerPage && (
-          <div className="px-6 py-4 border-t border-gray-100 dark:border-neutral-800 bg-gray-50/30 dark:bg-neutral-800/30 flex items-center justify-between">
+          <div className="px-6 py-4 border-t border-gray-100 dark:border-neutral-800 bg-gray-50/30 dark:bg-neutral-800/30 flex items-center justify-between flex-wrap gap-4">
             <p className="text-sm text-gray-500">
               Showing <span className="font-medium">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="font-medium">{Math.min(currentPage * itemsPerPage, filteredProducts.length)}</span> of <span className="font-medium">{filteredProducts.length}</span> results
             </p>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <button
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
@@ -364,6 +391,32 @@ export default function ProductsPage() {
         )}
       </div>
 
+      {selectedProductIds.length > 0 && user?.position === 'Director' && (
+        <div className="mt-8 bg-black text-white px-8 py-5 rounded-3xl shadow-2xl flex items-center justify-between animate-in fade-in slide-in-from-bottom-4 duration-500 ring-1 ring-white/10 flex-wrap gap-4">
+          <div className="flex items-center gap-8">
+            <span className="text-[10px] font-black uppercase tracking-widest bg-white/20 px-3 py-1.5 rounded-lg">
+              {selectedProductIds.length} Selected
+            </span>
+            <div className="hidden sm:block h-6 w-px bg-white/10"></div>
+            <div className="flex items-center gap-4">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-white/50">Actions</span>
+              <button
+                onClick={() => setShowBulkDeleteConfirm(true)}
+                disabled={bulkUpdating}
+                className="text-[10px] font-black uppercase tracking-widest px-6 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all disabled:opacity-50 flex items-center gap-2 active:scale-95"
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
+                Delete
+              </button>
+            </div>
+          </div>
+          <button onClick={clearProductSelection} className="text-white/40 hover:text-white transition-all p-2 flex items-center gap-2 group active:scale-90">
+            <span className="text-[10px] font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Clear</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+          </button>
+        </div>
+      )}
+
       <ProductModal
         isOpen={isModalOpen}
         onClose={() => {
@@ -388,6 +441,25 @@ export default function ProductsPage() {
         onConfirm={confirmDelete}
         title="Confirm Deletion"
         message="Are you sure you want to remove this product? This action cannot be undone."
+      />
+
+      <DeleteConfirmModal
+        isOpen={showBulkDeleteConfirm}
+        onClose={() => setShowBulkDeleteConfirm(false)}
+        onConfirm={async () => {
+          setBulkUpdating(true);
+          try {
+            await bulkDeleteProducts(selectedProductIds);
+            setShowBulkDeleteConfirm(false);
+            showToast(`Successfully deleted ${selectedProductIds.length} products`);
+          } catch {
+            showToast("Failed to delete products", "error");
+          } finally {
+            setBulkUpdating(false);
+          }
+        }}
+        title="Delete Products"
+        message={`Are you sure you want to delete ${selectedProductIds.length} selected product${selectedProductIds.length !== 1 ? 's' : ''}? This action cannot be undone.`}
       />
 
       <Toast
