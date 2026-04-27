@@ -1,5 +1,6 @@
 "use client";
 import React from 'react';
+import html2canvas from 'html2canvas';
 import { Order } from './types';
 
 interface PrintSlipModalProps {
@@ -9,6 +10,8 @@ interface PrintSlipModalProps {
 }
 
 export default function PrintSlipModal({ order, settings, onClose }: PrintSlipModalProps) {
+  const receiptRef = React.useRef<HTMLDivElement>(null);
+
   const handlePrint = () => {
     const items = order.items.map(item =>
       `<div class="row"><span>${item.productName} &times;${item.quantity}</span><span>&#8358;${(parseFloat(item.price as any) * item.quantity).toLocaleString()}</span></div>`
@@ -60,12 +63,30 @@ export default function PrintSlipModal({ order, settings, onClose }: PrintSlipMo
   const handleShare = async () => {
     const text = `Order #${order.id}\nReceipt ID: ${order.receipt_number || 'N/A'}\nTotal: ₦${parseFloat(order.total_amount as any).toLocaleString()}\n\nThank you for shopping with ${settings?.companyName || 'us'}!`;
     
+    let file: File | null = null;
+    if (receiptRef.current) {
+      try {
+        const canvas = await html2canvas(receiptRef.current, { scale: 2 });
+        const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
+        if (blob) {
+          file = new File([blob], `receipt-${order.id}.png`, { type: 'image/png' });
+        }
+      } catch (err) {
+        console.error('Failed to generate receipt image:', err);
+      }
+    }
+
     if (navigator.share) {
       try {
-        await navigator.share({
+        const shareData: any = {
           title: `Receipt - Order #${order.id}`,
           text: text,
-        });
+        };
+        // Use any cast to bypass strict typing for canShare if necessary
+        if (file && (navigator as any).canShare && (navigator as any).canShare({ files: [file] })) {
+          shareData.files = [file];
+        }
+        await navigator.share(shareData);
       } catch (err: any) {
         if (err.name !== 'AbortError') {
           console.error('Error sharing:', err);
@@ -101,7 +122,7 @@ export default function PrintSlipModal({ order, settings, onClose }: PrintSlipMo
         </div>
 
         {/* Slip Preview */}
-        <div className="px-6 py-5 font-mono text-xs space-y-1 border-b border-dashed border-gray-200 dark:border-neutral-700 bg-gray-50/50 dark:bg-neutral-800/50">
+        <div ref={receiptRef} className="px-6 py-5 font-mono text-xs space-y-1 border-b border-dashed border-gray-200 dark:border-neutral-700 bg-gray-50/50 dark:bg-neutral-800/50">
           <div className="text-center mb-3">
             <p className="font-black text-sm uppercase tracking-wider">{settings?.companyName || 'Store Receipt'}</p>
             {settings?.address && <p className="text-[9px] text-gray-500 leading-tight mt-0.5">{settings.address}</p>}

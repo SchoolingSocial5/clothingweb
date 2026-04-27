@@ -112,7 +112,7 @@ export default function SignIn() {
 
           {/* Image Side */}
           <div className="hidden lg:block lg:w-1/2 bg-[#E5E3DB] relative">
-            <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('/menstore4.jpg')" }}></div>
+            <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('/signin.jpeg')" }}></div>
             <div className="absolute inset-0 bg-black/10"></div>
           </div>
         </div>

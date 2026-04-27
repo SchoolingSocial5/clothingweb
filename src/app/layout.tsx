@@ -8,8 +8,8 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "Wink Ecommerce",
-  description: "Explore the various collection of Wink",
+  title: "Hi Health Equipment",
+  description: "Explore the various collection of Hi Health Equipment",
 };
 
 import { CartProvider } from "@/context/CartContext";
