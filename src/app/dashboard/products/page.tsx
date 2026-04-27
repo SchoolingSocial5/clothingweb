@@ -22,7 +22,7 @@ export default function ProductsPage() {
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const itemsPerPage = 20;
 
   const showToast = (message: string, type: "success" | "error" | "warning" = "success") => {
     setToast({ message, type, visible: true });

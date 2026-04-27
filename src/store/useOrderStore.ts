@@ -32,7 +32,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     total: 0,
     page: 1,
     last_page: 1,
-    per_page: 10,
+    per_page: 20,
   },
   selectedOrderIds: [],
   loading: false,
@@ -41,7 +41,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
   fetchOrders: async (page = 1, from = '', to = '', search = '', paymentStatus = '') => {
     if (get().orders.length === 0) set({ loading: true });
     try {
-      const params = new URLSearchParams({ page: String(page), limit: '10' });
+      const params = new URLSearchParams({ page: String(page), limit: '20' });
       if (from) params.set('from', from);
       if (to) params.set('to', to);
       if (search) params.set('search', search);

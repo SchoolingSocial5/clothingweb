@@ -33,7 +33,7 @@ const paymentMethodColors: Record<string, string> = {
 };
 
 export default function TransactionsPage() {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const orders = useOrderStore(state => state.orders);
   const pagination = useOrderStore(state => state.pagination);
   const selectedOrderIds = useOrderStore(state => state.selectedOrderIds);
@@ -228,12 +228,13 @@ export default function TransactionsPage() {
                   <th className="px-4 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">Staff</th>
                   <th className="px-4 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">Payment</th>
                   <th className="px-4 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 text-right">Date/Time</th>
+                  {user?.position === 'Director' && <th className="px-4 py-5 w-10"></th>}
                 </tr>
               </thead>
               <tbody>
                 {orders.length === 0 && !loading && (
                   <tr>
-                    <td colSpan={9} className="px-6 py-20 text-center">
+                    <td colSpan={user?.position === 'Director' ? 10 : 9} className="px-6 py-20 text-center">
                       <svg className="mx-auto mb-4 text-gray-200" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
                         <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
                       </svg>
@@ -335,9 +336,24 @@ export default function TransactionsPage() {
                         <div className="text-gray-400">{new Date(order.created_at).toLocaleDateString()}</div>
                       </div>
                     </td>
+                    {user?.position === 'Director' && (
+                      <td className="px-4 py-5 text-right" onClick={e => e.stopPropagation()}>
+                        <button
+                          onClick={() => {
+                            if (window.confirm('Are you sure you want to delete this transaction?')) {
+                              useOrderStore.getState().deleteOrder(order.id);
+                            }
+                          }}
+                          className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-colors"
+                          title="Delete Transaction"
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))}
-              {loading && <TableLoader colSpan={8} />}
+              {loading && <TableLoader colSpan={user?.position === 'Director' ? 10 : 9} />}
               </tbody>
             </table>
           </div>
@@ -363,14 +379,16 @@ export default function TransactionsPage() {
               <span className="text-[10px] font-bold uppercase tracking-widest text-white/50">Actions</span>
               <button onClick={() => handleBulkUpdate('payment_status', 'paid')} disabled={bulkUpdating} className="text-[10px] font-black uppercase tracking-widest px-6 py-2.5 bg-white text-black rounded-xl hover:bg-gray-200 transition-all disabled:opacity-50 active:scale-95">Mark Paid</button>
               <button onClick={() => handleBulkUpdate('payment_status', 'unpaid')} disabled={bulkUpdating} className="text-[10px] font-black uppercase tracking-widest px-6 py-2.5 bg-white/10 text-white border border-white/20 rounded-xl hover:bg-white/20 transition-all disabled:opacity-50 active:scale-95">Mark Unpaid</button>
-              <button
-                onClick={() => setShowBulkDeleteConfirm(true)}
-                disabled={bulkUpdating}
-                className="text-[10px] font-black uppercase tracking-widest px-6 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all disabled:opacity-50 flex items-center gap-2 active:scale-95"
-              >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
-                Delete
-              </button>
+              {user?.position === 'Director' && (
+                <button
+                  onClick={() => setShowBulkDeleteConfirm(true)}
+                  disabled={bulkUpdating}
+                  className="text-[10px] font-black uppercase tracking-widest px-6 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all disabled:opacity-50 flex items-center gap-2 active:scale-95"
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
+                  Delete
+                </button>
+              )}
             </div>
           </div>
           <button onClick={() => useOrderStore.getState().clearSelection()} className="text-white/40 hover:text-white transition-all p-2 flex items-center gap-2 group active:scale-90">

@@ -44,7 +44,7 @@ export default function ProductsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [search, setSearch] = useState('');
   const [isSearching, setIsSearching] = useState(false);
-  const itemsPerPage = 10;
+  const itemsPerPage = 20;
 
   const filteredProducts = search.trim()
     ? products.filter(p =>

@@ -15,7 +15,7 @@ import ProductImageModal from "@/components/ProductImageModal";
 import { getImageUrl } from "@/utils/image";
 import { useBlogStore, Blog } from "@/store/useBlogStore";
 
-const PER_PAGE = 12;
+const PER_PAGE = 20;
 
 export default function Home() {
   const products = useProductStore(state => state.products);
@@ -49,13 +49,17 @@ export default function Home() {
       .catch(() => {});
   }, [fetchProducts, fetchBanners, fetchPublicBlogs]);
 
-  // Filter by category, colors and price
+  // Filter by category, colors and price, then sort by availability (in-stock first)
   const filtered = products.filter((p) => {
     if (selectedCategory !== "All Products" && p.category?.toLowerCase() !== selectedCategory.toLowerCase()) return false;
     if (selectedColors.length > 0 && !selectedColors.includes((p.color || "").trim().toLowerCase())) return false;
     const price = parseFloat(p.price);
     if (!isNaN(price) && price > priceRange[1]) return false;
     return true;
+  }).sort((a, b) => {
+    const aAvailable = Number(a.quantity) > 0 ? 1 : 0;
+    const bAvailable = Number(b.quantity) > 0 ? 1 : 0;
+    return bAvailable - aAvailable;
   });
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
@@ -275,12 +279,12 @@ export default function Home() {
 
           {/* Pagination */}
           {!productsLoading && totalPages > 1 && (
-            <div className="mt-16 flex items-center justify-center gap-2">
+            <div className="mt-16 flex items-center justify-center gap-3 flex-wrap">
               {/* Prev */}
               <button
                 onClick={() => changePage(page - 1)}
                 disabled={page === 1}
-                className="w-10 h-10 flex items-center justify-center rounded-full border border-gray-200 dark:border-neutral-800 text-gray-500 dark:text-gray-400 hover:border-black dark:hover:border-white hover:text-black dark:hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                className="min-w-[40px] h-10 flex items-center justify-center rounded-full border border-gray-200 dark:border-neutral-800 text-gray-500 dark:text-gray-400 hover:border-black dark:hover:border-white hover:text-black dark:hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <polyline points="15 18 9 12 15 6"></polyline>
@@ -292,7 +296,7 @@ export default function Home() {
                 <button
                   key={p}
                   onClick={() => changePage(p)}
-                  className={`w-10 h-10 rounded-full text-sm font-bold transition-all ${p === page
+                  className={`min-w-[40px] px-2 h-10 rounded-full text-sm font-bold transition-all ${p === page
                     ? 'bg-black text-white dark:bg-white dark:text-black'
                     : 'border border-gray-200 dark:border-neutral-800 text-gray-500 dark:text-gray-400 hover:border-black dark:hover:border-white hover:text-black dark:hover:text-white'
                   }`}
@@ -305,7 +309,7 @@ export default function Home() {
               <button
                 onClick={() => changePage(page + 1)}
                 disabled={page === totalPages}
-                className="w-10 h-10 flex items-center justify-center rounded-full border border-gray-200 dark:border-neutral-800 text-gray-500 dark:text-gray-400 hover:border-black dark:hover:border-white hover:text-black dark:hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                className="min-w-[40px] h-10 flex items-center justify-center rounded-full border border-gray-200 dark:border-neutral-800 text-gray-500 dark:text-gray-400 hover:border-black dark:hover:border-white hover:text-black dark:hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <polyline points="9 18 15 12 9 6"></polyline>

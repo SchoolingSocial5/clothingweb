@@ -64,41 +64,81 @@ export default function PrintSlipModal({ order, settings, onClose }: PrintSlipMo
     const text = `Order #${order.id}\nReceipt ID: ${order.receipt_number || 'N/A'}\nTotal: ₦${parseFloat(order.total_amount as any).toLocaleString()}\n\nThank you for shopping with ${settings?.companyName || 'us'}!`;
     
     let file: File | null = null;
+    let fallbackDataUrl: string | null = null;
+    
     if (receiptRef.current) {
       try {
         const canvas = await html2canvas(receiptRef.current, { scale: 2 });
         const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
         if (blob) {
           file = new File([blob], `receipt-${order.id}.png`, { type: 'image/png' });
+          fallbackDataUrl = canvas.toDataURL('image/png');
         }
       } catch (err) {
         console.error('Failed to generate receipt image:', err);
       }
     }
 
+    // Determine if browser fully supports sharing files
+    const canShareFiles = file && navigator.canShare && navigator.canShare({ files: [file] });
+
     if (navigator.share) {
       try {
         const shareData: any = {
           title: `Receipt - Order #${order.id}`,
-          text: text,
         };
-        // Use any cast to bypass strict typing for canShare if necessary
-        if (file && (navigator as any).canShare && (navigator as any).canShare({ files: [file] })) {
+        
+        if (canShareFiles) {
+          // If we can share files, don't pass text so some platforms (like WhatsApp) don't prioritize text
           shareData.files = [file];
+        } else {
+          // If files can't be shared but navigator.share exists, just share text
+          shareData.text = text;
         }
+
         await navigator.share(shareData);
+
+        // If file wasn't shared but was successfully generated, prompt user to download manually
+        if (file && !canShareFiles && fallbackDataUrl) {
+          triggerDownload(fallbackDataUrl, `receipt-${order.id}.png`);
+        }
+
       } catch (err: any) {
         if (err.name !== 'AbortError') {
           console.error('Error sharing:', err);
+          // Fallback download if share fails completely
+          if (fallbackDataUrl) {
+            triggerDownload(fallbackDataUrl, `receipt-${order.id}.png`);
+          } else {
+            fallbackClipboard(text);
+          }
         }
       }
     } else {
-      try {
-        await navigator.clipboard.writeText(text);
-        alert('Receipt details copied to clipboard!');
-      } catch (err) {
-        console.error('Failed to copy:', err);
+      if (fallbackDataUrl) {
+        triggerDownload(fallbackDataUrl, `receipt-${order.id}.png`);
+      } else {
+        fallbackClipboard(text);
       }
+    }
+  };
+
+  const triggerDownload = (dataUrl: string, filename: string) => {
+    const a = document.createElement('a');
+    a.href = dataUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    alert('Receipt image downloaded to your device!');
+  };
+
+  const fallbackClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      alert('Receipt details copied to clipboard!');
+    } catch (err) {
+      console.error('Failed to copy:', err);
     }
   };
 
