@@ -11,6 +11,9 @@ export interface Product {
   quantity: number;
   image_url?: string;
   description?: string;
+  product_type: 'Retail' | 'Whole';
+  wholesale_price?: string;
+  min_order_quantity?: number;
 }
 
 interface ProductState {

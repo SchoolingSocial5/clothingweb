@@ -13,7 +13,7 @@ import { usePurchaseStore } from "@/store/usePurchaseStore";
 import TableLoader from "@/components/admin/TableLoader";
 import { getImageUrl } from "@/utils/image";
 
-export default function ProductsPage() {
+export default function WholeSaleProductsPage() {
   const { token, user } = useAuth();
   const { 
     products, loading, fetchProducts, createProduct, updateProduct, deleteProduct,
@@ -32,7 +32,7 @@ export default function ProductsPage() {
     color: "#000000",
     quantity: "0",
     description: "",
-    product_type: "Retail" as "Retail" | "Whole",
+    product_type: "Whole" as "Retail" | "Whole",
     wholesale_price: "",
     min_order_quantity: "1",
     image: null as File | null
@@ -55,7 +55,7 @@ export default function ProductsPage() {
   const itemsPerPage = 20;
 
   const filteredProducts = products.filter(p => {
-    if (p.product_type !== 'Retail') return false;
+    if (p.product_type !== 'Whole') return false;
     if (!search.trim()) return true;
     return p.name.toLowerCase().includes(search.toLowerCase()) ||
            p.category.toLowerCase().includes(search.toLowerCase());
@@ -81,7 +81,7 @@ export default function ProductsPage() {
       color: product.color,
       quantity: product.quantity.toString(),
       description: product.description || "",
-      product_type: product.product_type || "Retail",
+      product_type: product.product_type || "Whole",
       wholesale_price: product.wholesale_price || "",
       min_order_quantity: (product.min_order_quantity || 1).toString(),
       image: null
@@ -134,7 +134,7 @@ export default function ProductsPage() {
     formData.append("product_type", newProduct.product_type);
     formData.append("wholesale_price", newProduct.wholesale_price);
     formData.append("min_order_quantity", newProduct.min_order_quantity);
-    // quantity is managed via Purchase, not directly on save
+
     if (newProduct.image) {
       formData.append("image", newProduct.image);
     }
@@ -153,7 +153,7 @@ export default function ProductsPage() {
 
       setIsModalOpen(false);
       setEditingProduct(null);
-      setNewProduct({ name: "", category: "", price: "", cost_price: "", color: "#000000", quantity: "0", description: "", product_type: "Retail" as "Retail" | "Whole", wholesale_price: "", min_order_quantity: "1", image: null });
+      setNewProduct({ name: "", category: "", price: "", cost_price: "", color: "#000000", quantity: "0", description: "", product_type: "Whole" as "Retail" | "Whole", wholesale_price: "", min_order_quantity: "1", image: null });
       setImagePreview(null);
       showToast(editingProduct ? "Product updated successfully" : "Product saved successfully", "success");
     } catch (err: any) {
@@ -169,7 +169,6 @@ export default function ProductsPage() {
     try {
       let productId = editingProduct?.id;
 
-      // If it's a new product, we must create it first
       if (!productId) {
         const formData = new FormData();
         formData.append("name", newProduct.name);
@@ -180,7 +179,7 @@ export default function ProductsPage() {
         formData.append("product_type", newProduct.product_type);
         formData.append("wholesale_price", newProduct.wholesale_price);
         formData.append("min_order_quantity", newProduct.min_order_quantity);
-        formData.append("quantity", "0"); // Start with 0, then add via purchase
+        formData.append("quantity", "0");
         if (newProduct.image) {
           formData.append("image", newProduct.image);
         }
@@ -198,9 +197,9 @@ export default function ProductsPage() {
       showToast("Purchase recorded and stock updated!", "success");
       setIsModalOpen(false);
       setEditingProduct(null);
-      setNewProduct({ name: "", category: "", price: "", cost_price: "", color: "#000000", quantity: "0", description: "", product_type: "Retail" as "Retail" | "Whole", wholesale_price: "", min_order_quantity: "1", image: null });
+      setNewProduct({ name: "", category: "", price: "", cost_price: "", color: "#000000", quantity: "0", description: "", product_type: "Whole" as "Retail" | "Whole", wholesale_price: "", min_order_quantity: "1", image: null });
       setImagePreview(null);
-      await fetchProducts(); // Refresh stock in list
+      await fetchProducts();
     } catch (error: any) {
       showToast(error.message || "Failed to record purchase", "error");
     } finally {
@@ -211,27 +210,27 @@ export default function ProductsPage() {
   return (
     <div className="p-[10px] md:p-8">
       <AdminPageHeader
-        title="Retail Products"
-        description="View and manage your retail inventory."
-        stats={{ label: "Total Retail", value: filteredProducts.length }}
+        title="Whole Sale Products"
+        description="View and manage your whole sale inventory."
+        stats={{ label: "Total Whole Sale", value: filteredProducts.length }}
       >
         <button
           onClick={() => {
-            setNewProduct({ name: "", category: "", price: "", cost_price: "", color: "#000000", quantity: "0", description: "", product_type: "Retail" as "Retail" | "Whole", wholesale_price: "", min_order_quantity: "1", image: null });
+            setEditingProduct(null);
+            setNewProduct({ name: "", category: "", price: "", cost_price: "", color: "#000000", quantity: "0", description: "", product_type: "Whole" as "Retail" | "Whole", wholesale_price: "", min_order_quantity: "1", image: null });
             setImagePreview(null);
             setIsModalOpen(true);
           }}
           className="bg-black text-white px-4 py-2 md:px-6 md:py-3 rounded-xl text-sm font-bold shadow-lg shadow-black/20 hover:bg-gray-900 transition-colors flex items-center gap-2 cursor-pointer"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-          Create New Product
+          Create Wholesale Product
         </button>
       </AdminPageHeader>
 
-
       <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-gray-100 dark:border-neutral-800 shadow-sm overflow-hidden">
         <div className="px-6 py-5 border-b border-gray-100 dark:border-neutral-800 flex justify-between items-center">
-          <h3 className="hidden md:block font-bold text-lg">All Products ({products.length})</h3>
+          <h3 className="hidden md:block font-bold text-lg">Wholesale Products ({filteredProducts.length})</h3>
           <div className="relative">
             <input
               type="text"
@@ -250,19 +249,6 @@ export default function ProductsPage() {
           </div>
         </div>
 
-        {/* Bulk Actions Header (Mobile/Desktop wrapper) */}
-        <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between px-6 py-4 bg-white dark:bg-neutral-900 border-b border-gray-100 dark:border-neutral-800 gap-3">
-          <label className="flex items-center gap-4 cursor-pointer group">
-            <input
-              type="checkbox"
-              checked={products.length > 0 && products.every(p => selectedProductIds.includes(p.id))}
-              onChange={() => toggleAllProducts()}
-              className="w-5 h-5 rounded-lg border-gray-200 text-black focus:ring-black cursor-pointer transition-all"
-            />
-            <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 group-hover:text-black transition-colors">Select All Products</span>
-          </label>
-        </div>
-
         <div className="overflow-x-auto min-h-[400px]">
             <table className="w-full text-left border-collapse">
               <thead>
@@ -271,8 +257,9 @@ export default function ProductsPage() {
                   <th className="px-2 py-4 w-8"></th>
                   <th className="px-6 py-4 font-semibold">Product Name</th>
                   <th className="px-6 py-4 font-semibold">Category</th>
-                  <th className="px-6 py-4 font-semibold">Color</th>
-                  <th className="px-6 py-4 font-semibold text-right">Price</th>
+                  <th className="px-6 py-4 font-semibold text-right">Retail Price</th>
+                  <th className="px-6 py-4 font-semibold text-right">Wholesale Price</th>
+                  <th className="px-6 py-4 font-semibold text-center">Min Order</th>
                   <th className="px-6 py-4 font-semibold text-center">Stock</th>
                   <th className="px-6 py-4 font-semibold text-center">Actions</th>
                 </tr>
@@ -305,7 +292,6 @@ export default function ProductsPage() {
                               src={getImageUrl(product.image_url) || ""}
                               alt={product.name}
                               className="w-full h-full object-cover"
-                              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                             />
                           ) : (
                             <svg className="text-gray-400" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
@@ -322,14 +308,14 @@ export default function ProductsPage() {
                         {product.category}
                       </span>
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 rounded-full border border-gray-200" style={{ backgroundColor: product.color }}></div>
-                        <span className="text-xs text-gray-600">{product.color}</span>
-                      </div>
-                    </td>
                     <td className="px-6 py-4 text-right">
                       <span className="font-bold text-sm text-gray-900 dark:text-gray-100">{formatPrice(Number(product.price), settings?.currency_symbol || "₦")}</span>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <span className="font-bold text-sm text-green-600 dark:text-green-400">{formatPrice(Number(product.wholesale_price || 0), settings?.currency_symbol || "₦")}</span>
+                    </td>
+                    <td className="px-6 py-4 text-center text-sm font-medium">
+                      {product.min_order_quantity || 1}
                     </td>
                     <td className="px-6 py-4 text-center">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${product.quantity > 10 ? 'bg-green-100 text-green-800' :
@@ -357,7 +343,7 @@ export default function ProductsPage() {
                     </td>
                   </tr>
                 ))}
-              {loading && <TableLoader colSpan={8} />}
+              {loading && <TableLoader colSpan={9} />}
             </tbody>
             </table>
         </div>
@@ -402,32 +388,6 @@ export default function ProductsPage() {
         )}
       </div>
 
-      {selectedProductIds.length > 0 && user?.position === 'Director' && (
-        <div className="mt-8 bg-black text-white px-8 py-5 rounded-3xl shadow-2xl flex items-center justify-between animate-in fade-in slide-in-from-bottom-4 duration-500 ring-1 ring-white/10 flex-wrap gap-4">
-          <div className="flex items-center gap-8">
-            <span className="text-[10px] font-black uppercase tracking-widest bg-white/20 px-3 py-1.5 rounded-lg">
-              {selectedProductIds.length} Selected
-            </span>
-            <div className="hidden sm:block h-6 w-px bg-white/10"></div>
-            <div className="flex items-center gap-4">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-white/50">Actions</span>
-              <button
-                onClick={() => setShowBulkDeleteConfirm(true)}
-                disabled={bulkUpdating}
-                className="text-[10px] font-black uppercase tracking-widest px-6 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all disabled:opacity-50 flex items-center gap-2 active:scale-95"
-              >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
-                Delete
-              </button>
-            </div>
-          </div>
-          <button onClick={clearProductSelection} className="text-white/40 hover:text-white transition-all p-2 flex items-center gap-2 group active:scale-90">
-            <span className="text-[10px] font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Clear</span>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
-          </button>
-        </div>
-      )}
-
       <ProductModal
         isOpen={isModalOpen}
         onClose={() => {
@@ -452,25 +412,6 @@ export default function ProductsPage() {
         onConfirm={confirmDelete}
         title="Confirm Deletion"
         message="Are you sure you want to remove this product? This action cannot be undone."
-      />
-
-      <DeleteConfirmModal
-        isOpen={showBulkDeleteConfirm}
-        onClose={() => setShowBulkDeleteConfirm(false)}
-        onConfirm={async () => {
-          setBulkUpdating(true);
-          try {
-            await bulkDeleteProducts(selectedProductIds);
-            setShowBulkDeleteConfirm(false);
-            showToast(`Successfully deleted ${selectedProductIds.length} products`);
-          } catch {
-            showToast("Failed to delete products", "error");
-          } finally {
-            setBulkUpdating(false);
-          }
-        }}
-        title="Delete Products"
-        message={`Are you sure you want to delete ${selectedProductIds.length} selected product${selectedProductIds.length !== 1 ? 's' : ''}? This action cannot be undone.`}
       />
 
       <Toast

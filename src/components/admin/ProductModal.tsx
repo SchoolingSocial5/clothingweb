@@ -20,6 +20,9 @@ interface ProductModalProps {
     color: string;
     quantity: string;
     description?: string;
+    product_type: 'Retail' | 'Whole';
+    wholesale_price: string;
+    min_order_quantity: string;
   };
   setNewProduct: (product: any) => void;
   categories: Category[];
@@ -198,6 +201,57 @@ export default function ProductModal({
               />
             </div>
           </div>
+
+          {/* Product Type */}
+          <div className="flex flex-col gap-2">
+            <label className={labelCls}>Product Type</label>
+            <div className="flex gap-3">
+              {['Retail', 'Whole'].map((type) => (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => setNewProduct({ ...newProduct, product_type: type as any })}
+                  className={`flex-1 py-2.5 text-sm font-bold rounded-xl border transition-all ${
+                    newProduct.product_type === type
+                      ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white'
+                      : 'bg-transparent text-gray-500 dark:text-gray-400 border-gray-200 dark:border-neutral-700 hover:border-black dark:hover:border-white'
+                  }`}
+                >
+                  {type}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Wholesale specific fields */}
+          {newProduct.product_type === 'Whole' && (
+            <div className="grid grid-cols-2 gap-4 animate-in slide-in-from-top-2 duration-200">
+              <div className="flex flex-col gap-2">
+                <label className={labelCls}>Wholesale Price</label>
+                <input
+                  required
+                  type="number"
+                  min="0"
+                  value={newProduct.wholesale_price}
+                  onChange={(e) => setNewProduct({ ...newProduct, wholesale_price: e.target.value })}
+                  placeholder="85.00"
+                  className={inputCls}
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className={labelCls}>Min Order Qty</label>
+                <input
+                  required
+                  type="number"
+                  min="1"
+                  value={newProduct.min_order_quantity}
+                  onChange={(e) => setNewProduct({ ...newProduct, min_order_quantity: e.target.value })}
+                  placeholder="10"
+                  className={inputCls}
+                />
+              </div>
+            </div>
+          )}
 
           {/* Selling Price + Stock Quantity */}
           <div className="grid grid-cols-2 gap-4">

@@ -23,6 +23,7 @@ export default function Header() {
   const logoSrc = getImageUrl(settings?.logo);
 
   const navLinks = [
+    { name: 'Whole Sales', href: '/whole-sales' },
     { name: 'About', href: '/about' },
     { name: 'Contact', href: '/contact' },
     { name: 'FAQ', href: '/faq' },
