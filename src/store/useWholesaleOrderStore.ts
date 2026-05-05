@@ -1,0 +1,142 @@
+import { create } from 'zustand';
+import { apiClient } from '@/utils/api';
+import { Order } from '@/components/admin/orders/types';
+
+interface WholesaleOrderState {
+  orders: Order[];
+  pagination: {
+    total: number;
+    page: number;
+    last_page: number;
+    per_page: number;
+  };
+  selectedOrderIds: number[];
+  loading: boolean;
+  error: string | null;
+  fetchOrders: (page?: number, from?: string, to?: string, search?: string, paymentStatus?: string) => Promise<void>;
+  updateOrderStatus: (id: number, data: Partial<Order>) => Promise<void>;
+  bulkUpdateStatus: (ids: number[], data: Partial<Order>) => Promise<void>;
+  bulkDeleteOrders: (ids: number[]) => Promise<void>;
+  deleteOrder: (id: number) => Promise<void>;
+  createOrder: (formData: FormData) => Promise<Order>;
+  toggleOrderSelection: (id: number) => void;
+  toggleAllSelection: () => void;
+  clearSelection: () => void;
+}
+
+export const useWholesaleOrderStore = create<WholesaleOrderState>((set, get) => ({
+  orders: [],
+  pagination: {
+    total: 0,
+    page: 1,
+    last_page: 1,
+    per_page: 20,
+  },
+  selectedOrderIds: [],
+  loading: false,
+  error: null,
+
+  fetchOrders: async (page = 1, from = '', to = '', search = '', paymentStatus = '') => {
+    if (get().orders.length === 0) set({ loading: true });
+    try {
+      const params = new URLSearchParams({ page: String(page), limit: '20' });
+      if (from) params.set('from', from);
+      if (to) params.set('to', to);
+      if (search) params.set('search', search);
+      if (paymentStatus) params.set('payment_status', paymentStatus);
+      const response = await apiClient<any>(`/admin/wholesale-orders?${params.toString()}`);
+      set({ orders: response.orders, pagination: response.pagination, loading: false, error: null });
+    } catch (err: any) {
+      set({ error: err.message, loading: false });
+    }
+  },
+
+  updateOrderStatus: async (id, data) => {
+    try {
+      await apiClient<any>(`/admin/wholesale-orders/${id}`, {
+        method: 'PATCH',
+        body: data,
+      });
+      await get().fetchOrders(get().pagination.page);
+    } catch (err: any) {
+      set({ error: err.message });
+      throw err;
+    }
+  },
+
+  bulkUpdateStatus: async (ids, data) => {
+    try {
+      set({ loading: true });
+      await apiClient<any>('/admin/wholesale-orders/bulk-status', {
+        method: 'POST',
+        body: { ids, ...data },
+      });
+      set({ selectedOrderIds: [] });
+      await get().fetchOrders(get().pagination.page);
+    } catch (err: any) {
+      set({ error: err.message, loading: false });
+      throw err;
+    }
+  },
+
+  bulkDeleteOrders: async (ids) => {
+    try {
+      set({ loading: true });
+      await apiClient<any>('/admin/wholesale-orders/bulk-delete', {
+        method: 'DELETE',
+        body: { ids },
+      });
+      set({ selectedOrderIds: [] });
+      await get().fetchOrders(get().pagination.page);
+    } catch (err: any) {
+      set({ error: err.message, loading: false });
+      throw err;
+    }
+  },
+
+  deleteOrder: async (id) => {
+    try {
+      await apiClient(`/admin/wholesale-orders/${id}`, { method: 'DELETE' });
+      await get().fetchOrders(get().pagination.page);
+    } catch (err: any) {
+      set({ error: err.message });
+      throw err;
+    }
+  },
+
+  toggleOrderSelection: (id) => {
+    const { selectedOrderIds } = get();
+    if (selectedOrderIds.includes(id)) {
+      set({ selectedOrderIds: selectedOrderIds.filter((oid) => oid !== id) });
+    } else {
+      set({ selectedOrderIds: [...selectedOrderIds, id] });
+    }
+  },
+
+  toggleAllSelection: () => {
+    const { orders, selectedOrderIds } = get();
+    if (selectedOrderIds.length === orders.length) {
+      set({ selectedOrderIds: [] });
+    } else {
+      set({ selectedOrderIds: orders.map((o) => o.id) });
+    }
+  },
+
+  clearSelection: () => set({ selectedOrderIds: [] }),
+
+  createOrder: async (formData: FormData) => {
+    set({ loading: true, error: null });
+    try {
+      const order = await apiClient<Order>('/wholesale-orders', {
+        method: 'POST',
+        body: formData,
+        isFormData: true,
+      });
+      set({ loading: false });
+      return order;
+    } catch (err: any) {
+      set({ error: err.message, loading: false });
+      throw err;
+    }
+  },
+}));

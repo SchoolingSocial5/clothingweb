@@ -101,6 +101,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="5" width="20" height="14" rx="2" ry="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
                 Transactions
               </Link>
+              <Link href="/admin/wholesale-transactions" className={`flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin/wholesale-transactions' ? 'text-white bg-black dark:bg-white dark:text-black' : 'text-gray-500 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                Wholesale Trans
+              </Link>
             </>
           )}
           <Link href="/admin/products" className={`flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin/products' ? 'text-white bg-black dark:bg-white dark:text-black' : 'text-gray-500 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
