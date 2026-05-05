@@ -51,7 +51,6 @@ export default function Home() {
 
   // Filter by category, colors and price, then sort by availability (in-stock first)
   const filtered = products.filter((p) => {
-    if (p.product_type !== 'Retail') return false;
     if (selectedCategory !== "All Products" && p.category?.toLowerCase() !== selectedCategory.toLowerCase()) return false;
     if (selectedColors.length > 0 && !selectedColors.includes((p.color || "").trim().toLowerCase())) return false;
     const price = parseFloat(p.price);

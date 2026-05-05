@@ -2,16 +2,15 @@
 
 import { useState, useRef, useEffect } from "react";
 import dynamic from "next/dynamic";
-import { Product } from "@/store/useProductStore";
-import { Category } from "@/store/useCategoryStore";
+import { WholesaleProduct } from "@/store/useWholesaleProductStore";
 
 const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
 import "react-quill-new/dist/quill.snow.css";
 
-interface ProductModalProps {
+interface WholesaleProductModalProps {
   isOpen: boolean;
   onClose: () => void;
-  editingProduct: Product | null;
+  editingProduct: WholesaleProduct | null;
   newProduct: {
     name: string;
     category: string;
@@ -20,9 +19,9 @@ interface ProductModalProps {
     color: string;
     quantity: string;
     description?: string;
+    min_order_quantity: string;
   };
   setNewProduct: (product: any) => void;
-  categories: Category[];
   onSubmit: (e: React.FormEvent) => void;
   handleImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   imagePreview: string | null;
@@ -30,73 +29,7 @@ interface ProductModalProps {
   onPurchase?: (quantity: string, costPrice: string) => Promise<void>;
 }
 
-function CategoryDropdown({
-  value,
-  categories,
-  onChange,
-}: {
-  value: string;
-  categories: Category[];
-  onChange: (val: string) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
-
-  return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen(o => !o)}
-        className="w-full px-4 py-3 bg-gray-50 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all text-left flex items-center justify-between text-sm"
-      >
-        <span className={value ? "text-gray-900 dark:text-gray-100" : "text-gray-400 dark:text-gray-500"}>
-          {value || "Select category"}
-        </span>
-        <svg
-          width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-          strokeWidth="2.5"
-          className={`text-gray-400 dark:text-gray-500 transition-transform duration-200 flex-shrink-0 ${open ? "rotate-180" : ""}`}
-        >
-          <polyline points="6 9 12 15 18 9" />
-        </svg>
-      </button>
-
-      {open && (
-        <div className="absolute z-50 mt-1 w-full bg-white dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 rounded-xl shadow-xl overflow-hidden max-h-48 overflow-y-auto">
-          {categories.length === 0 ? (
-            <p className="px-4 py-3 text-xs text-gray-400 dark:text-gray-500 italic">No categories available</p>
-          ) : (
-            categories.map(cat => (
-              <button
-                key={cat.id}
-                type="button"
-                onClick={() => { onChange(cat.name); setOpen(false); }}
-                className={`w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-neutral-700 transition-colors flex items-center justify-between ${
-                  value === cat.name ? "font-bold text-black dark:text-white bg-gray-50 dark:bg-neutral-700" : "text-gray-700 dark:text-gray-300"
-                }`}
-              >
-                {cat.name}
-                {value === cat.name && (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                    <path d="M20 6L9 17l-5-5" />
-                  </svg>
-                )}
-              </button>
-            ))
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
 
 const quillModules = {
   toolbar: [
@@ -107,19 +40,18 @@ const quillModules = {
   ],
 };
 
-export default function ProductModal({
+export default function WholesaleProductModal({
   isOpen,
   onClose,
   editingProduct,
   newProduct,
   setNewProduct,
-  categories,
   onSubmit,
   handleImageChange,
   imagePreview,
   submitting = false,
   onPurchase,
-}: ProductModalProps) {
+}: WholesaleProductModalProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!isOpen) return null;
@@ -133,7 +65,7 @@ export default function ProductModal({
         {/* Header */}
         <div className="px-6 md:px-8 py-5 border-b border-gray-100 dark:border-neutral-800 flex justify-between items-center flex-shrink-0">
           <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-            {editingProduct ? "Edit Product" : "Add New Product"}
+            {editingProduct ? "Edit Wholesale Product" : "Add New Wholesale Product"}
           </h3>
           <button onClick={onClose} className="text-gray-400 hover:text-black dark:hover:text-white p-1 transition-colors cursor-pointer">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -151,13 +83,14 @@ export default function ProductModal({
               type="text"
               value={newProduct.name}
               onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
-              placeholder="e.g. Minimalist Linen Shirt"
+              placeholder="e.g. Bulk Wheat Flour"
               className={inputCls}
             />
           </div>
 
           {/* Prices Section */}
           <div className="grid grid-cols-2 gap-4">
+            {/* Cost Price */}
             <div className="flex flex-col gap-2">
               <label className={labelCls}>Cost Price</label>
               <input
@@ -170,6 +103,8 @@ export default function ProductModal({
                 className={inputCls}
               />
             </div>
+
+            {/* Selling Price */}
             <div className="flex flex-col gap-2">
               <label className={labelCls}>Selling Price</label>
               <input
@@ -184,29 +119,19 @@ export default function ProductModal({
             </div>
           </div>
 
-          {/* Category & Stock Qty */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-2">
-              <label className={labelCls}>Category</label>
-              <CategoryDropdown
-                value={newProduct.category}
-                categories={categories}
-                onChange={(val) => setNewProduct({ ...newProduct, category: val })}
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <label className={labelCls}>Stock Qty</label>
-              <input
-                type="number"
-                value={newProduct.quantity}
-                onChange={(e) => setNewProduct({ ...newProduct, quantity: e.target.value })}
-                placeholder="0"
-                className={inputCls}
-              />
-            </div>
+          {/* Stock Qty */}
+          <div className="flex flex-col gap-2">
+            <label className={labelCls}>Stock Qty</label>
+            <input
+              type="number"
+              value={newProduct.quantity}
+              onChange={(e) => setNewProduct({ ...newProduct, quantity: e.target.value })}
+              placeholder="0"
+              className={inputCls}
+            />
           </div>
 
-          {/* Color & Image */}
+          {/* Color + Image upload side by side */}
           <div className="flex flex-col gap-2">
             <label className={labelCls}>Color &amp; Image</label>
             <div className="flex items-center gap-3">
@@ -215,6 +140,7 @@ export default function ProductModal({
                 value={newProduct.color}
                 onChange={(e) => setNewProduct({ ...newProduct, color: e.target.value })}
                 className="w-12 h-12 rounded-xl border border-gray-200 dark:border-neutral-700 cursor-pointer overflow-hidden p-0 flex-shrink-0"
+                title="Pick color"
               />
               <span className="text-sm text-gray-500 dark:text-gray-400 font-mono uppercase w-20">{newProduct.color}</span>
 
@@ -224,12 +150,13 @@ export default function ProductModal({
                 accept="image/*"
                 onChange={handleImageChange}
                 className="hidden"
-                id="product-image"
+                id="wholesale-product-image"
               />
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 className="w-12 h-12 rounded-xl border-2 border-dashed border-gray-200 dark:border-neutral-700 hover:border-black dark:hover:border-white hover:bg-gray-50 dark:hover:bg-neutral-800 transition-all cursor-pointer overflow-hidden flex-shrink-0 relative"
+                title="Upload product image"
               >
                 {imagePreview ? (
                   <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
@@ -241,18 +168,21 @@ export default function ProductModal({
                   </svg>
                 )}
               </button>
+              {imagePreview && (
+                <span className="text-xs text-gray-400 dark:text-gray-500 truncate max-w-[80px]">Image set</span>
+              )}
             </div>
           </div>
 
           {/* Description */}
           <div className="flex flex-col gap-2">
             <label className={labelCls}>Description</label>
-            <div className="rounded-xl overflow-hidden border border-gray-200 dark:border-neutral-700">
+            <div className="rounded-xl overflow-hidden border border-gray-200 dark:border-neutral-700 [&_.ql-toolbar]:bg-gray-50 [&_.ql-toolbar]:dark:bg-neutral-800 [&_.ql-toolbar]:border-b [&_.ql-toolbar]:border-gray-200 [&_.ql-toolbar]:dark:border-neutral-700 [&_.ql-container]:bg-white [&_.ql-container]:dark:bg-neutral-900 [&_.ql-editor]:text-gray-900 [&_.ql-editor]:dark:text-gray-100 [&_.ql-editor]:min-h-[120px] [&_.ql-toolbar_button]:text-gray-600 [&_.ql-toolbar_button]:dark:text-gray-400 [&_.ql-picker-label]:text-gray-600 [&_.ql-picker-label]:dark:text-gray-400 [&_.ql-stroke]:stroke-current [&_.ql-fill]:fill-current [&_.ql-container]:border-0 [&_.ql-toolbar]:rounded-t-none">
               <ReactQuill
                 value={newProduct.description || ""}
                 onChange={(val) => setNewProduct({ ...newProduct, description: val })}
                 modules={quillModules}
-                placeholder="Write a product description..."
+                placeholder="Write a wholesale product description..."
                 theme="snow"
               />
             </div>
@@ -264,7 +194,7 @@ export default function ProductModal({
               type="button"
               onClick={onClose}
               disabled={submitting}
-              className="w-full md:w-auto px-8 py-3 border border-gray-200 dark:border-neutral-700 rounded-xl text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+              className="w-full md:w-auto px-8 py-3 border border-gray-200 dark:border-neutral-700 rounded-xl text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-neutral-800 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancel
             </button>
@@ -275,7 +205,7 @@ export default function ProductModal({
                   type="button"
                   onClick={() => onPurchase(newProduct.quantity, newProduct.cost_price)}
                   disabled={submitting}
-                  className="flex-1 px-4 py-3 bg-green-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-green-600/20 hover:bg-green-700 transition-colors cursor-pointer"
+                  className="flex-1 px-4 py-3 bg-green-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-green-600/20 hover:bg-green-700 transition-colors cursor-pointer flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   Purchase
                 </button>
@@ -283,8 +213,9 @@ export default function ProductModal({
               <button
                 type="submit"
                 disabled={submitting}
-                className="flex-1 px-4 py-3 bg-black dark:bg-white text-white dark:text-black rounded-xl text-sm font-bold shadow-lg shadow-black/20 hover:opacity-90 transition-colors cursor-pointer flex items-center justify-center gap-2"
+                className="flex-1 px-4 py-3 bg-black dark:bg-white text-white dark:text-black rounded-xl text-sm font-bold shadow-lg shadow-black/20 hover:opacity-90 transition-colors cursor-pointer flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
               >
+                {submitting ? <div className="w-4 h-4 border-2 border-white/30 dark:border-black/30 border-t-white dark:border-t-black rounded-full animate-spin" /> : null}
                 {submitting ? "Processing..." : (editingProduct ? "Update" : "Save")}
               </button>
             </div>

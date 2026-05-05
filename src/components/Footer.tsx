@@ -55,17 +55,26 @@ export default function Footer() {
           </div>
 
           {/* Social Links */}
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center justify-center md:justify-end gap-6">
             {platforms.length > 0 ? platforms.map(platform => (
               <a 
-                key={platform.name} 
+                key={platform.id} 
                 href={platform.url} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 dark:bg-neutral-800 text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-200 dark:hover:bg-neutral-700 transition-all active:scale-95"
+                className="flex items-center gap-3 text-gray-400 hover:text-black dark:hover:text-white transition-all group"
                 title={platform.name}
               >
-                {renderIcon(platform.name)}
+                <div className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 dark:bg-neutral-800 group-hover:bg-gray-200 dark:group-hover:bg-neutral-700 transition-colors">
+                  {platform.icon ? (
+                    <img src={getImageUrl(platform.icon) || ''} className="w-5 h-5 object-contain" alt="" />
+                  ) : (
+                    renderIcon(platform.name)
+                  )}
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-black uppercase tracking-widest">{platform.handle || platform.name}</span>
+                </div>
               </a>
             )) : (
               <div className="text-xs font-bold uppercase tracking-widest text-gray-300 dark:text-gray-700 italic">Follow us on social media</div>

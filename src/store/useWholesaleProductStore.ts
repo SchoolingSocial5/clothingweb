@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { apiClient } from '@/utils/api';
 
-export interface Product {
+export interface WholesaleProduct {
   id: number;
   name: string;
   category: string;
@@ -11,17 +11,18 @@ export interface Product {
   quantity: number;
   image_url?: string;
   description?: string;
+  min_order_quantity?: number;
 }
 
-interface ProductState {
-  products: Product[];
+interface WholesaleProductState {
+  wholesaleProducts: WholesaleProduct[];
   loading: boolean;
   error: string | null;
-  fetchProducts: () => Promise<void>;
-  fetchProductById: (id: string) => Promise<Product | null>;
-  createProduct: (formData: FormData) => Promise<Product>;
-  updateProduct: (id: number, formData: FormData) => Promise<Product>;
-  deleteProduct: (id: number) => Promise<void>;
+  fetchWholesaleProducts: () => Promise<void>;
+  fetchWholesaleProductById: (id: string) => Promise<WholesaleProduct | null>;
+  createWholesaleProduct: (formData: FormData) => Promise<WholesaleProduct>;
+  updateWholesaleProduct: (id: number, formData: FormData) => Promise<WholesaleProduct>;
+  deleteWholesaleProduct: (id: number) => Promise<void>;
   selectedProductIds: number[];
   toggleProductSelection: (id: number) => void;
   toggleAllProducts: () => void;
@@ -29,26 +30,26 @@ interface ProductState {
   bulkDeleteProducts: (ids: number[]) => Promise<void>;
 }
 
-export const useProductStore = create<ProductState>((set, get) => ({
-  products: [],
+export const useWholesaleProductStore = create<WholesaleProductState>((set, get) => ({
+  wholesaleProducts: [],
   selectedProductIds: [],
   loading: false,
   error: null,
 
-  fetchProducts: async () => {
-    if (get().products.length === 0) set({ loading: true });
+  fetchWholesaleProducts: async () => {
+    if (get().wholesaleProducts.length === 0) set({ loading: true });
     try {
-      const data = await apiClient<Product[]>('/products');
-      set({ products: data, loading: false, error: null });
+      const data = await apiClient<WholesaleProduct[]>('/wholesale-products');
+      set({ wholesaleProducts: data, loading: false, error: null });
     } catch (err: any) {
       set({ error: err.message, loading: false });
     }
   },
 
-  fetchProductById: async (id: string) => {
+  fetchWholesaleProductById: async (id: string) => {
     set({ loading: true, error: null });
     try {
-      const data = await apiClient<Product>(`/products/${id}`);
+      const data = await apiClient<WholesaleProduct>(`/wholesale-products/${id}`);
       set({ loading: false });
       return data;
     } catch (err: any) {
@@ -57,16 +58,16 @@ export const useProductStore = create<ProductState>((set, get) => ({
     }
   },
 
-  createProduct: async (formData: FormData) => {
+  createWholesaleProduct: async (formData: FormData) => {
     set({ loading: true, error: null });
     try {
-      const product = await apiClient<Product>('/products', {
+      const product = await apiClient<WholesaleProduct>('/wholesale-products', {
         method: 'POST',
         body: formData,
         isFormData: true,
       });
       set({ 
-        products: [product, ...get().products],
+        wholesaleProducts: [product, ...get().wholesaleProducts],
         loading: false 
       });
       return product;
@@ -76,16 +77,16 @@ export const useProductStore = create<ProductState>((set, get) => ({
     }
   },
 
-  updateProduct: async (id: number, formData: FormData) => {
+  updateWholesaleProduct: async (id: number, formData: FormData) => {
     set({ loading: true, error: null });
     try {
-      const product = await apiClient<Product>(`/products/${id}`, {
-        method: 'POST', // Laravel requires POST with _method=PUT for multipart/form-data
+      const product = await apiClient<WholesaleProduct>(`/wholesale-products/${id}`, {
+        method: 'POST',
         body: formData,
         isFormData: true,
       });
       set({ 
-        products: get().products.map(p => p.id === id ? product : p),
+        wholesaleProducts: get().wholesaleProducts.map(p => p.id === id ? product : p),
         loading: false 
       });
       return product;
@@ -95,12 +96,12 @@ export const useProductStore = create<ProductState>((set, get) => ({
     }
   },
 
-  deleteProduct: async (id: number) => {
+  deleteWholesaleProduct: async (id: number) => {
     set({ loading: true, error: null });
     try {
-      await apiClient(`/products/${id}`, { method: 'DELETE' });
+      await apiClient(`/wholesale-products/${id}`, { method: 'DELETE' });
       set({ 
-        products: get().products.filter(p => p.id !== id),
+        wholesaleProducts: get().wholesaleProducts.filter(p => p.id !== id),
         loading: false 
       });
     } catch (err: any) {
@@ -119,11 +120,11 @@ export const useProductStore = create<ProductState>((set, get) => ({
   },
 
   toggleAllProducts: () => {
-    const { products, selectedProductIds } = get();
-    if (selectedProductIds.length === products.length && products.length > 0) {
+    const { wholesaleProducts, selectedProductIds } = get();
+    if (selectedProductIds.length === wholesaleProducts.length && wholesaleProducts.length > 0) {
       set({ selectedProductIds: [] });
     } else {
-      set({ selectedProductIds: products.map(p => p.id) });
+      set({ selectedProductIds: wholesaleProducts.map(p => p.id) });
     }
   },
 
@@ -132,9 +133,9 @@ export const useProductStore = create<ProductState>((set, get) => ({
   bulkDeleteProducts: async (ids) => {
     set({ loading: true, error: null });
     try {
-      await Promise.all(ids.map(id => apiClient(`/products/${id}`, { method: 'DELETE' })));
+      await Promise.all(ids.map(id => apiClient(`/wholesale-products/${id}`, { method: 'DELETE' })));
       set({ 
-        products: get().products.filter(p => !ids.includes(p.id)),
+        wholesaleProducts: get().wholesaleProducts.filter(p => !ids.includes(p.id)),
         selectedProductIds: [],
         loading: false 
       });

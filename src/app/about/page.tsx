@@ -61,37 +61,38 @@ export default function AboutPage() {
       `}</style>
       <section className="max-w-6xl mx-auto px-[10px] md:px-8 py-24 overflow-x-hidden">
         <div className="space-y-16">
-          <div className="flex flex-col md:flex-row gap-12 items-start">
-            <div className="flex-1 min-w-0 pr-[10px] md:pr-8">
-              <h2 className="text-3xl font-bold mb-6 tracking-tight text-gray-900 dark:text-gray-100">
+          <div className="flex flex-col md:flex-row gap-12 items-center">
+            <div className="w-full md:w-auto md:max-w-[45%] flex-shrink-0 bg-gray-100 dark:bg-neutral-800 rounded-3xl overflow-hidden shadow-2xl">
+              {aboutBlog?.image_url ? (
+                <img
+                  src={getImageUrl(aboutBlog.image_url) || ''}
+                  alt={aboutBlog.title}
+                  className="w-full h-auto object-cover"
+                />
+              ) : (
+                <div className="aspect-video w-full bg-gradient-to-br from-gray-200 dark:from-neutral-700 to-gray-50 dark:to-neutral-900 flex items-center justify-center">
+                  <span className="text-gray-300 dark:text-neutral-600 font-black text-6xl uppercase transform -rotate-12">Artistry</span>
+                </div>
+              )}
+            </div>
+            
+            <div className="flex-1 min-w-0">
+              <h2 className="text-3xl md:text-4xl font-black uppercase tracking-tight mb-8 text-gray-900 dark:text-gray-100">
                 {aboutBlog?.title || 'The Vision'}
               </h2>
               {aboutBlog ? (
                 <div
-                  className="about-content prose prose-sm dark:prose-invert max-w-none text-gray-600 dark:text-gray-400 leading-relaxed"
+                  className="about-content prose prose-sm md:prose-base dark:prose-invert max-w-none text-gray-600 dark:text-gray-400 leading-relaxed space-y-6"
                   dangerouslySetInnerHTML={{ __html: aboutBlog.content }}
                 />
               ) : (
-                <>
-                  <p className="text-gray-600 dark:text-gray-400 leading-relaxed mb-6">
+                <div className="space-y-6">
+                  <p className="text-gray-600 dark:text-gray-400 leading-relaxed text-lg font-medium">
                     Wink was founded on the belief that clothing is more than just fabric—it&apos;s an expression of identity. We curate collections that balance timeless silhouettes with contemporary edge.
                   </p>
                   <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
                     Our mission is to provide high-quality, sustainable fashion that empowers individuals to feel confident and stylish in every moment of their lives.
                   </p>
-                </>
-              )}
-            </div>
-            <div className="w-full md:w-80 lg:w-96 flex-shrink-0 aspect-square bg-gray-100 dark:bg-neutral-800 rounded-3xl overflow-hidden shadow-2xl">
-              {aboutBlog?.image_url ? (
-                <img
-                  src={getImageUrl(aboutBlog.image_url) || ''}
-                  alt={aboutBlog.title}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full bg-gradient-to-br from-gray-200 dark:from-neutral-700 to-gray-50 dark:to-neutral-900 flex items-center justify-center">
-                  <span className="text-gray-300 dark:text-neutral-600 font-black text-6xl uppercase transform -rotate-12">Artistry</span>
                 </div>
               )}
             </div>

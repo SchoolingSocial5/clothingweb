@@ -10,7 +10,7 @@ import DeleteConfirmModal from "@/components/admin/DeleteConfirmModal";
 import { useAuth } from "@/context/AuthContext";
 import { getImageUrl } from "@/utils/image";
 
-export default function PurchasesPage() {
+export default function WholesalePurchasesPage() {
   const { user } = useAuth();
   const { 
     purchases, pagination, loading, fetchPurchases,
@@ -27,25 +27,25 @@ export default function PurchasesPage() {
   const [bulkUpdating, setBulkUpdating] = useState(false);
 
   useEffect(() => {
-    fetchPurchases(1, '', '', 'Retail');
+    fetchPurchases(1, '', '', 'Whole');
   }, [fetchPurchases]);
 
   const handleFilter = () => {
-    fetchPurchases(1, from, to, 'Retail');
+    fetchPurchases(1, from, to, 'Whole');
   };
 
   const handleClear = () => {
     setFrom('');
     setTo('');
-    fetchPurchases(1, '', '', 'Retail');
+    fetchPurchases(1, '', '', 'Whole');
   };
 
   return (
     <div className="p-[10px] md:p-8 w-full">
       <AdminPageHeader
-        title="Retail Purchase History"
-        description="View all retail product acquisitions and stock intake records."
-        stats={{ label: "Total Retail Purchases", value: pagination?.total || 0 }}
+        title="Wholesale Purchase History"
+        description="View all wholesale product acquisitions and stock intake records."
+        stats={{ label: "Total Wholesale Purchases", value: pagination?.total || 0 }}
       />
 
       {/* Date Range Filter */}
@@ -218,7 +218,7 @@ export default function PurchasesPage() {
             <Pagination
               currentPage={pagination?.page || 1}
               totalPages={pagination?.last_page || 1}
-              onPageChange={(page) => fetchPurchases(page, from, to, 'Retail')}
+              onPageChange={(page) => fetchPurchases(page, from, to, 'Whole')}
             />
           </div>
         )}

@@ -26,7 +26,7 @@ interface PurchaseState {
   selectedPurchaseIds: number[];
   loading: boolean;
   error: string | null;
-  fetchPurchases: (page?: number, from?: string, to?: string) => Promise<void>;
+  fetchPurchases: (page?: number, from?: string, to?: string, productType?: string) => Promise<void>;
   addPurchase: (data: { product_id: number; quantity: number|string; cost_price: number|string }) => Promise<void>;
   deletePurchase: (id: number) => Promise<void>;
   bulkDeletePurchases: (ids: number[]) => Promise<void>;
@@ -42,12 +42,13 @@ export const usePurchaseStore = create<PurchaseState>((set, get) => ({
   loading: false,
   error: null,
 
-  fetchPurchases: async (page = 1, from = '', to = '') => {
+  fetchPurchases: async (page = 1, from = '', to = '', productType = '') => {
     if (get().purchases.length === 0) set({ loading: true });
     try {
       const params = new URLSearchParams({ page: String(page), limit: '20' });
       if (from) params.set('from', from);
       if (to) params.set('to', to);
+      if (productType) params.set('product_type', productType);
       const data = await apiClient<{ purchases: Purchase[]; pagination: PurchasePagination }>(
         `/admin/purchases?${params.toString()}`
       );

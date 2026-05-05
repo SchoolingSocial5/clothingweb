@@ -6,10 +6,9 @@ import 'swiper/css';
 import 'swiper/css/pagination';
 import 'swiper/css/effect-fade';
 
-import { useProductStore } from "@/store/useProductStore";
+import { useWholesaleProductStore } from "@/store/useWholesaleProductStore";
 import { useBannerStore } from "@/store/useBannerStore";
 import Header from "@/components/Header";
-import Sidebar from "@/components/Sidebar";
 import ProductCard from "@/components/ProductCard";
 import ProductImageModal from "@/components/ProductImageModal";
 import { getImageUrl } from "@/utils/image";
@@ -18,9 +17,9 @@ import { useBlogStore, Blog } from "@/store/useBlogStore";
 const PER_PAGE = 20;
 
 export default function WholeSales() {
-  const products = useProductStore(state => state.products);
-  const productsLoading = useProductStore(state => state.loading);
-  const fetchProducts = useProductStore(state => state.fetchProducts);
+  const wholesaleProducts = useWholesaleProductStore(state => state.wholesaleProducts);
+  const productsLoading = useWholesaleProductStore(state => state.loading);
+  const fetchWholesaleProducts = useWholesaleProductStore(state => state.fetchWholesaleProducts);
   
   const allBanners = useBannerStore(state => state.banners);
   const bannersLoading = useBannerStore(state => state.loading);
@@ -29,7 +28,6 @@ export default function WholeSales() {
   const fetchPublicBlogs = useBlogStore(state => state.fetchPublicBlogs);
   const banners = allBanners.filter(b => b.category === 'Whole Sales');
   const [page, setPage] = useState(1);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("All Products");
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, Infinity]);
@@ -38,7 +36,7 @@ export default function WholeSales() {
   const [previewIndex, setPreviewIndex] = useState(0);
 
   useEffect(() => {
-    fetchProducts();
+    fetchWholesaleProducts();
     fetchBanners();
 
     fetchPublicBlogs()
@@ -47,11 +45,10 @@ export default function WholeSales() {
         if (blog) setWholeBlog(blog);
       })
       .catch(() => {});
-  }, [fetchProducts, fetchBanners, fetchPublicBlogs]);
+  }, [fetchWholesaleProducts, fetchBanners, fetchPublicBlogs]);
 
-  // Filter by product_type === 'Whole', category, colors and price, then sort by availability (in-stock first)
-  const filtered = products.filter((p) => {
-    if (p.product_type !== 'Whole') return false;
+  // Filter by category, colors and price, then sort by availability (in-stock first)
+  const filtered = wholesaleProducts.filter((p) => {
     if (selectedCategory !== "All Products" && p.category?.toLowerCase() !== selectedCategory.toLowerCase()) return false;
     if (selectedColors.length > 0 && !selectedColors.includes((p.color || "").trim().toLowerCase())) return false;
     const price = parseFloat(p.price);
@@ -69,11 +66,6 @@ export default function WholeSales() {
   const changePage = (p: number) => {
     setPage(p);
     document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  const handleCategoryChange = (cat: string) => {
-    setSelectedCategory(cat);
-    setPage(1);
   };
 
   return (
@@ -141,42 +133,9 @@ export default function WholeSales() {
         )}
       </section>
 
-      {/* Whole Sales Intro */}
-      <section className="max-w-[1600px] mx-auto px-4 md:px-8 py-12 md:py-16">
-        <div className="flex flex-col md:flex-row gap-8 items-center bg-white dark:bg-neutral-900 border border-gray-100 dark:border-neutral-800 p-8 md:p-12 rounded-[2.5rem] shadow-sm">
-           <div className="flex-1">
-             <h2 className="text-3xl font-bold mb-6 tracking-tight text-gray-900 dark:text-gray-100 uppercase italic">
-                {wholeBlog?.title || 'Wholesale Partnership'}
-              </h2>
-              {wholeBlog ? (
-                <div
-                  className="prose prose-sm dark:prose-invert max-w-none text-gray-600 dark:text-gray-400 leading-relaxed"
-                  dangerouslySetInnerHTML={{ __html: wholeBlog.content }}
-                />
-              ) : (
-                <p className="text-gray-600 dark:text-gray-400 leading-relaxed text-lg">
-                  We offer exclusive wholesale pricing for retailers and business partners. Access our full catalog at competitive rates to grow your business with Hi Health Equipment.
-                </p>
-              )}
-           </div>
-        </div>
-      </section>
-
       {/* Products Area */}
-      <section id="products" className="max-w-[1600px] mx-auto px-4 md:px-8 py-8 md:py-12 flex gap-6 items-start">
-        <Sidebar
-          isOpen={isSidebarOpen}
-          onClose={() => setIsSidebarOpen(false)}
-          selectedCategory={selectedCategory}
-          onCategoryChange={handleCategoryChange}
-          selectedColors={selectedColors}
-          onColorsChange={(colors) => { setSelectedColors(colors); setPage(1); }}
-          priceRange={priceRange}
-          onPriceRangeChange={(range) => { setPriceRange(range); setPage(1); }}
-          allProducts={products.filter(p => p.product_type === 'Whole')}
-        />
-
-        <div className="flex-1 min-w-0">
+      <section id="products" className="max-w-[1600px] mx-auto px-4 md:px-8 py-8 md:py-12">
+        <div className="w-full">
           <div className="flex flex-wrap justify-between items-end mb-10 pb-4 border-b border-gray-100 dark:border-neutral-800 gap-3">
             <div>
               <h2 className="text-3xl font-bold tracking-tight mb-2 text-gray-900 dark:text-white">
@@ -202,7 +161,7 @@ export default function WholeSales() {
                 ? paginated.map((p, index) => (
                   <ProductCard 
                     key={p.id} 
-                    {...p} 
+                    {...(p as any)} 
                     onImageClick={() => {
                       setPreviewIndex((page - 1) * PER_PAGE + index);
                       setIsPreviewOpen(true);
@@ -219,7 +178,6 @@ export default function WholeSales() {
 
           {!productsLoading && totalPages > 1 && (
             <div className="mt-16 flex items-center justify-center gap-3">
-               {/* Simplified pagination for example */}
                {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
                 <button
                   key={p}
@@ -240,7 +198,7 @@ export default function WholeSales() {
       <ProductImageModal
         isOpen={isPreviewOpen}
         onClose={() => setIsPreviewOpen(false)}
-        products={filtered}
+        products={filtered as any}
         initialIndex={previewIndex}
       />
     </main>

@@ -11,8 +11,7 @@ export default function SocialMediaPage() {
   const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
   
   const [platformForm, setPlatformForm] = useState({ 
-    name: "", url: "", handle: "", icon: null as File | null, 
-    email: "", password: "", phone_number: "" 
+    name: "", url: "", handle: "", icon: null as File | null
   });
   
   const [activityForm, setActivityForm] = useState({ 
@@ -34,15 +33,12 @@ export default function SocialMediaPage() {
     formData.append('name', platformForm.name);
     if (platformForm.url) formData.append('url', platformForm.url);
     if (platformForm.handle) formData.append('handle', platformForm.handle);
-    if (platformForm.email) formData.append('email', platformForm.email);
-    if (platformForm.password) formData.append('password', platformForm.password);
-    if (platformForm.phone_number) formData.append('phone_number', platformForm.phone_number);
     if (platformForm.icon) formData.append('icon', platformForm.icon);
 
     try {
       await createPlatform(formData);
       setIsPlatformModalOpen(false);
-      setPlatformForm({ name: "", url: "", handle: "", icon: null, email: "", password: "", phone_number: "" });
+      setPlatformForm({ name: "", url: "", handle: "", icon: null });
     } catch (err) {}
   };
 
@@ -254,25 +250,8 @@ export default function SocialMediaPage() {
                     <input type="url" value={platformForm.url} onChange={e => setPlatformForm({...platformForm, url: e.target.value})} placeholder="https://..." className="w-full px-5 py-4 bg-gray-50 dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 rounded-2xl focus:ring-0 focus:border-black outline-none font-bold text-sm transition-all dark:text-gray-100" />
                   </div>
                   <div>
-                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Email Address</label>
-                    <input type="email" value={platformForm.email} onChange={e => setPlatformForm({...platformForm, email: e.target.value})} placeholder="social@brand.com" className="w-full px-5 py-4 bg-gray-50 dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 rounded-2xl focus:ring-0 focus:border-black outline-none font-bold text-sm transition-all dark:text-gray-100" />
-                  </div>
-                </div>
-                
-                <div className="space-y-6">
-                   <div>
                     <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Handle / Username</label>
                     <input type="text" value={platformForm.handle} onChange={e => setPlatformForm({...platformForm, handle: e.target.value})} placeholder="@username" className="w-full px-5 py-4 bg-gray-50 dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 rounded-2xl focus:ring-0 focus:border-black outline-none font-bold text-sm transition-all dark:text-gray-100" />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Password (Opt)</label>
-                      <input type="password" value={platformForm.password} onChange={e => setPlatformForm({...platformForm, password: e.target.value})} className="w-full px-5 py-4 bg-gray-50 dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 rounded-2xl focus:ring-0 focus:border-black outline-none font-bold text-sm transition-all dark:text-gray-100" />
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Phone (Opt)</label>
-                      <input type="tel" value={platformForm.phone_number} onChange={e => setPlatformForm({...platformForm, phone_number: e.target.value})} className="w-full px-5 py-4 bg-gray-50 dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 rounded-2xl focus:ring-0 focus:border-black outline-none font-bold text-sm transition-all dark:text-gray-100" />
-                    </div>
                   </div>
                   
                   <div>

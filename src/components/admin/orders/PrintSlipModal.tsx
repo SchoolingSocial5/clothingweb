@@ -1,5 +1,5 @@
 "use client";
-import React from 'react';
+import React, { useState } from 'react';
 import html2canvas from 'html2canvas';
 import { Order } from './types';
 
@@ -11,10 +11,16 @@ interface PrintSlipModalProps {
 
 export default function PrintSlipModal({ order, settings, onClose }: PrintSlipModalProps) {
   const receiptRef = React.useRef<HTMLDivElement>(null);
+  const [sharing, setSharing] = useState(false);
+
+  // Fix field names from settings
+  const companyName = settings?.company_name || settings?.companyName || 'Store Receipt';
+  const companyPhone = settings?.phone_number || settings?.phone || '';
+  const companyAddress = settings?.address || '';
 
   const handlePrint = () => {
     const items = order.items.map(item =>
-      `<div class="row"><span>${item.productName} &times;${item.quantity}</span><span>&#8358;${(parseFloat(item.price as any) * item.quantity).toLocaleString()}</span></div>`
+      `<div class="row"><span>${item.productName || item.product_name} &times;${item.quantity}</span><span>&#8358;${(parseFloat(item.price as any) * item.quantity).toLocaleString()}</span></div>`
     ).join('');
 
     const w = window.open('', '_blank', 'width=380,height=680,scrollbars=yes');
@@ -38,9 +44,9 @@ export default function PrintSlipModal({ order, settings, onClose }: PrintSlipMo
   @media print{.btn-print{display:none}}
 </style></head><body>
   <div class="header">
-    <h2>${settings?.companyName || 'Receipt'}</h2>
-    ${settings?.address ? `<p>${settings.address}</p>` : ''}
-    ${settings?.phone ? `<p>Tel: ${settings.phone}</p>` : ''}
+    <h2>${companyName}</h2>
+    ${companyAddress ? `<p>${companyAddress}</p>` : ''}
+    ${companyPhone ? `<p>Tel: ${companyPhone}</p>` : ''}
   </div>
   <div class="receipt-title">ORDER RECEIPT</div>
   <p class="center">Order #${order.id}</p>
@@ -61,66 +67,49 @@ export default function PrintSlipModal({ order, settings, onClose }: PrintSlipMo
   };
 
   const handleShare = async () => {
-    const text = `Order #${order.id}\nReceipt ID: ${order.receipt_number || 'N/A'}\nTotal: ₦${parseFloat(order.total_amount as any).toLocaleString()}\n\nThank you for shopping with ${settings?.companyName || 'us'}!`;
+    const text = `*RECEIPT - ${companyName.toUpperCase()}*\n\nOrder #${order.id}\nReceipt ID: ${order.receipt_number || 'N/A'}\nTotal: ₦${parseFloat(order.total_amount as any).toLocaleString()}\n\nThank you for shopping with us!`;
     
-    let file: File | null = null;
-    let fallbackDataUrl: string | null = null;
-    
-    if (receiptRef.current) {
-      try {
-        const canvas = await html2canvas(receiptRef.current, { scale: 2 });
-        const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
+    setSharing(true);
+    try {
+      let file: File | null = null;
+      let fallbackDataUrl: string | null = null;
+      
+      if (receiptRef.current) {
+        const canvas = await html2canvas(receiptRef.current, { scale: 3, backgroundColor: '#ffffff' });
+        const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png', 1.0));
         if (blob) {
           file = new File([blob], `receipt-${order.id}.png`, { type: 'image/png' });
           fallbackDataUrl = canvas.toDataURL('image/png');
         }
-      } catch (err) {
-        console.error('Failed to generate receipt image:', err);
       }
-    }
 
-    // Determine if browser fully supports sharing files
-    const canShareFiles = file && navigator.canShare && navigator.canShare({ files: [file] });
+      const canShareFiles = file && navigator.canShare && navigator.canShare({ files: [file] });
 
-    if (navigator.share) {
-      try {
-        const shareData: any = {
-          title: `Receipt - Order #${order.id}`,
-        };
-        
+      if (navigator.share) {
+        const shareData: any = { title: `Receipt - Order #${order.id}` };
         if (canShareFiles) {
-          // If we can share files, don't pass text so some platforms (like WhatsApp) don't prioritize text
           shareData.files = [file];
+          shareData.text = text;
         } else {
-          // If files can't be shared but navigator.share exists, just share text
           shareData.text = text;
         }
-
         await navigator.share(shareData);
-
-        // If file wasn't shared but was successfully generated, prompt user to download manually
-        if (file && !canShareFiles && fallbackDataUrl) {
-          triggerDownload(fallbackDataUrl, `receipt-${order.id}.png`);
-        }
-
-      } catch (err: any) {
-        if (err.name !== 'AbortError') {
-          console.error('Error sharing:', err);
-          // Fallback download if share fails completely
-          if (fallbackDataUrl) {
-            triggerDownload(fallbackDataUrl, `receipt-${order.id}.png`);
-          } else {
-            fallbackClipboard(text);
-          }
-        }
-      }
-    } else {
-      if (fallbackDataUrl) {
+      } else if (fallbackDataUrl) {
         triggerDownload(fallbackDataUrl, `receipt-${order.id}.png`);
       } else {
         fallbackClipboard(text);
       }
+    } catch (err: any) {
+      if (err.name !== 'AbortError') console.error('Error sharing:', err);
+    } finally {
+      setSharing(false);
     }
+  };
+
+  const handleWhatsAppShare = () => {
+    const text = `*RECEIPT - ${companyName.toUpperCase()}*\n\nOrder #${order.id}\nReceipt ID: ${order.receipt_number || 'N/A'}\nTotal: ₦${parseFloat(order.total_amount as any).toLocaleString()}\n\nThank you for shopping with us!`;
+    const whatsappUrl = `https://wa.me/${companyPhone.replace(/\D/g, '')}?text=${encodeURIComponent(text)}`;
+    window.open(whatsappUrl, '_blank');
   };
 
   const triggerDownload = (dataUrl: string, filename: string) => {
@@ -130,7 +119,7 @@ export default function PrintSlipModal({ order, settings, onClose }: PrintSlipMo
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    alert('Receipt image downloaded to your device!');
+    alert('Receipt image downloaded! You can now share it manually.');
   };
 
   const fallbackClipboard = async (text: string) => {
@@ -145,7 +134,7 @@ export default function PrintSlipModal({ order, settings, onClose }: PrintSlipMo
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
       <div
-        className="bg-white dark:bg-neutral-900 rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden"
+        className="bg-white dark:bg-neutral-900 rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
@@ -162,59 +151,76 @@ export default function PrintSlipModal({ order, settings, onClose }: PrintSlipMo
         </div>
 
         {/* Slip Preview */}
-        <div ref={receiptRef} className="px-6 py-5 font-mono text-xs space-y-1 border-b border-dashed border-gray-200 dark:border-neutral-700 bg-gray-50/50 dark:bg-neutral-800/50">
-          <div className="text-center mb-3">
-            <p className="font-black text-sm uppercase tracking-wider">{settings?.companyName || 'Store Receipt'}</p>
-            {settings?.address && <p className="text-[9px] text-gray-500 leading-tight mt-0.5">{settings.address}</p>}
-            {settings?.phone && <p className="text-[9px] text-gray-500 mt-0.5">Tel: {settings.phone}</p>}
+        <div ref={receiptRef} style={{ backgroundColor: '#ffffff', color: '#000000', padding: '20px', fontFamily: 'monospace', fontSize: '12px', borderBottom: '1px dashed #e5e7eb' }}>
+          <div style={{ textAlign: 'center', marginBottom: '12px' }}>
+            <p style={{ fontWeight: '900', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '1px', margin: '0 0 2px 0', color: '#000000' }}>{companyName}</p>
+            {companyAddress && <p style={{ fontSize: '9px', lineHeight: '1.2', marginTop: '2px', color: '#6b7280', margin: '0' }}>{companyAddress}</p>}
+            {companyPhone && <p style={{ fontSize: '9px', marginTop: '2px', color: '#6b7280', margin: '0' }}>Tel: {companyPhone}</p>}
           </div>
 
-          <div className="border-t border-dashed border-gray-300 dark:border-neutral-600 my-2" />
+          <div style={{ borderTop: '1px dashed #d1d5db', margin: '8px 0' }} />
           
-          <p className="text-center font-black text-[10px] tracking-widest uppercase mb-1">Receipt Summary</p>
-          <p className="text-center text-gray-900 dark:text-gray-100 text-[10px] font-black">Order #{order.id}</p>
+          <p style={{ textAlign: 'center', fontWeight: '900', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 4px 0', color: '#000000' }}>Receipt Summary</p>
+          <p style={{ textAlign: 'center', fontSize: '10px', fontWeight: '900', margin: '0', color: '#000000' }}>Order #{order.id}</p>
           {order.receipt_number && (
-            <p className="text-center text-[10px] font-black text-gray-500">Receipt ID: <span className="text-black dark:text-white">{order.receipt_number}</span></p>
+            <p style={{ textAlign: 'center', fontSize: '10px', fontWeight: '900', margin: '0', color: '#6b7280' }}>Receipt ID: <span style={{ color: '#000000' }}>{order.receipt_number}</span></p>
           )}
-          <div className="border-t border-dashed border-gray-300 dark:border-neutral-600 my-2" />
-          <div><span className="text-gray-400 uppercase text-[9px] tracking-widest">Customer</span><p className="font-bold dark:text-gray-200">{order.customer_name}</p></div>
-          {order.customer_phone && <div><span className="text-gray-400 uppercase text-[9px] tracking-widest">Phone</span><p className="font-bold dark:text-gray-200">{order.customer_phone}</p></div>}
-          {order.delivery_address && <div><span className="text-gray-400 uppercase text-[9px] tracking-widest">Address</span><p className="font-bold leading-tight dark:text-gray-200">{order.delivery_address}</p></div>}
-          <div className="border-t border-dashed border-gray-300 dark:border-neutral-600 my-2" />
+          <div style={{ borderTop: '1px dashed #d1d5db', margin: '8px 0' }} />
+          <div style={{ marginBottom: '4px' }}><span style={{ textTransform: 'uppercase', fontSize: '9px', letterSpacing: '0.1em', color: '#9ca3af' }}>Customer</span><p style={{ fontWeight: '700', margin: '0', color: '#000000' }}>{order.customer_name}</p></div>
+          {order.customer_phone && <div style={{ marginBottom: '4px' }}><span style={{ textTransform: 'uppercase', fontSize: '9px', letterSpacing: '0.1em', color: '#9ca3af' }}>Phone</span><p style={{ fontWeight: '700', margin: '0', color: '#000000' }}>{order.customer_phone}</p></div>}
+          {order.delivery_address && <div style={{ marginBottom: '4px' }}><span style={{ textTransform: 'uppercase', fontSize: '9px', letterSpacing: '0.1em', color: '#9ca3af' }}>Address</span><p style={{ fontWeight: '700', lineHeight: '1.2', margin: '0', color: '#000000' }}>{order.delivery_address}</p></div>}
+          <div style={{ borderTop: '1px dashed #d1d5db', margin: '8px 0' }} />
           {order.items.map((item, idx) => (
-            <div key={item.id || item._id || idx} className="flex justify-between">
-              <span className="text-gray-700 dark:text-gray-300 truncate max-w-[60%]">{item.productName} &times;{item.quantity}</span>
-              <span className="font-bold dark:text-white">&#8358;{(parseFloat(item.price as any) * item.quantity).toLocaleString()}</span>
+            <div key={item.id || item._id || idx} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+              <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '60%', color: '#374151' }}>{item.productName || item.product_name} &times;{item.quantity}</span>
+              <span style={{ fontWeight: '700', color: '#000000' }}>&#8358;{(parseFloat(item.price as any) * item.quantity).toLocaleString()}</span>
             </div>
           ))}
-          <div className="border-t border-dashed border-gray-300 dark:border-neutral-600 my-2" />
-          <div className="flex justify-between font-black text-sm dark:text-white">
+          <div style={{ borderTop: '1px dashed #d1d5db', margin: '8px 0' }} />
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: '900', fontSize: '14px', color: '#000000' }}>
             <span>TOTAL</span>
             <span>&#8358;{parseFloat(order.total_amount as any).toLocaleString()}</span>
           </div>
         </div>
 
         {/* Actions */}
-        <div className="px-6 py-4 flex gap-3">
-          <button
-            onClick={handleShare}
-            className="p-2.5 border border-gray-200 dark:border-neutral-800 rounded-xl text-gray-400 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 transition-colors"
-            title="Share Receipt"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" y1="2" x2="12" y2="15" />
-            </svg>
-          </button>
+        <div className="px-6 py-4 space-y-3">
+          <div className="flex gap-3">
+            <button
+              onClick={handleWhatsAppShare}
+              className="flex-1 py-3 bg-[#25D366] text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[#20BA5A] transition-colors flex items-center justify-center gap-2 shadow-lg shadow-green-500/20"
+              title="Share on WhatsApp"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+              </svg>
+              WhatsApp
+            </button>
+            <button
+              onClick={handleShare}
+              disabled={sharing}
+              className="p-3 border border-gray-200 dark:border-neutral-800 rounded-xl text-gray-400 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 transition-colors"
+              title="Share Receipt Image"
+            >
+              {sharing ? (
+                <div className="w-4 h-4 border-2 border-gray-300 border-t-black rounded-full animate-spin" />
+              ) : (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" y1="2" x2="12" y2="15" />
+                </svg>
+              )}
+            </button>
+          </div>
           <button
             onClick={handlePrint}
-            className="flex-1 py-2.5 bg-black text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-gray-900 transition-colors flex items-center justify-center gap-2"
+            className="w-full py-3 bg-black text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-900 transition-all flex items-center justify-center gap-2 active:scale-95"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <polyline points="6 9 6 2 18 2 18 9" />
               <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
               <rect x="6" y="14" width="12" height="8" />
             </svg>
-            Print Slip
+            Print Receipt Slip
           </button>
         </div>
       </div>

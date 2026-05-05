@@ -413,7 +413,7 @@ export default function TransactionsPage() {
       {receiptOrder && <ReceiptModal order={receiptOrder} onClose={() => setReceiptOrder(null)} />}
 
       {/* Print Slip Modal */}
-      {printOrder && <PrintSlipModal order={printOrder} settings={settings} onClose={() => setPrintOrder(null)} />}
+      {printOrder && <PrintSlipModal order={printOrder as any} settings={settings} onClose={() => setPrintOrder(null)} />}
 
       {/* Product Picker Modal */}
       {showProductPicker && (

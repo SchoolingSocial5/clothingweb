@@ -1,39 +1,37 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { useProductStore, Product } from "@/store/useProductStore";
+import { WholesaleProduct, useWholesaleProductStore } from "@/store/useWholesaleProductStore";
 import { useCategoryStore } from "@/store/useCategoryStore";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import { formatPrice } from "@/utils/format";
 import { useSettings } from "@/context/SettingsContext";
 import DeleteConfirmModal from "@/components/admin/DeleteConfirmModal";
 import Toast from "@/components/admin/Toast";
-import ProductModal from "@/components/admin/ProductModal";
-import { usePurchaseStore } from "@/store/usePurchaseStore";
+import WholesaleProductModal from "@/components/admin/WholesaleProductModal";
 import TableLoader from "@/components/admin/TableLoader";
+import { usePurchaseStore } from "@/store/usePurchaseStore";
 import { getImageUrl } from "@/utils/image";
 
 export default function WholeSaleProductsPage() {
   const { token, user } = useAuth();
   const { 
-    products, loading, fetchProducts, createProduct, updateProduct, deleteProduct,
+    wholesaleProducts, loading, fetchWholesaleProducts, createWholesaleProduct, updateWholesaleProduct, deleteWholesaleProduct,
     selectedProductIds, toggleProductSelection, toggleAllProducts, clearProductSelection, bulkDeleteProducts
-  } = useProductStore();
-  const { categories, fetchCategories } = useCategoryStore();
+  } = useWholesaleProductStore();
   const { addPurchase } = usePurchaseStore();
+  const { categories, fetchCategories } = useCategoryStore();
   const { settings } = useSettings();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [editingProduct, setEditingProduct] = useState<WholesaleProduct | null>(null);
   const [newProduct, setNewProduct] = useState({
     name: "",
-    category: "",
+    category: "Wholesale",
     price: "",
     cost_price: "",
     color: "#000000",
     quantity: "0",
     description: "",
-    product_type: "Whole" as "Retail" | "Whole",
-    wholesale_price: "",
     min_order_quantity: "1",
     image: null as File | null
   });
@@ -54,11 +52,9 @@ export default function WholeSaleProductsPage() {
   const [isSearching, setIsSearching] = useState(false);
   const itemsPerPage = 20;
 
-  const filteredProducts = products.filter(p => {
-    if (p.product_type !== 'Whole') return false;
+  const filteredProducts = wholesaleProducts.filter(p => {
     if (!search.trim()) return true;
-    return p.name.toLowerCase().includes(search.toLowerCase()) ||
-           p.category.toLowerCase().includes(search.toLowerCase());
+    return p.name.toLowerCase().includes(search.toLowerCase());
   });
 
   const showToast = (message: string, type: "success" | "error" | "warning" = "success") => {
@@ -67,11 +63,11 @@ export default function WholeSaleProductsPage() {
   };
 
   useEffect(() => {
-    fetchProducts();
+    fetchWholesaleProducts();
     fetchCategories();
-  }, [fetchProducts, fetchCategories]);
+  }, [fetchWholesaleProducts, fetchCategories]);
 
-  const handleEdit = (product: Product) => {
+  const handleEdit = (product: WholesaleProduct) => {
     setEditingProduct(product);
     setNewProduct({
       name: product.name,
@@ -81,8 +77,6 @@ export default function WholeSaleProductsPage() {
       color: product.color,
       quantity: product.quantity.toString(),
       description: product.description || "",
-      product_type: product.product_type || "Whole",
-      wholesale_price: product.wholesale_price || "",
       min_order_quantity: (product.min_order_quantity || 1).toString(),
       image: null
     });
@@ -102,10 +96,10 @@ export default function WholeSaleProductsPage() {
   const confirmDelete = async () => {
     if (!deleteId || !token) return;
     try {
-      await deleteProduct(deleteId);
-      showToast("Product deleted successfully", "success");
+      await deleteWholesaleProduct(deleteId);
+      showToast("Wholesale product deleted successfully", "success");
     } catch {
-      showToast("Failed to delete product", "error");
+      showToast("Failed to delete wholesale product", "error");
     } finally {
       setShowDeleteConfirm(false);
       setDeleteId(null);
@@ -131,9 +125,8 @@ export default function WholeSaleProductsPage() {
     formData.append("cost_price", newProduct.cost_price);
     formData.append("color", newProduct.color);
     formData.append("description", newProduct.description || "");
-    formData.append("product_type", newProduct.product_type);
-    formData.append("wholesale_price", newProduct.wholesale_price);
     formData.append("min_order_quantity", newProduct.min_order_quantity);
+    formData.append("quantity", newProduct.quantity);
 
     if (newProduct.image) {
       formData.append("image", newProduct.image);
@@ -146,62 +139,37 @@ export default function WholeSaleProductsPage() {
     setSubmitting(true);
     try {
       if (editingProduct) {
-        await updateProduct(editingProduct.id, formData);
+        await updateWholesaleProduct(editingProduct.id, formData);
       } else {
-        await createProduct(formData);
+        await createWholesaleProduct(formData);
       }
 
       setIsModalOpen(false);
       setEditingProduct(null);
-      setNewProduct({ name: "", category: "", price: "", cost_price: "", color: "#000000", quantity: "0", description: "", product_type: "Whole" as "Retail" | "Whole", wholesale_price: "", min_order_quantity: "1", image: null });
+      setNewProduct({ name: "", category: "Wholesale", price: "", cost_price: "", color: "#000000", quantity: "0", description: "", min_order_quantity: "1", image: null });
       setImagePreview(null);
-      showToast(editingProduct ? "Product updated successfully" : "Product saved successfully", "success");
+      showToast(editingProduct ? "Wholesale product updated successfully" : "Wholesale product saved successfully", "success");
     } catch (err: any) {
-      showToast(err?.message || "Error saving product", "error");
+      showToast(err?.message || "Error saving wholesale product", "error");
     } finally {
       setSubmitting(false);
     }
   };
-
-  const handlePurchase = async (quantity: number, cost: number) => {
-    if (submitting) return;
+  
+  const handlePurchase = async (quantity: string, cost_price: string) => {
+    if (!editingProduct || !token || submitting) return;
     setSubmitting(true);
     try {
-      let productId = editingProduct?.id;
-
-      if (!productId) {
-        const formData = new FormData();
-        formData.append("name", newProduct.name);
-        formData.append("category", newProduct.category);
-        formData.append("price", newProduct.price);
-        formData.append("cost_price", newProduct.cost_price);
-        formData.append("color", newProduct.color);
-        formData.append("product_type", newProduct.product_type);
-        formData.append("wholesale_price", newProduct.wholesale_price);
-        formData.append("min_order_quantity", newProduct.min_order_quantity);
-        formData.append("quantity", "0");
-        if (newProduct.image) {
-          formData.append("image", newProduct.image);
-        }
-
-        const createdProduct = await createProduct(formData);
-        productId = createdProduct.id;
-      }
-
       await addPurchase({
-        product_id: productId,
-        quantity,
-        cost_price: cost,
+        product_id: editingProduct.id,
+        quantity: quantity,
+        cost_price: cost_price
       });
-
-      showToast("Purchase recorded and stock updated!", "success");
-      setIsModalOpen(false);
-      setEditingProduct(null);
-      setNewProduct({ name: "", category: "", price: "", cost_price: "", color: "#000000", quantity: "0", description: "", product_type: "Whole" as "Retail" | "Whole", wholesale_price: "", min_order_quantity: "1", image: null });
-      setImagePreview(null);
-      await fetchProducts();
-    } catch (error: any) {
-      showToast(error.message || "Failed to record purchase", "error");
+      // Refresh products to see updated stock
+      await fetchWholesaleProducts();
+      showToast("Purchase recorded successfully", "success");
+    } catch (err: any) {
+      showToast(err?.message || "Error recording purchase", "error");
     } finally {
       setSubmitting(false);
     }
@@ -211,13 +179,13 @@ export default function WholeSaleProductsPage() {
     <div className="p-[10px] md:p-8">
       <AdminPageHeader
         title="Whole Sale Products"
-        description="View and manage your whole sale inventory."
-        stats={{ label: "Total Whole Sale", value: filteredProducts.length }}
+        description="Manage your wholesale inventory as a separate product catalog."
+        stats={{ label: "Total Whole Sale", value: wholesaleProducts.length }}
       >
         <button
           onClick={() => {
             setEditingProduct(null);
-            setNewProduct({ name: "", category: "", price: "", cost_price: "", color: "#000000", quantity: "0", description: "", product_type: "Whole" as "Retail" | "Whole", wholesale_price: "", min_order_quantity: "1", image: null });
+            setNewProduct({ name: "", category: "Wholesale", price: "", cost_price: "", color: "#000000", quantity: "0", description: "", min_order_quantity: "1", image: null });
             setImagePreview(null);
             setIsModalOpen(true);
           }}
@@ -249,6 +217,19 @@ export default function WholeSaleProductsPage() {
           </div>
         </div>
 
+        {/* Bulk Actions Header */}
+        <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between px-6 py-4 bg-white dark:bg-neutral-900 border-b border-gray-100 dark:border-neutral-800 gap-3">
+          <label className="flex items-center gap-4 cursor-pointer group">
+            <input
+              type="checkbox"
+              checked={wholesaleProducts.length > 0 && wholesaleProducts.every(p => selectedProductIds.includes(p.id))}
+              onChange={() => toggleAllProducts()}
+              className="w-5 h-5 rounded-lg border-gray-200 text-black focus:ring-black cursor-pointer transition-all"
+            />
+            <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 group-hover:text-black transition-colors">Select All Wholesale Items</span>
+          </label>
+        </div>
+
         <div className="overflow-x-auto min-h-[400px]">
             <table className="w-full text-left border-collapse">
               <thead>
@@ -256,10 +237,8 @@ export default function WholeSaleProductsPage() {
                   <th className="px-6 py-4 font-semibold text-center w-16">S/N</th>
                   <th className="px-2 py-4 w-8"></th>
                   <th className="px-6 py-4 font-semibold">Product Name</th>
-                  <th className="px-6 py-4 font-semibold">Category</th>
-                  <th className="px-6 py-4 font-semibold text-right">Retail Price</th>
-                  <th className="px-6 py-4 font-semibold text-right">Wholesale Price</th>
-                  <th className="px-6 py-4 font-semibold text-center">Min Order</th>
+                  <th className="px-6 py-4 font-semibold text-right">Cost Price</th>
+                  <th className="px-6 py-4 font-semibold text-right">Selling Price</th>
                   <th className="px-6 py-4 font-semibold text-center">Stock</th>
                   <th className="px-6 py-4 font-semibold text-center">Actions</th>
                 </tr>
@@ -303,19 +282,11 @@ export default function WholeSaleProductsPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                        {product.category}
-                      </span>
+                    <td className="px-6 py-4 text-right">
+                      <span className="font-bold text-sm text-gray-500 dark:text-gray-400">{formatPrice(Number(product.cost_price || 0), settings?.currency_symbol || "₦")}</span>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <span className="font-bold text-sm text-gray-900 dark:text-gray-100">{formatPrice(Number(product.price), settings?.currency_symbol || "₦")}</span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <span className="font-bold text-sm text-green-600 dark:text-green-400">{formatPrice(Number(product.wholesale_price || 0), settings?.currency_symbol || "₦")}</span>
-                    </td>
-                    <td className="px-6 py-4 text-center text-sm font-medium">
-                      {product.min_order_quantity || 1}
                     </td>
                     <td className="px-6 py-4 text-center">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${product.quantity > 10 ? 'bg-green-100 text-green-800' :
@@ -343,7 +314,7 @@ export default function WholeSaleProductsPage() {
                     </td>
                   </tr>
                 ))}
-              {loading && <TableLoader colSpan={9} />}
+              {loading && <TableLoader colSpan={7} />}
             </tbody>
             </table>
         </div>
@@ -388,7 +359,33 @@ export default function WholeSaleProductsPage() {
         )}
       </div>
 
-      <ProductModal
+      {selectedProductIds.length > 0 && user?.position === 'Director' && (
+        <div className="mt-8 bg-black text-white px-8 py-5 rounded-3xl shadow-2xl flex items-center justify-between animate-in fade-in slide-in-from-bottom-4 duration-500 ring-1 ring-white/10 flex-wrap gap-4">
+          <div className="flex items-center gap-8">
+            <span className="text-[10px] font-black uppercase tracking-widest bg-white/20 px-3 py-1.5 rounded-lg">
+              {selectedProductIds.length} Selected
+            </span>
+            <div className="hidden sm:block h-6 w-px bg-white/10"></div>
+            <div className="flex items-center gap-4">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-white/50">Actions</span>
+              <button
+                onClick={() => setShowBulkDeleteConfirm(true)}
+                disabled={bulkUpdating}
+                className="text-[10px] font-black uppercase tracking-widest px-6 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all disabled:opacity-50 flex items-center gap-2 active:scale-95"
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
+                Delete
+              </button>
+            </div>
+          </div>
+          <button onClick={clearProductSelection} className="text-white/40 hover:text-white transition-all p-2 flex items-center gap-2 group active:scale-90">
+            <span className="text-[10px] font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Clear</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+          </button>
+        </div>
+      )}
+
+      <WholesaleProductModal
         isOpen={isModalOpen}
         onClose={() => {
           if (submitting) return;
@@ -398,11 +395,10 @@ export default function WholeSaleProductsPage() {
         editingProduct={editingProduct}
         newProduct={newProduct}
         setNewProduct={setNewProduct}
-        categories={categories}
         onSubmit={handleSubmit}
+        onPurchase={handlePurchase}
         handleImageChange={handleImageChange}
         imagePreview={imagePreview}
-        onPurchase={handlePurchase}
         submitting={submitting}
       />
 
@@ -411,7 +407,26 @@ export default function WholeSaleProductsPage() {
         onClose={() => setShowDeleteConfirm(false)}
         onConfirm={confirmDelete}
         title="Confirm Deletion"
-        message="Are you sure you want to remove this product? This action cannot be undone."
+        message="Are you sure you want to remove this wholesale product? This action cannot be undone."
+      />
+
+      <DeleteConfirmModal
+        isOpen={showBulkDeleteConfirm}
+        onClose={() => setShowBulkDeleteConfirm(false)}
+        onConfirm={async () => {
+          setBulkUpdating(true);
+          try {
+            await bulkDeleteProducts(selectedProductIds);
+            setShowBulkDeleteConfirm(false);
+            showToast(`Successfully deleted ${selectedProductIds.length} wholesale products`);
+          } catch {
+            showToast("Failed to delete wholesale products", "error");
+          } finally {
+            setBulkUpdating(false);
+          }
+        }}
+        title="Delete Wholesale Products"
+        message={`Are you sure you want to delete ${selectedProductIds.length} selected item${selectedProductIds.length !== 1 ? 's' : ''}? This action cannot be undone.`}
       />
 
       <Toast
@@ -438,7 +453,7 @@ export default function WholeSaleProductsPage() {
             </button>
             <img
               src={previewImage}
-              alt="Product preview"
+              alt="Wholesale Product preview"
               className="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             />

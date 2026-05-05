@@ -9,18 +9,18 @@ import { useSettings } from "@/context/SettingsContext";
 import DeleteConfirmModal from "@/components/admin/DeleteConfirmModal";
 import Toast from "@/components/admin/Toast";
 import ProductModal from "@/components/admin/ProductModal";
-import { usePurchaseStore } from "@/store/usePurchaseStore";
 import TableLoader from "@/components/admin/TableLoader";
+import { usePurchaseStore } from "@/store/usePurchaseStore";
 import { getImageUrl } from "@/utils/image";
 
 export default function ProductsPage() {
   const { token, user } = useAuth();
   const { 
-    products, loading, fetchProducts, createProduct, updateProduct, deleteProduct,
+    products, loading, error, fetchProducts, createProduct, updateProduct, deleteProduct,
     selectedProductIds, toggleProductSelection, toggleAllProducts, clearProductSelection, bulkDeleteProducts
   } = useProductStore();
-  const { categories, fetchCategories } = useCategoryStore();
   const { addPurchase } = usePurchaseStore();
+  const { categories, fetchCategories } = useCategoryStore();
   const { settings } = useSettings();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -32,9 +32,6 @@ export default function ProductsPage() {
     color: "#000000",
     quantity: "0",
     description: "",
-    product_type: "Retail" as "Retail" | "Whole",
-    wholesale_price: "",
-    min_order_quantity: "1",
     image: null as File | null
   });
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -55,7 +52,6 @@ export default function ProductsPage() {
   const itemsPerPage = 20;
 
   const filteredProducts = products.filter(p => {
-    if (p.product_type !== 'Retail') return false;
     if (!search.trim()) return true;
     return p.name.toLowerCase().includes(search.toLowerCase()) ||
            p.category.toLowerCase().includes(search.toLowerCase());
@@ -81,9 +77,6 @@ export default function ProductsPage() {
       color: product.color,
       quantity: product.quantity.toString(),
       description: product.description || "",
-      product_type: product.product_type || "Retail",
-      wholesale_price: product.wholesale_price || "",
-      min_order_quantity: (product.min_order_quantity || 1).toString(),
       image: null
     });
     if (product.image_url) {
@@ -131,10 +124,7 @@ export default function ProductsPage() {
     formData.append("cost_price", newProduct.cost_price);
     formData.append("color", newProduct.color);
     formData.append("description", newProduct.description || "");
-    formData.append("product_type", newProduct.product_type);
-    formData.append("wholesale_price", newProduct.wholesale_price);
-    formData.append("min_order_quantity", newProduct.min_order_quantity);
-    // quantity is managed via Purchase, not directly on save
+    formData.append("quantity", newProduct.quantity);
     if (newProduct.image) {
       formData.append("image", newProduct.image);
     }
@@ -153,7 +143,7 @@ export default function ProductsPage() {
 
       setIsModalOpen(false);
       setEditingProduct(null);
-      setNewProduct({ name: "", category: "", price: "", cost_price: "", color: "#000000", quantity: "0", description: "", product_type: "Retail" as "Retail" | "Whole", wholesale_price: "", min_order_quantity: "1", image: null });
+      setNewProduct({ name: "", category: "", price: "", cost_price: "", color: "#000000", quantity: "0", description: "", image: null });
       setImagePreview(null);
       showToast(editingProduct ? "Product updated successfully" : "Product saved successfully", "success");
     } catch (err: any) {
@@ -162,47 +152,20 @@ export default function ProductsPage() {
       setSubmitting(false);
     }
   };
-
-  const handlePurchase = async (quantity: number, cost: number) => {
-    if (submitting) return;
+  
+  const handlePurchase = async (quantity: string, cost_price: string) => {
+    if (!editingProduct || !token || submitting) return;
     setSubmitting(true);
     try {
-      let productId = editingProduct?.id;
-
-      // If it's a new product, we must create it first
-      if (!productId) {
-        const formData = new FormData();
-        formData.append("name", newProduct.name);
-        formData.append("category", newProduct.category);
-        formData.append("price", newProduct.price);
-        formData.append("cost_price", newProduct.cost_price);
-        formData.append("color", newProduct.color);
-        formData.append("product_type", newProduct.product_type);
-        formData.append("wholesale_price", newProduct.wholesale_price);
-        formData.append("min_order_quantity", newProduct.min_order_quantity);
-        formData.append("quantity", "0"); // Start with 0, then add via purchase
-        if (newProduct.image) {
-          formData.append("image", newProduct.image);
-        }
-
-        const createdProduct = await createProduct(formData);
-        productId = createdProduct.id;
-      }
-
       await addPurchase({
-        product_id: productId,
-        quantity,
-        cost_price: cost,
+        product_id: editingProduct.id,
+        quantity: quantity,
+        cost_price: cost_price
       });
-
-      showToast("Purchase recorded and stock updated!", "success");
-      setIsModalOpen(false);
-      setEditingProduct(null);
-      setNewProduct({ name: "", category: "", price: "", cost_price: "", color: "#000000", quantity: "0", description: "", product_type: "Retail" as "Retail" | "Whole", wholesale_price: "", min_order_quantity: "1", image: null });
-      setImagePreview(null);
-      await fetchProducts(); // Refresh stock in list
-    } catch (error: any) {
-      showToast(error.message || "Failed to record purchase", "error");
+      await fetchProducts();
+      showToast("Purchase recorded successfully", "success");
+    } catch (err: any) {
+      showToast(err?.message || "Error recording purchase", "error");
     } finally {
       setSubmitting(false);
     }
@@ -213,11 +176,12 @@ export default function ProductsPage() {
       <AdminPageHeader
         title="Retail Products"
         description="View and manage your retail inventory."
-        stats={{ label: "Total Retail", value: filteredProducts.length }}
+        stats={{ label: "Total Retail", value: products.length }}
       >
         <button
           onClick={() => {
-            setNewProduct({ name: "", category: "", price: "", cost_price: "", color: "#000000", quantity: "0", description: "", product_type: "Retail" as "Retail" | "Whole", wholesale_price: "", min_order_quantity: "1", image: null });
+            setEditingProduct(null);
+            setNewProduct({ name: "", category: "", price: "", cost_price: "", color: "#000000", quantity: "0", description: "", image: null });
             setImagePreview(null);
             setIsModalOpen(true);
           }}
@@ -227,7 +191,6 @@ export default function ProductsPage() {
           Create New Product
         </button>
       </AdminPageHeader>
-
 
       <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-gray-100 dark:border-neutral-800 shadow-sm overflow-hidden">
         <div className="px-6 py-5 border-b border-gray-100 dark:border-neutral-800 flex justify-between items-center">
@@ -248,19 +211,6 @@ export default function ProductsPage() {
             <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
             {isSearching && <div className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 border-2 border-gray-300 border-t-black rounded-full animate-spin" />}
           </div>
-        </div>
-
-        {/* Bulk Actions Header (Mobile/Desktop wrapper) */}
-        <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between px-6 py-4 bg-white dark:bg-neutral-900 border-b border-gray-100 dark:border-neutral-800 gap-3">
-          <label className="flex items-center gap-4 cursor-pointer group">
-            <input
-              type="checkbox"
-              checked={products.length > 0 && products.every(p => selectedProductIds.includes(p.id))}
-              onChange={() => toggleAllProducts()}
-              className="w-5 h-5 rounded-lg border-gray-200 text-black focus:ring-black cursor-pointer transition-all"
-            />
-            <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 group-hover:text-black transition-colors">Select All Products</span>
-          </label>
         </div>
 
         <div className="overflow-x-auto min-h-[400px]">
@@ -345,7 +295,7 @@ export default function ProductsPage() {
                           onClick={() => handleEdit(product)}
                           className="text-gray-400 hover:text-black transition-colors cursor-pointer"
                         >
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1-1-4 9.5-9.5z"></path></svg>
                         </button>
                         <button
                           onClick={() => handleDelete(product.id)}
@@ -357,9 +307,32 @@ export default function ProductsPage() {
                     </td>
                   </tr>
                 ))}
-              {loading && <TableLoader colSpan={8} />}
-            </tbody>
+                {loading && <TableLoader colSpan={8} />}
+              </tbody>
             </table>
+            {!loading && error && (
+              <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
+                <div className="w-16 h-16 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-4">
+                  <svg className="text-red-500" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2">Failed to load products</h3>
+                <p className="text-gray-500 dark:text-gray-400 text-sm max-w-xs mx-auto mb-6">{error}</p>
+                <button 
+                  onClick={() => fetchProducts()}
+                  className="px-6 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg text-sm font-bold hover:scale-105 transition-transform"
+                >
+                  Try Again
+                </button>
+              </div>
+            )}
+            {!loading && !error && filteredProducts.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-20 text-center">
+                <p className="text-gray-400 font-bold uppercase tracking-widest text-sm">No retail products found</p>
+                {search && (
+                   <button onClick={() => setSearch('')} className="mt-2 text-xs font-bold underline text-gray-500 hover:text-black">Clear search</button>
+                )}
+              </div>
+            )}
         </div>
 
         {/* Pagination Controls */}
@@ -440,9 +413,9 @@ export default function ProductsPage() {
         setNewProduct={setNewProduct}
         categories={categories}
         onSubmit={handleSubmit}
+        onPurchase={handlePurchase}
         handleImageChange={handleImageChange}
         imagePreview={imagePreview}
-        onPurchase={handlePurchase}
         submitting={submitting}
       />
 
