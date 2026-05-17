@@ -3,24 +3,25 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useSettings } from '@/context/SettingsContext';
-import { useOrderStore } from '@/store/useOrderStore';
-import { useProductStore, Product as StoreProduct } from '@/store/useProductStore';
+import { useWholesaleOrderStore } from '@/store/useWholesaleOrderStore';
+import { useWholesaleProductStore, WholesaleProduct } from '@/store/useWholesaleProductStore';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import Pagination from '@/components/common/Pagination';
 import TableLoader from '@/components/admin/TableLoader';
 import DeleteConfirmModal from '@/components/admin/DeleteConfirmModal';
-import { getImageUrl } from '@/utils/image';
 import Toast from '@/components/admin/Toast';
 import InsufficientStockModal from '@/components/admin/orders/InsufficientStockModal';
 
-// Extracted Components
+// Shared Components
 import { Order } from '@/components/admin/orders/types';
 import OrderDetailsModal from '@/components/admin/orders/OrderDetailsModal';
 import PrintSlipModal from '@/components/admin/orders/PrintSlipModal';
 import ReceiptModal from '@/components/admin/orders/ReceiptModal';
-import ProductPickerModal from '@/components/admin/orders/ProductPickerModal';
-import CheckoutModal from '@/components/admin/orders/CheckoutModal';
 import FloatingCartIndicator from '@/components/admin/orders/FloatingCartIndicator';
+
+// Wholesale Custom Modals
+import WholesaleProductPickerModal from '@/components/admin/wholesale-orders/WholesaleProductPickerModal';
+import WholesaleCheckoutModal from '@/components/admin/wholesale-orders/WholesaleCheckoutModal';
 
 const paymentColors: Record<string, string> = {
   unpaid: 'bg-red-50 text-red-500',
@@ -34,18 +35,18 @@ const paymentMethodColors: Record<string, string> = {
   online: 'bg-gray-50 text-gray-600 border-gray-100',
 };
 
-export default function OrdersPage() {
+export default function WholesaleOrdersPage() {
   const { token } = useAuth();
   const router = useRouter();
-  const orders = useOrderStore(state => state.orders);
-  const pagination = useOrderStore(state => state.pagination);
-  const selectedOrderIds = useOrderStore(state => state.selectedOrderIds);
-  const loading = useOrderStore(state => state.loading);
-  const fetchOrders = useOrderStore(state => state.fetchOrders);
-  const updateOrderStatus = useOrderStore(state => state.updateOrderStatus);
-  const bulkUpdateStatus = useOrderStore(state => state.bulkUpdateStatus);
-  const toggleOrderSelection = useOrderStore(state => state.toggleOrderSelection);
-  const toggleAllSelection = useOrderStore(state => state.toggleAllSelection);
+  const orders = useWholesaleOrderStore(state => state.orders);
+  const pagination = useWholesaleOrderStore(state => state.pagination);
+  const selectedOrderIds = useWholesaleOrderStore(state => state.selectedOrderIds);
+  const loading = useWholesaleOrderStore(state => state.loading);
+  const fetchOrders = useWholesaleOrderStore(state => state.fetchOrders);
+  const updateOrderStatus = useWholesaleOrderStore(state => state.updateOrderStatus);
+  const bulkUpdateStatus = useWholesaleOrderStore(state => state.bulkUpdateStatus);
+  const toggleOrderSelection = useWholesaleOrderStore(state => state.toggleOrderSelection);
+  const toggleAllSelection = useWholesaleOrderStore(state => state.toggleAllSelection);
 
   const [detailsOrder, setDetailsOrder] = useState<Order | null>(null);
   const [receiptOrder, setReceiptOrder] = useState<Order | null>(null);
@@ -74,7 +75,7 @@ export default function OrdersPage() {
 
   const cartTotal = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
 
-  const handleAddToCart = (product: StoreProduct) => {
+  const handleAddToCart = (product: WholesaleProduct) => {
     const existing = cartItems.find(i => i.id === product.id);
     if (existing) {
       setCartItems(cartItems.map(i => i.id === product.id ? { ...i, quantity: i.quantity + 1 } : i));
@@ -100,13 +101,13 @@ export default function OrdersPage() {
   const onOrderCreated = () => {
     setCartItems([]);
     setShowCheckout(false);
-    setToast({ message: 'Order created successfully!', type: 'success' });
-    router.push('/admin/transactions');
+    setToast({ message: 'Wholesale order created successfully!', type: 'success' });
+    router.push('/admin/wholesale-transactions');
   };
 
   const today = new Date().toISOString().split('T')[0];
 
-  const { settings, refreshSettings } = useSettings();
+  const { settings } = useSettings();
 
   useEffect(() => {
     fetchOrders(1, '', '', '', 'unpaid');
@@ -127,7 +128,7 @@ export default function OrdersPage() {
       await updateOrderStatus(id, { [field]: value });
       setToast({ message: 'Order status updated successfully!', type: 'success' });
       if (field === 'payment_status' && value === 'paid') {
-        router.push('/admin/transactions');
+        router.push('/admin/wholesale-transactions');
         return;
       }
     } catch (err: any) {
@@ -152,7 +153,7 @@ export default function OrdersPage() {
       await bulkUpdateStatus(selectedOrderIds, { [field]: value });
       setToast({ message: 'Bulk status update successful!', type: 'success' });
       if (field === 'payment_status' && value === 'paid') {
-        router.push('/admin/transactions');
+        router.push('/admin/wholesale-transactions');
         return;
       }
     } catch (err: any) {
@@ -172,8 +173,8 @@ export default function OrdersPage() {
   return (
     <div className="p-[10px] md:p-8 w-full">
       <AdminPageHeader
-        title="Orders"
-        description="Manage and track all customer orders"
+        title="Wholesale Orders"
+        description="Manage and track all wholesale partner orders"
         stats={{ label: "Total", value: pagination?.total || 0 }}
       >
         <button
@@ -181,7 +182,7 @@ export default function OrdersPage() {
           className="bg-black text-white px-6 py-3 rounded-xl text-sm font-bold shadow-lg shadow-black/20 hover:bg-gray-900 transition-all flex items-center gap-2"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
-          Create Order
+          Create Wholesale Order
         </button>
       </AdminPageHeader>
 
@@ -253,7 +254,7 @@ export default function OrdersPage() {
           <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 group-hover:text-black transition-colors">Select All Orders</span>
         </label>
         <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">
-          Showing {orders.length} of {pagination.total} Orders
+          Showing {orders.length} of {pagination.total} Wholesale Orders
         </div>
       </div>
 
@@ -268,6 +269,7 @@ export default function OrdersPage() {
                   <th className="px-4 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 text-right">Amount</th>
                   <th className="px-4 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 text-center">Receipt ID</th>
                   <th className="px-4 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 text-center">Method</th>
+                  <th className="px-4 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 text-center">Receipt Image</th>
                   <th className="px-4 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">Payment</th>
                   <th className="px-4 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 text-right">Date/Time</th>
                 </tr>
@@ -275,12 +277,12 @@ export default function OrdersPage() {
               <tbody>
                 {orders.length === 0 && !loading && (
                   <tr>
-                    <td colSpan={8} className="px-6 py-20 text-center">
+                    <td colSpan={9} className="px-6 py-20 text-center">
                       <svg className="mx-auto mb-4 text-gray-200" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
                         <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" />
                         <path d="M16 10a4 4 0 0 1-8 0" />
                       </svg>
-                      <p className="text-gray-400 font-bold uppercase tracking-widest text-sm">No orders yet</p>
+                      <p className="text-gray-400 font-bold uppercase tracking-widest text-sm">No wholesale orders yet</p>
                     </td>
                   </tr>
                 )}
@@ -345,6 +347,19 @@ export default function OrdersPage() {
                         {order.payment_method === 'transfer' ? 'Trans' : order.payment_method}
                       </span>
                     </td>
+                    <td className="px-4 py-5 text-center" onClick={e => e.stopPropagation()}>
+                      {order.receipt_path ? (
+                        <button
+                          onClick={() => setReceiptOrder(order as any)}
+                          className="px-3 py-1.5 bg-gray-50 hover:bg-gray-100 text-gray-500 hover:text-black dark:bg-neutral-800 dark:hover:bg-neutral-700 dark:text-gray-300 dark:hover:text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all cursor-pointer inline-flex items-center gap-1.5"
+                        >
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+                          View Receipt
+                        </button>
+                      ) : (
+                        <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest italic">None</span>
+                      )}
+                    </td>
                     <td className="px-4 py-5" onClick={e => e.stopPropagation()}>
                       {updatingId === order.id ? (
                         <div className="flex items-center gap-2 px-3 py-1.5">
@@ -370,7 +385,7 @@ export default function OrdersPage() {
                     </td>
                   </tr>
                 ))}
-              {loading && <TableLoader colSpan={8} />}
+              {loading && <TableLoader colSpan={9} />}
               </tbody>
             </table>
           </div>
@@ -406,7 +421,7 @@ export default function OrdersPage() {
               </button>
             </div>
           </div>
-          <button onClick={() => useOrderStore.getState().clearSelection()} className="text-white/40 hover:text-white transition-all p-2 flex items-center gap-2 group active:scale-90">
+          <button onClick={() => useWholesaleOrderStore.getState().clearSelection()} className="text-white/40 hover:text-white transition-all p-2 flex items-center gap-2 group active:scale-90">
             <span className="text-[10px] font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Clear</span>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
           </button>
@@ -416,9 +431,9 @@ export default function OrdersPage() {
       <DeleteConfirmModal
         isOpen={showBulkDeleteConfirm}
         onClose={() => setShowBulkDeleteConfirm(false)}
-        onConfirm={() => useOrderStore.getState().bulkDeleteOrders(selectedOrderIds)}
-        title="Delete Orders"
-        message={`Are you sure you want to delete ${selectedOrderIds.length} selected order${selectedOrderIds.length !== 1 ? 's' : ''}? This action cannot be undone.`}
+        onConfirm={() => useWholesaleOrderStore.getState().bulkDeleteOrders(selectedOrderIds)}
+        title="Delete Wholesale Orders"
+        message={`Are you sure you want to delete ${selectedOrderIds.length} selected wholesale order${selectedOrderIds.length !== 1 ? 's' : ''}? This action cannot be undone.`}
       />
 
       {/* Order Details Modal */}
@@ -432,7 +447,7 @@ export default function OrdersPage() {
 
       {/* Product Picker Modal */}
       {showProductPicker && (
-        <ProductPickerModal 
+        <WholesaleProductPickerModal 
           onClose={() => setShowProductPicker(false)} 
           onAddToCart={handleAddToCart}
           onUpdateQty={updateCartQty}
@@ -441,7 +456,7 @@ export default function OrdersPage() {
       )}
 
       {showCheckout && (
-        <CheckoutModal 
+        <WholesaleCheckoutModal 
           cartItems={cartItems}
           onClose={() => setShowCheckout(false)}
           onUpdateQty={updateCartQty}

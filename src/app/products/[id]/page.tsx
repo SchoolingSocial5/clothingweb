@@ -55,7 +55,7 @@ export default function ProductDetailPage() {
   const cartItem = cart.find((c) => c.id === Number(id));
 
   const handleAddToCart = () => {
-    if (!product || product.quantity <= 0) return;
+    if (!product) return;
     addToCart({ id: product.id, name: product.name, category: product.category, price: product.price, color: product.color, image_url: product.image_url, quantity: product.quantity });
   };
 
@@ -226,24 +226,18 @@ export default function ProductDetailPage() {
             ) : (
               <button
                 onClick={handleAddToCart}
-                disabled={!inStock}
-                className={`w-full py-4 text-sm font-black uppercase tracking-widest rounded-2xl transition-all duration-200 cursor-pointer mb-4
-                  ${inStock
-                    ? 'bg-black dark:bg-white text-white dark:text-black hover:opacity-85 active:scale-[0.98] shadow-lg shadow-black/10'
-                    : 'bg-gray-200 dark:bg-neutral-800 text-gray-400 cursor-not-allowed'
-                  }`}
+                className="w-full py-4 text-sm font-black uppercase tracking-widest rounded-2xl transition-all duration-200 cursor-pointer mb-4 bg-black dark:bg-white text-white dark:text-black hover:opacity-85 active:scale-[0.98] shadow-lg shadow-black/10"
               >
-                {inStock ? 'Add to Cart' : 'Out of Stock'}
+                Add to Cart
               </button>
             )}
 
             <Link
               href="/checkout"
-              className={`w-full py-4 text-sm font-black uppercase tracking-widest rounded-2xl border-2 text-center transition-all duration-200
-                ${inStock
-                  ? 'border-gray-900 dark:border-gray-100 text-gray-900 dark:text-gray-100 hover:bg-gray-900 dark:hover:bg-gray-100 hover:text-white dark:hover:text-black'
-                  : 'border-gray-200 dark:border-neutral-700 text-gray-300 dark:text-neutral-600 cursor-not-allowed pointer-events-none'
-                }`}
+              onClick={() => {
+                if (!cartItem) handleAddToCart();
+              }}
+              className="w-full py-4 text-sm font-black uppercase tracking-widest rounded-2xl border-2 text-center transition-all duration-200 border-gray-900 dark:border-gray-100 text-gray-900 dark:text-gray-100 hover:bg-gray-900 dark:hover:bg-gray-100 hover:text-white dark:hover:text-black"
             >
               Buy Now
             </Link>

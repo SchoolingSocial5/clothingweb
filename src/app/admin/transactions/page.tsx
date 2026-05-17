@@ -34,6 +34,7 @@ const paymentMethodColors: Record<string, string> = {
 
 export default function TransactionsPage() {
   const { token, user } = useAuth();
+  const today = new Date().toISOString().split('T')[0];
   const orders = useOrderStore(state => state.orders);
   const pagination = useOrderStore(state => state.pagination);
   const selectedOrderIds = useOrderStore(state => state.selectedOrderIds);
@@ -50,8 +51,8 @@ export default function TransactionsPage() {
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [bulkUpdating, setBulkUpdating] = useState(false);
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
-  const [from, setFrom] = useState('');
-  const [to, setTo] = useState('');
+  const [from, setFrom] = useState(today);
+  const [to, setTo] = useState(today);
   const [search, setSearch] = useState('');
   
   // New POS cart state
@@ -88,25 +89,23 @@ export default function TransactionsPage() {
   const onOrderCreated = () => {
     setCartItems([]);
     setShowCheckout(false);
-    fetchOrders(1, '', '', '', 'paid');
+    fetchOrders(1, today, today, '', 'paid');
     setToast({ message: 'Order created successfully!', type: 'success' });
   };
-
-  const today = new Date().toISOString().split('T')[0];
 
   const { settings, refreshSettings } = useSettings();
 
   useEffect(() => {
-    fetchOrders(1, '', '', '', 'paid');
+    fetchOrders(1, today, today, '', 'paid');
   }, [token, fetchOrders]);
 
   const handleFilter = () => fetchOrders(1, from, to, search, 'paid');
 
   const handleClear = () => {
-    setFrom('');
-    setTo('');
+    setFrom(today);
+    setTo(today);
     setSearch('');
-    fetchOrders(1, '', '', '', 'paid');
+    fetchOrders(1, today, today, '', 'paid');
   };
 
   const updateStatus = async (id: number, field: 'status' | 'payment_status', value: string) => {

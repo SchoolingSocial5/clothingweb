@@ -33,6 +33,7 @@ const paymentMethodColors: Record<string, string> = {
 
 export default function WholesaleTransactionsPage() {
   const { token, user } = useAuth();
+  const today = new Date().toISOString().split('T')[0];
   const orders = useWholesaleOrderStore(state => state.orders);
   const pagination = useWholesaleOrderStore(state => state.pagination);
   const selectedOrderIds = useWholesaleOrderStore(state => state.selectedOrderIds);
@@ -49,8 +50,8 @@ export default function WholesaleTransactionsPage() {
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [bulkUpdating, setBulkUpdating] = useState(false);
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
-  const [from, setFrom] = useState('');
-  const [to, setTo] = useState('');
+  const [from, setFrom] = useState(today);
+  const [to, setTo] = useState(today);
   const [search, setSearch] = useState('');
 
   // New POS cart state
@@ -87,25 +88,23 @@ export default function WholesaleTransactionsPage() {
   const onOrderCreated = () => {
     setCartItems([]);
     setShowCheckout(false);
-    fetchOrders(1, '', '', '', 'paid');
+    fetchOrders(1, today, today, '', 'paid');
     setToast({ message: 'Wholesale order created successfully!', type: 'success' });
   };
-
-  const today = new Date().toISOString().split('T')[0];
 
   const { settings } = useSettings();
 
   useEffect(() => {
-    fetchOrders(1, '', '', '', 'paid');
+    fetchOrders(1, today, today, '', 'paid');
   }, [token, fetchOrders]);
 
   const handleFilter = () => fetchOrders(1, from, to, search, 'paid');
 
   const handleClear = () => {
-    setFrom('');
-    setTo('');
+    setFrom(today);
+    setTo(today);
     setSearch('');
-    fetchOrders(1, '', '', '', 'paid');
+    fetchOrders(1, today, today, '', 'paid');
   };
 
   const updateStatus = async (id: number, field: 'status' | 'payment_status', value: string) => {

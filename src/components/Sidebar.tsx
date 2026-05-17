@@ -101,43 +101,7 @@ export default function Sidebar({
         </ul>
       </div>
 
-      {/* Colors */}
-      {uniqueColors.length > 0 && (
-        <div className="mb-10">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="font-bold text-sm tracking-widest uppercase text-gray-900 dark:text-gray-100">Colors</h3>
-            {selectedColors.length > 0 && (
-              <button
-                onClick={() => onColorsChange?.([])}
-                className="text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-black dark:hover:text-white transition-colors cursor-pointer"
-              >
-                Reset
-              </button>
-            )}
-          </div>
-          <div className="flex flex-wrap gap-3">
-            {uniqueColors.map((c) => {
-              const isSelected = selectedColors.includes(c);
-              const isLight = c === "#ffffff" || c === "white" || c === "#fff";
-              return (
-                <button
-                  key={c}
-                  onClick={() => toggleColor(c)}
-                  title={c}
-                  className={`w-7 h-7 rounded-full transition-all cursor-pointer ${
-                    isLight ? "border border-gray-300 dark:border-neutral-600" : "border border-transparent"
-                  } ${
-                    isSelected
-                      ? "ring-2 ring-offset-2 ring-black dark:ring-white dark:ring-offset-neutral-900 scale-110"
-                      : "ring-2 ring-offset-2 ring-transparent hover:ring-gray-300 dark:hover:ring-neutral-600 dark:ring-offset-neutral-900"
-                  }`}
-                  style={{ backgroundColor: c }}
-                />
-              );
-            })}
-          </div>
-        </div>
-      )}
+
 
       {/* Price Range */}
       <div>

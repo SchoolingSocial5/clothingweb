@@ -58,7 +58,6 @@ export default function ProductImageModal({ isOpen, onClose, products, initialIn
   };
 
   const handleAddToCart = () => {
-    if (currentProduct.quantity <= 0) return;
     addToCart(currentProduct);
   };
 
@@ -162,14 +161,9 @@ export default function ProductImageModal({ isOpen, onClose, products, initialIn
           ) : (
             <button 
               onClick={handleAddToCart}
-              disabled={currentProduct.quantity <= 0}
-              className={`px-10 py-3.5 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all active:scale-95 cursor-pointer
-                ${currentProduct.quantity <= 0 
-                  ? 'bg-white/5 text-white/30 cursor-not-allowed' 
-                  : 'bg-white text-black hover:bg-neutral-200 shadow-xl shadow-white/5'
-                }`}
+              className="px-10 py-3.5 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all active:scale-95 cursor-pointer bg-white text-black hover:bg-neutral-200 shadow-xl shadow-white/5"
             >
-              {currentProduct.quantity <= 0 ? "Sold Out" : "Add to Cart"}
+              Add to Cart
             </button>
           )}
         </div>

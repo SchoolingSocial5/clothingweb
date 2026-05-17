@@ -7,6 +7,8 @@ import { useEffect, useState } from 'react';
 import AdminTopHeader from '@/components/admin/AdminTopHeader';
 import ThemeToggle from '@/components/ThemeToggle';
 import { getImageUrl } from '@/utils/image';
+import { socket } from '@/utils/socket';
+import { useOrderStore } from '@/store/useOrderStore';
 
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -18,6 +20,62 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [contentOpen, setContentOpen] = useState(pathname.startsWith('/admin/faq') || pathname.startsWith('/admin/blog') || pathname.startsWith('/admin/terms') || pathname.startsWith('/admin/social-media'));
   const [settingsOpen, setSettingsOpen] = useState(pathname.startsWith('/admin/settings') || pathname.startsWith('/admin/staff'));
   const logoSrc = getImageUrl(settings?.logo);
+
+  const { unpaidCount, fetchUnpaidCount, addLiveOrder } = useOrderStore();
+
+  useEffect(() => {
+    socket.connect();
+    fetchUnpaidCount();
+
+    let audioUnlockedInstance: HTMLAudioElement | null = null;
+    try {
+      audioUnlockedInstance = new Audio('/ring_tone.mp3');
+      audioUnlockedInstance.load();
+    } catch (e) {
+      console.error("Audio init error:", e);
+    }
+
+    const unlock = () => {
+      if (audioUnlockedInstance) {
+        audioUnlockedInstance.volume = 0;
+        audioUnlockedInstance.play()
+          .then(() => {
+            console.log("Audio system successfully unlocked for real-time ringtone notifications!");
+            window.removeEventListener('click', unlock);
+            window.removeEventListener('keydown', unlock);
+          })
+          .catch((err) => {
+            console.warn("Failed to unlock audio channel:", err);
+          });
+      }
+    };
+
+    window.addEventListener('click', unlock);
+    window.addEventListener('keydown', unlock);
+
+    const handleNewOrder = (order: any) => {
+      console.log("New live order received via socket:", order);
+      const ringPlay = new Audio('/ring_tone.mp3');
+      ringPlay.volume = 1.0;
+      ringPlay.play()
+        .then(() => {
+          console.log("Ringtone played successfully!");
+        })
+        .catch((err) => {
+          console.error("Autoplay blocked or failed. Interact with document to enable sound alerts:", err);
+        });
+      addLiveOrder(order);
+    };
+
+    socket.on('newOrder', handleNewOrder);
+
+    return () => {
+      window.removeEventListener('click', unlock);
+      window.removeEventListener('keydown', unlock);
+      socket.off('newOrder', handleNewOrder);
+      socket.disconnect();
+    };
+  }, [fetchUnpaidCount, addLiveOrder]);
 
   useEffect(() => {
     if (!loading && (!user || (user.status !== 'staff' && user.status !== 'admin'))) {
@@ -93,9 +151,25 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           )}
           {hasAccess('order') && (
             <>
-              <Link href="/admin/orders" className={`flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin/orders' ? 'text-white bg-black dark:bg-white dark:text-black' : 'text-gray-500 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
+              <Link href="/admin/orders" className={`flex items-center justify-between px-4 py-3 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin/orders' ? 'text-white bg-black dark:bg-white dark:text-black' : 'text-gray-500 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
+                <div className="flex items-center gap-3">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                  <span>Orders</span>
+                </div>
+                {unpaidCount > 0 && (
+                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-md flex items-center justify-center min-w-[20px] transition-colors
+                    ${pathname === '/admin/orders' 
+                      ? 'bg-white text-black dark:bg-black dark:text-white' 
+                      : 'bg-black text-white dark:bg-white dark:text-black'
+                    }`}
+                  >
+                    {unpaidCount}
+                  </span>
+                )}
+              </Link>
+              <Link href="/admin/wholesale-orders" className={`flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin/wholesale-orders' ? 'text-white bg-black dark:bg-white dark:text-black' : 'text-gray-500 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
-                Orders
+                Wholesale Orders
               </Link>
               <Link href="/admin/transactions" className={`flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin/transactions' ? 'text-white bg-black dark:bg-white dark:text-black' : 'text-gray-500 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="5" width="20" height="14" rx="2" ry="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
@@ -190,6 +264,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <div className="ml-7 mt-1 space-y-0.5 border-l border-gray-100 dark:border-neutral-800 pl-4">
                   <Link href="/admin/settings" className={`flex items-center gap-2 px-3 py-2 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin/settings' ? 'text-black dark:text-white bg-gray-50 dark:bg-neutral-800' : 'text-gray-400 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
                     Company
+                  </Link>
+                  <Link href="/admin/finance" className={`flex items-center gap-2 px-3 py-2 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin/finance' ? 'text-black dark:text-white bg-gray-50 dark:bg-neutral-800' : 'text-gray-400 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
+                    Finance
                   </Link>
                   <Link href="/admin/settings/positions" className={`flex items-center gap-2 px-3 py-2 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin/settings/positions' ? 'text-black dark:text-white bg-gray-50 dark:bg-neutral-800' : 'text-gray-400 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
                     Position

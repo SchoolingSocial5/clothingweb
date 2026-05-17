@@ -14,6 +14,7 @@ interface OrderState {
   selectedOrderIds: number[];
   loading: boolean;
   error: string | null;
+  unpaidCount: number;
   fetchOrders: (page?: number, from?: string, to?: string, search?: string, paymentStatus?: string) => Promise<void>;
   fetchCustomerOrders: () => Promise<void>;
   updateOrderStatus: (id: number, data: Partial<Order>) => Promise<void>;
@@ -24,6 +25,9 @@ interface OrderState {
   toggleOrderSelection: (id: number) => void;
   toggleAllSelection: () => void;
   clearSelection: () => void;
+  fetchUnpaidCount: () => Promise<void>;
+  setUnpaidCount: (count: number) => void;
+  addLiveOrder: (order: any) => void;
 }
 
 export const useOrderStore = create<OrderState>((set, get) => ({
@@ -37,6 +41,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
   selectedOrderIds: [],
   loading: false,
   error: null,
+  unpaidCount: 0,
 
   fetchOrders: async (page = 1, from = '', to = '', search = '', paymentStatus = '') => {
     if (get().orders.length === 0) set({ loading: true });
@@ -72,6 +77,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       // The API returns { message, orders } but with pagination it might be different now
       // Let's re-fetch the current page to keep it consistent
       await get().fetchOrders(get().pagination.page);
+      await get().fetchUnpaidCount();
     } catch (err: any) {
       set({ error: err.message });
       throw err;
@@ -87,6 +93,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       });
       set({ selectedOrderIds: [] }); // Clear selection after bulk action
       await get().fetchOrders(get().pagination.page);
+      await get().fetchUnpaidCount();
     } catch (err: any) {
       set({ error: err.message, loading: false });
       throw err;
@@ -102,6 +109,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       });
       set({ selectedOrderIds: [] });
       await get().fetchOrders(get().pagination.page);
+      await get().fetchUnpaidCount();
     } catch (err: any) {
       set({ error: err.message, loading: false });
       throw err;
@@ -112,6 +120,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     try {
       await apiClient(`/admin/orders/${id}`, { method: 'DELETE' });
       await get().fetchOrders(get().pagination.page);
+      await get().fetchUnpaidCount();
     } catch (err: any) {
       set({ error: err.message });
       throw err;
@@ -152,5 +161,29 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       set({ error: err.message, loading: false });
       throw err;
     }
+  },
+
+  fetchUnpaidCount: async () => {
+    try {
+      const response = await apiClient<{ total: number; unpaid: number }>('/admin/orders/count');
+      set({ unpaidCount: response.unpaid });
+    } catch (err: any) {
+      console.error('Failed to fetch unpaid count:', err);
+    }
+  },
+
+  setUnpaidCount: (count: number) => set({ unpaidCount: count }),
+
+  addLiveOrder: (order: any) => {
+    const { orders, pagination, unpaidCount } = get();
+    if (orders.some(o => o.id === order.id)) return;
+    set({
+      orders: [order, ...orders],
+      unpaidCount: unpaidCount + 1,
+      pagination: {
+        ...pagination,
+        total: pagination.total + 1
+      }
+    });
   },
 }));

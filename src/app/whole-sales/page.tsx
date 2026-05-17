@@ -47,10 +47,9 @@ export default function WholeSales() {
       .catch(() => {});
   }, [fetchWholesaleProducts, fetchBanners, fetchPublicBlogs]);
 
-  // Filter by category, colors and price, then sort by availability (in-stock first)
+  // Filter by category and price, then sort by availability (in-stock first)
   const filtered = wholesaleProducts.filter((p) => {
     if (selectedCategory !== "All Products" && p.category?.toLowerCase() !== selectedCategory.toLowerCase()) return false;
-    if (selectedColors.length > 0 && !selectedColors.includes((p.color || "").trim().toLowerCase())) return false;
     const price = parseFloat(p.price);
     if (!isNaN(price) && price > priceRange[1]) return false;
     return true;

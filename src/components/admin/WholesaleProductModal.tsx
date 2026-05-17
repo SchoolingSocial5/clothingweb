@@ -131,19 +131,10 @@ export default function WholesaleProductModal({
             />
           </div>
 
-          {/* Color + Image upload side by side */}
+          {/* Product Image */}
           <div className="flex flex-col gap-2">
-            <label className={labelCls}>Color &amp; Image</label>
-            <div className="flex items-center gap-3">
-              <input
-                type="color"
-                value={newProduct.color}
-                onChange={(e) => setNewProduct({ ...newProduct, color: e.target.value })}
-                className="w-12 h-12 rounded-xl border border-gray-200 dark:border-neutral-700 cursor-pointer overflow-hidden p-0 flex-shrink-0"
-                title="Pick color"
-              />
-              <span className="text-sm text-gray-500 dark:text-gray-400 font-mono uppercase w-20">{newProduct.color}</span>
-
+            <label className={labelCls}>Product Image</label>
+            <div className="flex items-center gap-4">
               <input
                 ref={fileInputRef}
                 type="file"
@@ -155,7 +146,7 @@ export default function WholesaleProductModal({
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="w-12 h-12 rounded-xl border-2 border-dashed border-gray-200 dark:border-neutral-700 hover:border-black dark:hover:border-white hover:bg-gray-50 dark:hover:bg-neutral-800 transition-all cursor-pointer overflow-hidden flex-shrink-0 relative"
+                className="w-16 h-16 rounded-xl border-2 border-dashed border-gray-200 dark:border-neutral-700 hover:border-black dark:hover:border-white hover:bg-gray-50 dark:hover:bg-neutral-800 transition-all cursor-pointer overflow-hidden flex-shrink-0 relative"
                 title="Upload product image"
               >
                 {imagePreview ? (
@@ -168,9 +159,10 @@ export default function WholesaleProductModal({
                   </svg>
                 )}
               </button>
-              {imagePreview && (
-                <span className="text-xs text-gray-400 dark:text-gray-500 truncate max-w-[80px]">Image set</span>
-              )}
+              <div className="text-xs text-gray-500 dark:text-gray-400">
+                <p className="font-bold text-gray-700 dark:text-gray-300">Upload Product Image</p>
+                <p>Click box to upload wholesale product photo.</p>
+              </div>
             </div>
           </div>
 
