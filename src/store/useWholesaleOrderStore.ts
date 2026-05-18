@@ -22,6 +22,7 @@ interface WholesaleOrderState {
   toggleOrderSelection: (id: number) => void;
   toggleAllSelection: () => void;
   clearSelection: () => void;
+  addLiveOrder: (order: any) => void;
 }
 
 export const useWholesaleOrderStore = create<WholesaleOrderState>((set, get) => ({
@@ -138,5 +139,17 @@ export const useWholesaleOrderStore = create<WholesaleOrderState>((set, get) => 
       set({ error: err.message, loading: false });
       throw err;
     }
+  },
+
+  addLiveOrder: (order: any) => {
+    const { orders, pagination } = get();
+    if (orders.some(o => o.id === order.id)) return;
+    set({
+      orders: [order, ...orders],
+      pagination: {
+        ...pagination,
+        total: pagination.total + 1
+      }
+    });
   },
 }));

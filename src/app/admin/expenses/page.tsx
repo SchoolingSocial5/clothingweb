@@ -26,8 +26,8 @@ export default function ExpensesPage() {
   });
 
   const today = new Date().toISOString().split('T')[0];
-  const [from, setFrom] = useState('');
-  const [to, setTo] = useState('');
+  const [from, setFrom] = useState(today);
+  const [to, setTo] = useState(today);
 
   const showToast = (message: string, type: "success" | "error" | "warning" = "success") => {
     setToast({ message, type, visible: true });
@@ -35,7 +35,7 @@ export default function ExpensesPage() {
   };
 
   useEffect(() => {
-    fetchExpenses();
+    fetchExpenses(from, to);
   }, [fetchExpenses]);
 
   const handleFilter = () => fetchExpenses(from, to);
@@ -165,7 +165,6 @@ export default function ExpensesPage() {
                   <tr key={expense.id} className="hover:bg-gray-50/50 dark:hover:bg-neutral-800/30 transition-colors">
                     <td className="px-6 py-4">
                       <p className="font-bold text-sm text-gray-900 dark:text-gray-100">{expense.title}</p>
-                      <p className="text-[10px] text-gray-400 font-mono">#{expense.id}</p>
                     </td>
                     <td className="px-6 py-4">
                       <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">

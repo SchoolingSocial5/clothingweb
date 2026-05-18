@@ -7,6 +7,7 @@ import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import PaymentConfirmModal from '@/components/PaymentConfirmModal';
 import { useOrderStore } from '@/store/useOrderStore';
+import { useWholesaleOrderStore } from '@/store/useWholesaleOrderStore';
 import { useSettings } from '@/context/SettingsContext';
 import { formatPrice } from '@/utils/format';
 import { getImageUrl } from '@/utils/image';
@@ -24,7 +25,12 @@ export default function CheckoutPage() {
   const { cart, getCartTotal, clearCart, updateQuantity } = useCart();
   const { user, login } = useAuth();
   const { settings: globalSettings, refreshSettings: fetchSettings } = useSettings();
-  const { createOrder, loading: submitting, error: storeError } = useOrderStore();
+  const { createOrder: createRetailOrder, loading: retailLoading, error: retailError } = useOrderStore();
+  const { createOrder: createWholesaleOrder, loading: wholesaleLoading, error: wholesaleError } = useWholesaleOrderStore();
+
+  const submitting = retailLoading || wholesaleLoading;
+  const storeError = retailError || wholesaleError;
+
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [done, setDone] = useState(false);
 
@@ -91,8 +97,12 @@ export default function CheckoutPage() {
       quantity: item.quantity
     }))));
     formData.append('receipt', receipt);
+    
+    const isWholesale = cart.some(item => item.isWholesale || item.category?.toLowerCase() === 'wholesale');
     try {
-      const response = await createOrder(formData) as any;
+      const response = isWholesale
+        ? await createWholesaleOrder(formData) as any
+        : await createRetailOrder(formData) as any;
       setOrderId(response.id);
       if (response.auth) login(response.auth.access_token, response.auth.user);
       setDone(true);
@@ -172,7 +182,7 @@ export default function CheckoutPage() {
                     <div className="flex-1">
                       <p className="font-bold text-sm text-gray-900 dark:text-gray-100 leading-tight">{item.name}</p>
                       <div className="flex items-center gap-2 mt-1">
-                        <button type="button" onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))} className="text-gray-400 hover:text-black dark:hover:text-white transition-colors p-1">
+                        <button type="button" onClick={() => updateQuantity(item.id, item.quantity - 1)} className="text-gray-400 hover:text-black dark:hover:text-white transition-colors p-1">
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="5" y1="12" x2="19" y2="12" /></svg>
                         </button>
                         <span className="text-xs font-black min-w-[12px] text-center text-gray-900 dark:text-gray-100">{item.quantity}</span>

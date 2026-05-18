@@ -14,6 +14,8 @@ export interface User {
   staffPosition?: string;
   staffDuties?: string;
   staffSalary?: string;
+  staffType?: 'Retail' | 'Wholesale' | 'All';
+  staff_type?: 'Retail' | 'Wholesale' | 'All';
 }
 
 interface UserState {
@@ -23,7 +25,7 @@ interface UserState {
   fetchUsers: () => Promise<void>;
   fetchStaff: () => Promise<void>;
   updateUserRole: (id: string, status: string, role?: string) => Promise<void>;
-  assignPosition: (userId: string, positionId: string) => Promise<void>;
+  assignPosition: (userId: string, positionId: string, staffType?: string) => Promise<void>;
   deleteUser: (id: string) => Promise<void>;
 }
 
@@ -70,12 +72,12 @@ export const useUserStore = create<UserState>((set, get) => ({
     }
   },
 
-  assignPosition: async (userId, positionId) => {
+  assignPosition: async (userId, positionId, staffType) => {
     set({ loading: true, error: null });
     try {
       const updatedUser = await apiClient<User>(`/admin/users/${userId}/assign-position`, {
         method: 'PATCH',
-        body: { positionId },
+        body: { positionId, staffType },
       });
       set({
         users: get().users.map((u) => (u.id === userId ? updatedUser : u)),

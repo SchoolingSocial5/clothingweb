@@ -9,6 +9,7 @@ import ThemeToggle from '@/components/ThemeToggle';
 import { getImageUrl } from '@/utils/image';
 import { socket } from '@/utils/socket';
 import { useOrderStore } from '@/store/useOrderStore';
+import { useWholesaleOrderStore } from '@/store/useWholesaleOrderStore';
 
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -22,12 +23,34 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const logoSrc = getImageUrl(settings?.logo);
 
   const { unpaidCount, fetchUnpaidCount, addLiveOrder } = useOrderStore();
+  const addLiveWholesaleOrder = useWholesaleOrderStore(state => state.addLiveOrder);
+
+  const isSuper = user?.role === 'admin' || user?.status === 'admin' || user?.staffPosition === 'Director' || user?.staffPosition === 'Developer';
+  const staffType = user?.staff_type || user?.staffType || 'Retail';
+
+  const canShowRetail = isSuper || staffType === 'Retail' || staffType === 'All';
+  const canShowWholesale = isSuper || staffType === 'Wholesale' || staffType === 'All';
+
+  // Consolidate roles for RBAC check
+  const allRoles = `${user?.role || ''},${user?.staffRole || ''}`.toLowerCase();
+  const hasAccess = (moduleName: string) => {
+    if (user?.status === 'admin') return true;
+    if (allRoles.includes('all')) return true;
+    if (user?.staffPosition === 'Manager' && moduleName !== 'setting') {
+      return true;
+    }
+    return allRoles.includes(moduleName.toLowerCase());
+  };
 
   useEffect(() => {
     socket.connect();
-    fetchUnpaidCount();
+    if (!loading && user && canShowRetail) {
+      fetchUnpaidCount();
+    }
 
     let audioUnlockedInstance: HTMLAudioElement | null = null;
+    let activeAudio: HTMLAudioElement | null = null;
+
     try {
       audioUnlockedInstance = new Audio('/ring_tone.mp3');
       audioUnlockedInstance.load();
@@ -50,14 +73,34 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       }
     };
 
+    const stopRinging = () => {
+      if (activeAudio) {
+        console.log("User action detected. Stopping notification sound!");
+        activeAudio.pause();
+        activeAudio.currentTime = 0;
+        activeAudio = null;
+      }
+    };
+
     window.addEventListener('click', unlock);
     window.addEventListener('keydown', unlock);
+    window.addEventListener('click', stopRinging);
+    window.addEventListener('mousemove', stopRinging);
+    window.addEventListener('keydown', stopRinging);
+    window.addEventListener('scroll', stopRinging);
+    window.addEventListener('touchstart', stopRinging);
 
     const handleNewOrder = (order: any) => {
+      if (!canShowRetail) return; // Skip retail order alerts for wholesale staff
       console.log("New live order received via socket:", order);
-      const ringPlay = new Audio('/ring_tone.mp3');
-      ringPlay.volume = 1.0;
-      ringPlay.play()
+      if (activeAudio) {
+        activeAudio.pause();
+        activeAudio.currentTime = 0;
+      }
+      activeAudio = new Audio('/ring_tone.mp3');
+      activeAudio.volume = 1.0;
+      activeAudio.loop = true;
+      activeAudio.play()
         .then(() => {
           console.log("Ringtone played successfully!");
         })
@@ -67,29 +110,52 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       addLiveOrder(order);
     };
 
+    const handleNewWholesaleOrder = (order: any) => {
+      if (!canShowWholesale) return; // Skip wholesale order alerts for retail staff
+      console.log("New live wholesale order received via socket:", order);
+      if (activeAudio) {
+        activeAudio.pause();
+        activeAudio.currentTime = 0;
+      }
+      activeAudio = new Audio('/ring_tone.mp3');
+      activeAudio.volume = 1.0;
+      activeAudio.loop = true;
+      activeAudio.play()
+        .then(() => {
+          console.log("Ringtone played successfully!");
+        })
+        .catch((err) => {
+          console.error("Autoplay blocked or failed. Interact with document to enable sound alerts:", err);
+        });
+      addLiveWholesaleOrder(order);
+    };
+
     socket.on('newOrder', handleNewOrder);
+    socket.on('newWholesaleOrder', handleNewWholesaleOrder);
 
     return () => {
       window.removeEventListener('click', unlock);
       window.removeEventListener('keydown', unlock);
+      window.removeEventListener('click', stopRinging);
+      window.removeEventListener('mousemove', stopRinging);
+      window.removeEventListener('keydown', stopRinging);
+      window.removeEventListener('scroll', stopRinging);
+      window.removeEventListener('touchstart', stopRinging);
+      if (activeAudio) {
+        activeAudio.pause();
+        activeAudio = null;
+      }
       socket.off('newOrder', handleNewOrder);
+      socket.off('newWholesaleOrder', handleNewWholesaleOrder);
       socket.disconnect();
     };
-  }, [fetchUnpaidCount, addLiveOrder]);
+  }, [fetchUnpaidCount, addLiveOrder, addLiveWholesaleOrder, canShowRetail, canShowWholesale, loading, user]);
 
   useEffect(() => {
     if (!loading && (!user || (user.status !== 'staff' && user.status !== 'admin'))) {
       router.push('/sign-in');
     }
   }, [user, loading, router]);
-
-  // Consolidate roles for RBAC check
-  const allRoles = `${user?.role || ''},${user?.staffRole || ''}`.toLowerCase();
-  const hasAccess = (moduleName: string) => {
-    if (user?.status === 'admin') return true;
-    if (allRoles.includes('all')) return true;
-    return allRoles.includes(moduleName.toLowerCase());
-  };
 
   // Close sidebar on path change (mobile)
   useEffect(() => {
@@ -151,41 +217,51 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           )}
           {hasAccess('order') && (
             <>
-              <Link href="/admin/orders" className={`flex items-center justify-between px-4 py-3 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin/orders' ? 'text-white bg-black dark:bg-white dark:text-black' : 'text-gray-500 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
-                <div className="flex items-center gap-3">
+              {canShowRetail && (
+                <Link href="/admin/orders" className={`flex items-center justify-between px-4 py-3 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin/orders' ? 'text-white bg-black dark:bg-white dark:text-black' : 'text-gray-500 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
+                  <div className="flex items-center gap-3">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                    <span>Orders</span>
+                  </div>
+                  {unpaidCount > 0 && (
+                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-md flex items-center justify-center min-w-[20px] transition-colors
+                      ${pathname === '/admin/orders' 
+                        ? 'bg-white text-black dark:bg-black dark:text-white' 
+                        : 'bg-black text-white dark:bg-white dark:text-black'
+                      }`}
+                    >
+                      {unpaidCount}
+                    </span>
+                  )}
+                </Link>
+              )}
+              {canShowWholesale && (
+                <Link href="/admin/wholesale-orders" className={`flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin/wholesale-orders' ? 'text-white bg-black dark:bg-white dark:text-black' : 'text-gray-500 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
-                  <span>Orders</span>
-                </div>
-                {unpaidCount > 0 && (
-                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-md flex items-center justify-center min-w-[20px] transition-colors
-                    ${pathname === '/admin/orders' 
-                      ? 'bg-white text-black dark:bg-black dark:text-white' 
-                      : 'bg-black text-white dark:bg-white dark:text-black'
-                    }`}
-                  >
-                    {unpaidCount}
-                  </span>
-                )}
-              </Link>
-              <Link href="/admin/wholesale-orders" className={`flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin/wholesale-orders' ? 'text-white bg-black dark:bg-white dark:text-black' : 'text-gray-500 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
-                Wholesale Orders
-              </Link>
-              <Link href="/admin/transactions" className={`flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin/transactions' ? 'text-white bg-black dark:bg-white dark:text-black' : 'text-gray-500 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="5" width="20" height="14" rx="2" ry="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
-                Transactions
-              </Link>
-              <Link href="/admin/wholesale-transactions" className={`flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin/wholesale-transactions' ? 'text-white bg-black dark:bg-white dark:text-black' : 'text-gray-500 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
-                Wholesale Trans
-              </Link>
+                  Wholesale Orders
+                </Link>
+              )}
+              {canShowRetail && (
+                <Link href="/admin/transactions" className={`flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin/transactions' ? 'text-white bg-black dark:bg-white dark:text-black' : 'text-gray-500 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="5" width="20" height="14" rx="2" ry="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
+                  Transactions
+                </Link>
+              )}
+              {canShowWholesale && (
+                <Link href="/admin/wholesale-transactions" className={`flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin/wholesale-transactions' ? 'text-white bg-black dark:bg-white dark:text-black' : 'text-gray-500 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                  Wholesale Trans
+                </Link>
+              )}
             </>
           )}
-          <Link href="/admin/products" className={`flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin/products' ? 'text-white bg-black dark:bg-white dark:text-black' : 'text-gray-500 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
-            Retail Products
-          </Link>
-          {hasAccess('product') && (
+          {canShowRetail && (
+            <Link href="/admin/products" className={`flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin/products' ? 'text-white bg-black dark:bg-white dark:text-black' : 'text-gray-500 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+              Retail Products
+            </Link>
+          )}
+          {canShowWholesale && hasAccess('product') && (
             <Link href="/admin/whole-sale-products" className={`flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin/whole-sale-products' ? 'text-white bg-black dark:bg-white dark:text-black' : 'text-gray-500 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
               Whole Sale Products
@@ -199,14 +275,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           )}
           {hasAccess('purchase') && (
             <>
-              <Link href="/admin/purchases" className={`flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin/purchases' ? 'text-white bg-black dark:bg-white dark:text-black' : 'text-gray-500 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
-                Purchases
-              </Link>
-              <Link href="/admin/wholesale-purchases" className={`flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin/wholesale-purchases' ? 'text-white bg-black dark:bg-white dark:text-black' : 'text-gray-500 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
-                Wholesale Purchases
-              </Link>
+              {canShowRetail && (
+                <Link href="/admin/purchases" className={`flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin/purchases' ? 'text-white bg-black dark:bg-white dark:text-black' : 'text-gray-500 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+                  Purchases
+                </Link>
+              )}
+              {canShowWholesale && (
+                <Link href="/admin/wholesale-purchases" className={`flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin/wholesale-purchases' ? 'text-white bg-black dark:bg-white dark:text-black' : 'text-gray-500 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+                  Wholesale Purchases
+                </Link>
+              )}
             </>
           )}
 

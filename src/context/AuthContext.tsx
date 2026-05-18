@@ -18,6 +18,8 @@ interface User {
   staffSalary?: string | number;
   duties?: string;
   salary?: string | number;
+  staffType?: 'Retail' | 'Wholesale' | 'All';
+  staff_type?: 'Retail' | 'Wholesale' | 'All';
 }
 
 interface AuthContextType {

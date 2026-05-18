@@ -6,7 +6,14 @@ import { useUserStore } from '@/store/useUserStore';
 interface AssignPositionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  user: { id: string; name: string; email: string } | null;
+  user: { 
+    id: string; 
+    name: string; 
+    email: string;
+    staffPosition?: string;
+    staffType?: string;
+    staff_type?: string;
+  } | null;
   onSuccess: () => void;
   showToast: (message: string, type: 'success' | 'error') => void;
 }
@@ -15,12 +22,27 @@ export default function AssignPositionModal({ isOpen, onClose, user, onSuccess, 
   const { positions, fetchPositions, loading: positionsLoading } = usePositionStore();
   const { assignPosition, loading: assigning } = useUserStore();
   const [selectedPositionId, setSelectedPositionId] = useState('');
+  const [staffType, setStaffType] = useState('Retail');
 
   useEffect(() => {
     if (isOpen) {
       fetchPositions();
+      if (user) {
+        setStaffType(user.staffType || user.staff_type || 'Retail');
+      }
     }
-  }, [isOpen, fetchPositions]);
+  }, [isOpen, fetchPositions, user]);
+
+  useEffect(() => {
+    if (user && positions.length > 0 && user.staffPosition) {
+      const matchingPos = positions.find(p => p.name === user.staffPosition);
+      if (matchingPos) {
+        setSelectedPositionId(matchingPos.id);
+      }
+    } else if (!user) {
+      setSelectedPositionId('');
+    }
+  }, [user, positions]);
 
   if (!isOpen || !user) return null;
 
@@ -29,7 +51,7 @@ export default function AssignPositionModal({ isOpen, onClose, user, onSuccess, 
     if (!selectedPositionId) return;
 
     try {
-      await assignPosition(user.id, selectedPositionId);
+      await assignPosition(user.id, selectedPositionId, staffType);
       onSuccess();
       onClose();
     } catch (error: any) {
@@ -66,6 +88,23 @@ export default function AssignPositionModal({ isOpen, onClose, user, onSuccess, 
                 {positions.map((pos) => (
                   <option key={pos.id} value={pos.id}>{pos.name} — {pos.salary}</option>
                 ))}
+              </select>
+              <div className="absolute right-5 bottom-4 pointer-events-none text-gray-400">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              </div>
+            </div>
+
+            <div className="space-y-2 relative">
+              <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 px-1">Select Department / Type</label>
+              <select
+                value={staffType}
+                onChange={(e) => setStaffType(e.target.value)}
+                required
+                className="w-full bg-gray-50 dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 rounded-2xl px-5 py-4 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all appearance-none text-gray-900 dark:text-gray-100"
+              >
+                <option value="Retail">Retail Department</option>
+                <option value="Wholesale">Wholesale Department</option>
+                <option value="All">All Departments</option>
               </select>
               <div className="absolute right-5 bottom-4 pointer-events-none text-gray-400">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="6 9 12 15 18 9"></polyline></svg>

@@ -11,13 +11,13 @@ interface FinanceRow {
 }
 
 interface FinanceData {
-  retail: {
+  retail?: {
     sales: FinanceRow;
     purchases: FinanceRow;
     expenses: FinanceRow;
     salary: FinanceRow;
   };
-  wholesale: {
+  wholesale?: {
     sales: FinanceRow;
     purchases: FinanceRow;
     expenses: FinanceRow;
@@ -217,9 +217,9 @@ export default function FinancePage() {
           ))}
         </div>
       ) : data ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {renderTable("Retail Financials", data.retail)}
-          {renderTable("Wholesale Financials", data.wholesale)}
+        <div className={`grid grid-cols-1 ${data.retail && data.wholesale ? 'lg:grid-cols-2' : ''} gap-8`}>
+          {data.retail && renderTable("Retail Financials", data.retail)}
+          {data.wholesale && renderTable("Wholesale Financials", data.wholesale)}
         </div>
       ) : (
         <div className="bg-white dark:bg-neutral-900 border border-gray-100 dark:border-neutral-800 p-12 text-center rounded-2xl shadow-sm text-gray-400">

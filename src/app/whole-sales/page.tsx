@@ -71,66 +71,8 @@ export default function WholeSales() {
     <main className="w-full min-h-screen bg-gray-50 dark:bg-neutral-950 transition-colors duration-300">
       <Header />
 
-      {/* Hero Section */}
-      <section className="w-full h-[40vh] bg-neutral-900 relative">
-        {bannersLoading ? (
-          <div className="w-full h-full flex items-center justify-center">
-            <div className="w-12 h-12 border-4 border-white/20 border-t-white rounded-full animate-spin" />
-          </div>
-        ) : banners.length > 0 ? (
-          <Swiper
-            modules={[Autoplay, Pagination, EffectFade]}
-            effect="fade"
-            autoplay={{ delay: 5000, disableOnInteraction: false }}
-            pagination={{ clickable: true }}
-            className="w-full h-full"
-          >
-            {banners.map((banner) => (
-              <SwiperSlide key={banner.id}>
-                <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
-                  <img
-                    src={getImageUrl(banner.image_url) || "/menstore3.jpg"}
-                    alt={banner.title}
-                    className="absolute inset-0 w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-black/50 z-10"></div>
-
-                  <div className="z-20 text-center px-4 max-w-5xl">
-                    <h2 className="text-white text-sm md:text-base font-bold tracking-[0.4em] uppercase mb-4">
-                      {banner.subtitle || "Wholesale Opportunity"}
-                    </h2>
-                    <h1 className="text-3xl md:text-5xl font-sans font-black text-white uppercase tracking-tighter mb-8 leading-[0.9]">
-                      {banner.title || "Whole Sales Collection"}
-                    </h1>
-                    <button
-                      onClick={() => document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' })}
-                      className="btn bg-white text-black px-10 py-4 text-sm font-black tracking-widest uppercase hover:bg-gray-100"
-                    >
-                      View Deals
-                    </button>
-                  </div>
-                </div>
-              </SwiperSlide>
-            ))}
-          </Swiper>
-        ) : (
-          <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-neutral-900 to-neutral-800 opacity-90"></div>
-            <div className="z-20 text-center px-4">
-              <h2 className="text-white text-sm font-bold tracking-[0.3em] uppercase mb-4">B2B Solutions</h2>
-              <h1 className="text-3xl md:text-5xl font-sans font-black text-white uppercase tracking-tighter mb-8 max-w-4xl leading-none">
-                Premium Whole Sales<br />for Your Business
-              </h1>
-              <button
-                onClick={() => document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' })}
-                className="btn bg-white text-black px-10 py-4 text-sm font-bold tracking-widest uppercase hover:bg-gray-200"
-              >
-                Explore Inventory
-              </button>
-            </div>
-          </div>
-        )}
-      </section>
+      {/* Spacer to replace hero section and separate header from main content */}
+      <div className="h-10"></div>
 
       {/* Products Area */}
       <section id="products" className="max-w-[1600px] mx-auto px-4 md:px-8 py-8 md:py-12">
@@ -161,6 +103,7 @@ export default function WholeSales() {
                   <ProductCard 
                     key={p.id} 
                     {...(p as any)} 
+                    isWholesale={true}
                     onImageClick={() => {
                       setPreviewIndex((page - 1) * PER_PAGE + index);
                       setIsPreviewOpen(true);

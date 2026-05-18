@@ -52,11 +52,21 @@ export default function ProductDetailPage() {
     if (products.length === 0) fetchProducts();
   }, []);
 
-  const cartItem = cart.find((c) => c.id === Number(id));
+  const cartItem = cart.find((c) => String(c.id) === String(id));
 
   const handleAddToCart = () => {
     if (!product) return;
-    addToCart({ id: product.id, name: product.name, category: product.category, price: product.price, color: product.color, image_url: product.image_url, quantity: product.quantity });
+    const isWholesale = product.category === 'Wholesale';
+    addToCart({ 
+      id: product.id, 
+      name: product.name, 
+      category: product.category, 
+      price: product.price, 
+      color: product.color, 
+      image_url: product.image_url, 
+      quantity: product.quantity,
+      isWholesale
+    });
   };
 
   const related = products
@@ -130,11 +140,6 @@ export default function ProductDetailPage() {
             }}
             className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-gray-100 dark:bg-neutral-800 shadow-sm cursor-pointer group"
           >
-            {!inStock && (
-              <div className="absolute top-4 left-4 z-10 bg-black dark:bg-white text-white dark:text-black text-[10px] font-black px-3 py-1.5 uppercase tracking-widest rounded-full shadow-xl">
-                Sold Out
-              </div>
-            )}
             <button
               onClick={(e) => { e.stopPropagation(); toggle(product.id); }}
               className="absolute top-4 right-4 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-white/80 dark:bg-neutral-900/80 backdrop-blur shadow-sm hover:scale-110 active:scale-95 transition-transform cursor-pointer"
@@ -196,13 +201,9 @@ export default function ProductDetailPage() {
 
             {/* Stock */}
             <div className="mb-8">
-              <span className={`inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest px-3 py-1.5 rounded-full ${
-                inStock
-                  ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400'
-                  : 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400'
-              }`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${inStock ? 'bg-green-500' : 'bg-red-500'}`} />
-                {inStock ? `In Stock (${product.quantity} left)` : 'Out of Stock'}
+              <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest px-3 py-1.5 rounded-full bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                In Stock
               </span>
             </div>
 
