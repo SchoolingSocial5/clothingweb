@@ -21,6 +21,7 @@ import { SettingsProvider } from "@/context/SettingsContext";
 import DynamicBranding from "@/components/DynamicBranding";
 import WhatsAppButton from "@/components/common/WhatsAppButton";
 import PWARegister from "@/components/PWARegister";
+import GlobalLoader from "@/components/common/GlobalLoader";
 
 export default function RootLayout({
   children,
@@ -53,6 +54,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen font-sans transition-colors duration-300 flex flex-col">
         <SettingsProvider>
+          <GlobalLoader />
           <DynamicBranding />
           <AuthProvider>
             <CartProvider>

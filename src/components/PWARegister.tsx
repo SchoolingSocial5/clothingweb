@@ -81,7 +81,7 @@ export default function PWARegister() {
   if (!showInstallBanner) return null;
 
   return (
-    <div className="fixed bottom-6 left-6 right-6 md:left-auto md:right-6 md:max-w-sm z-[100] bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md border border-gray-100 dark:border-neutral-800 rounded-2xl p-4 shadow-2xl flex items-center justify-between gap-4 animate-in slide-in-from-bottom duration-300">
+    <div className="fixed bottom-6 left-6 right-6 md:left-auto md:right-6 md:max-w-sm z-[100] bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md border border-gray-100 dark:border-neutral-800 rounded-2xl p-4 shadow-2xl flex flex-wrap items-center justify-between gap-4 animate-in slide-in-from-bottom duration-300">
       <div className="flex items-center gap-3">
         <div className="w-12 h-12 rounded-xl bg-black dark:bg-white text-white dark:text-black flex items-center justify-center flex-shrink-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -92,7 +92,7 @@ export default function PWARegister() {
           <p className="text-xs text-gray-500 dark:text-gray-400">Add to home screen for instant access.</p>
         </div>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 max-sm:ml-auto">
         <button 
           onClick={() => setShowInstallBanner(false)} 
           className="px-3 py-2 text-xs font-bold text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors cursor-pointer"

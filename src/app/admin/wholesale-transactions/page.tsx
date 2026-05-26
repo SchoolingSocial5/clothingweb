@@ -116,7 +116,16 @@ export default function WholesaleTransactionsPage() {
   const updateStatus = async (id: number, field: 'status' | 'payment_status', value: string) => {
     setUpdatingId(id);
     try {
-      await updateOrderStatus(id, { [field]: value });
+      await updateOrderStatus(
+        id, 
+        { [field]: value },
+        pagination?.page || 1,
+        from,
+        to,
+        search,
+        'paid',
+        viewingTrash
+      );
     } catch { }
     setUpdatingId(null);
   };
@@ -125,7 +134,16 @@ export default function WholesaleTransactionsPage() {
     if (selectedOrderIds.length === 0) return;
     setBulkUpdating(true);
     try {
-      await bulkUpdateStatus(selectedOrderIds, { [field]: value });
+      await bulkUpdateStatus(
+        selectedOrderIds, 
+        { [field]: value },
+        pagination?.page || 1,
+        from,
+        to,
+        search,
+        'paid',
+        viewingTrash
+      );
     } catch { }
     setBulkUpdating(false);
   };
@@ -316,14 +334,16 @@ export default function WholesaleTransactionsPage() {
                   </td>
                   <td className="px-4 py-5 text-center">
                     <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1.5 rounded-lg border ${paymentMethodColors[order.payment_method] || paymentMethodColors.online}`}>
-                      {order.payment_method}
+                      {order.payment_method === 'transfer' ? 'Transfer' : (order.payment_method === 'pos' ? 'POS' : (order.payment_method === 'cash' ? 'Cash' : (order.payment_method === 'online' ? 'Online' : order.payment_method)))}
                     </span>
                   </td>
                   <td className="px-4 py-5" onClick={e => e.stopPropagation()}>
                     {order.approved_by ? (
                       <div className="flex flex-col">
                         <span className="text-[11px] font-bold text-gray-900 dark:text-gray-100 leading-tight">{order.approved_by}</span>
-                        <span className="text-[9px] font-black uppercase tracking-widest text-gray-400">Approved</span>
+                        <span className="text-[9px] font-black uppercase tracking-widest text-gray-400">
+                          {order.payment_method === 'transfer' ? 'Transfer' : (order.payment_method === 'pos' ? 'POS' : order.payment_method)}
+                        </span>
                       </div>
                     ) : (
                       <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest italic">—</span>

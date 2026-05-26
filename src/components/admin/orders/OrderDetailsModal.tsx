@@ -130,9 +130,17 @@ export default function OrderDetailsModal({ order, onClose }: OrderDetailsModalP
               <span className="text-xl font-black">₦{order.total_amount.toLocaleString()}</span>
             </div>
             {order.approved_by && (
-              <div className="flex items-center justify-between bg-gray-50 dark:bg-neutral-800 rounded-2xl px-6 py-4">
-                <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Processed By</span>
-                <span className="text-xs font-bold text-gray-900 dark:text-gray-100">{order.approved_by}</span>
+              <div className="bg-gray-50 dark:bg-neutral-800 rounded-2xl px-6 py-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Processed By</span>
+                  <span className="text-xs font-bold text-gray-900 dark:text-gray-100">{order.approved_by}</span>
+                </div>
+                <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-neutral-700">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Payment Method</span>
+                  <span className="text-xs font-bold text-gray-900 dark:text-gray-100 capitalize">
+                    {order.payment_method === 'transfer' ? 'Transfer' : (order.payment_method === 'pos' ? 'POS' : order.payment_method)}
+                  </span>
+                </div>
               </div>
             )}
           </div>

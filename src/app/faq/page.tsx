@@ -9,8 +9,10 @@ export default function FAQPage() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   useEffect(() => {
-    fetchFaqs();
-  }, [fetchFaqs]);
+    if (faqs.length === 0) {
+      fetchFaqs();
+    }
+  }, [fetchFaqs, faqs.length]);
 
   return (
     <main className="min-h-screen bg-gray-50 dark:bg-neutral-950 transition-colors duration-300">

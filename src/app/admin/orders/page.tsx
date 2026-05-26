@@ -18,9 +18,6 @@ import { Order } from '@/components/admin/orders/types';
 import OrderDetailsModal from '@/components/admin/orders/OrderDetailsModal';
 import PrintSlipModal from '@/components/admin/orders/PrintSlipModal';
 import ReceiptModal from '@/components/admin/orders/ReceiptModal';
-import ProductPickerModal from '@/components/admin/orders/ProductPickerModal';
-import CheckoutModal from '@/components/admin/orders/CheckoutModal';
-import FloatingCartIndicator from '@/components/admin/orders/FloatingCartIndicator';
 
 const paymentColors: Record<string, string> = {
   unpaid: 'bg-red-50 text-red-500',
@@ -50,6 +47,7 @@ export default function OrdersPage() {
   const bulkRestoreOrders = useOrderStore(state => state.bulkRestoreOrders);
   const deleteOrderPermanent = useOrderStore(state => state.deleteOrderPermanent);
   const bulkDeleteOrdersPermanent = useOrderStore(state => state.bulkDeleteOrdersPermanent);
+  const fetchUnpaidCount = useOrderStore(state => state.fetchUnpaidCount);
 
   const [detailsOrder, setDetailsOrder] = useState<Order | null>(null);
   const [receiptOrder, setReceiptOrder] = useState<Order | null>(null);
@@ -62,10 +60,6 @@ export default function OrdersPage() {
   const [to, setTo] = useState('');
   const [search, setSearch] = useState('');
   
-  // New POS cart state
-  const [cartItems, setCartItems] = useState<any[]>([]);
-  const [showProductPicker, setShowProductPicker] = useState(false);
-  const [showCheckout, setShowCheckout] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
   const [shortageInfo, setShortageInfo] = useState<{
     customerName: string;
@@ -77,38 +71,6 @@ export default function OrdersPage() {
     }>;
   } | null>(null);
 
-  const cartTotal = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-
-  const handleAddToCart = (product: StoreProduct) => {
-    const existing = cartItems.find(i => i.id === product.id);
-    if (existing) {
-      setCartItems(cartItems.map(i => i.id === product.id ? { ...i, quantity: i.quantity + 1 } : i));
-    } else {
-      setCartItems([...cartItems, { ...product, quantity: 1, price: parseFloat(product.price) }]);
-    }
-  };
-
-  const updateCartQty = (id: number, delta: number) => {
-    setCartItems(prev => prev.map(i => {
-      if (i.id === id) {
-        const next = i.quantity + delta;
-        return next > 0 ? { ...i, quantity: next } : null;
-      }
-      return i;
-    }).filter((i): i is any => i !== null));
-  };
-
-  const removeFromCart = (id: number) => {
-    setCartItems(cartItems.filter(i => i.id !== id));
-  };
-
-  const onOrderCreated = () => {
-    setCartItems([]);
-    setShowCheckout(false);
-    setToast({ message: 'Order created successfully!', type: 'success' });
-    router.push('/admin/transactions');
-  };
-
   const today = (() => {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -118,7 +80,8 @@ export default function OrdersPage() {
 
   useEffect(() => {
     fetchOrders(1, '', '', '', 'unpaid', viewingTrash);
-  }, [token, fetchOrders, viewingTrash]);
+    fetchUnpaidCount();
+  }, [token, fetchOrders, fetchUnpaidCount, viewingTrash]);
 
   const handleClear = () => {
     setFrom('');
@@ -130,11 +93,19 @@ export default function OrdersPage() {
   const updateStatus = async (id: number, field: 'status' | 'payment_status', value: string) => {
     setUpdatingId(id);
     try {
-      await updateOrderStatus(id, { [field]: value });
+      await updateOrderStatus(
+        id, 
+        { [field]: value },
+        pagination?.page || 1,
+        from,
+        to,
+        search,
+        'unpaid',
+        viewingTrash
+      );
       setToast({ message: 'Order status updated successfully!', type: 'success' });
       if (field === 'payment_status' && value === 'paid') {
-        router.push('/admin/transactions');
-        return;
+        useOrderStore.getState().clearSelection();
       }
     } catch (err: any) {
       console.error(err);
@@ -155,11 +126,19 @@ export default function OrdersPage() {
     if (selectedOrderIds.length === 0) return;
     setBulkUpdating(true);
     try {
-      await bulkUpdateStatus(selectedOrderIds, { [field]: value });
+      await bulkUpdateStatus(
+        selectedOrderIds, 
+        { [field]: value },
+        pagination?.page || 1,
+        from,
+        to,
+        search,
+        'unpaid',
+        viewingTrash
+      );
       setToast({ message: 'Bulk status update successful!', type: 'success' });
       if (field === 'payment_status' && value === 'paid') {
-        router.push('/admin/transactions');
-        return;
+        useOrderStore.getState().clearSelection();
       }
     } catch (err: any) {
       console.error(err);
@@ -196,15 +175,6 @@ export default function OrdersPage() {
           </svg>
           {viewingTrash ? "Active Orders" : "Trash Can"}
         </button>
-        {!viewingTrash && (
-          <button
-            onClick={() => setShowProductPicker(true)}
-            className="bg-black text-white px-6 py-3 rounded-xl text-sm font-bold shadow-lg shadow-black/20 hover:bg-gray-900 transition-all flex items-center gap-2 cursor-pointer"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
-            Create Order
-          </button>
-        )}
       </AdminPageHeader>
 
       {/* Filter Bar */}
@@ -536,35 +506,7 @@ export default function OrdersPage() {
       {/* Print Slip Modal */}
       {printOrder && <PrintSlipModal order={printOrder} settings={settings} onClose={() => setPrintOrder(null)} />}
 
-      {/* Product Picker Modal */}
-      {showProductPicker && (
-        <ProductPickerModal 
-          onClose={() => setShowProductPicker(false)} 
-          onAddToCart={handleAddToCart}
-          onUpdateQty={updateCartQty}
-          cartItems={cartItems}
-        />
-      )}
 
-      {showCheckout && (
-        <CheckoutModal 
-          cartItems={cartItems}
-          onClose={() => setShowCheckout(false)}
-          onUpdateQty={updateCartQty}
-          onRemove={removeFromCart}
-          onOrderCreated={onOrderCreated}
-          onError={(msg) => setToast({ message: msg, type: 'error' })}
-        />
-      )}
-
-      {/* Floating Cart */}
-      {cartItems.length > 0 && !showCheckout && (
-        <FloatingCartIndicator 
-          count={cartItems.reduce((acc, item) => acc + item.quantity, 0)}
-          total={cartTotal}
-          onClick={() => { setShowProductPicker(false); setShowCheckout(true); }}
-        />
-      )}
 
       {toast && <Toast message={toast.message} type={toast.type} visible={!!toast} onClose={() => setToast(null)} />}
 

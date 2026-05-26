@@ -13,7 +13,6 @@ import ProductCard from "@/components/ProductCard";
 import ProductImageModal from "@/components/ProductImageModal";
 import { getImageUrl } from "@/utils/image";
 import { useBlogStore, Blog } from "@/store/useBlogStore";
-import PageLoader from "@/components/common/PageLoader";
 
 const PER_PAGE = 20;
 
@@ -27,6 +26,7 @@ export default function WholeSales() {
   const fetchBanners = useBannerStore(state => state.fetchBanners);
   
   const fetchPublicBlogs = useBlogStore(state => state.fetchPublicBlogs);
+  const publicBlogs = useBlogStore(state => state.blogs);
   const banners = allBanners.filter(b => b.category === 'Whole Sales');
   const [page, setPage] = useState(1);
   const [selectedCategory, setSelectedCategory] = useState("All Products");
@@ -40,17 +40,23 @@ export default function WholeSales() {
 
   useEffect(() => {
     setMounted(true);
-    fetchWholesaleProducts();
-    fetchBanners();
+    if (wholesaleProducts.length === 0) fetchWholesaleProducts();
+    if (allBanners.length === 0) fetchBanners();
 
-    fetchPublicBlogs()
-      .then(data => {
-        const blog = data.find(b => b.category?.toLowerCase() === 'whole sales');
-        if (blog) setWholeBlog(blog);
-      })
-      .catch(() => {})
-      .finally(() => setBlogsLoading(false));
-  }, [fetchWholesaleProducts, fetchBanners, fetchPublicBlogs]);
+    if (publicBlogs.length === 0) {
+      fetchPublicBlogs()
+        .then(data => {
+          const blog = data.find(b => b.category?.toLowerCase() === 'whole sales');
+          if (blog) setWholeBlog(blog);
+        })
+        .catch(() => {})
+        .finally(() => setBlogsLoading(false));
+    } else {
+      const blog = publicBlogs.find(b => b.category?.toLowerCase() === 'whole sales');
+      if (blog) setWholeBlog(blog);
+      setBlogsLoading(false);
+    }
+  }, [fetchWholesaleProducts, fetchBanners, fetchPublicBlogs, wholesaleProducts.length, allBanners.length, publicBlogs]);
 
   // Filter by category and price, then sort by availability (in-stock first)
   const filtered = wholesaleProducts.filter((p) => {
@@ -72,11 +78,8 @@ export default function WholeSales() {
     document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const isPageLoading = productsLoading || bannersLoading || blogsLoading || !mounted;
-
   return (
     <main className="w-full min-h-screen bg-gray-50 dark:bg-neutral-950 transition-colors duration-300">
-      <PageLoader isLoading={isPageLoading} />
       <Header />
 
       {/* Spacer to replace hero section and separate header from main content */}

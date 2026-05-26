@@ -9,7 +9,7 @@ import { useOrderStore } from '@/store/useOrderStore';
 import { useWholesaleOrderStore } from '@/store/useWholesaleOrderStore';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, loading, logout } = useAuth();
   const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -132,12 +132,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, [fetchUnpaidCount, addLiveOrder, addLiveWholesaleOrder, canShowRetail, canShowWholesale, loading, user]);
 
   useEffect(() => {
-    if (!loading && (!user || (user.status !== 'staff' && user.status !== 'admin'))) {
-      router.push('/sign-in');
+    if (!loading) {
+      if (!user) {
+        router.push('/sign-in');
+      } else if (user.status !== 'staff') {
+        alert("You are not authorized to access the admin panel.");
+        logout();
+      }
     }
-  }, [user, loading, router]);
+  }, [user, loading, router, logout]);
 
-  if (loading || !user || (user.status !== 'staff' && user.status !== 'admin')) {
+  if (loading || !user || user.status !== 'staff') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black"></div>
@@ -159,7 +164,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <AdminSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col h-screen overflow-y-auto">
+      <main className="flex-1 flex flex-col min-h-screen md:pl-64">
         <AdminTopHeader onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
 
         {children}

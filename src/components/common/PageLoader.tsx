@@ -9,8 +9,8 @@ interface PageLoaderProps {
 
 export default function PageLoader({ isLoading }: PageLoaderProps) {
   const { settings } = useSettings();
-  const [visible, setVisible] = useState(true);
-  const [shouldRender, setShouldRender] = useState(true);
+  const [visible, setVisible] = useState(isLoading);
+  const [shouldRender, setShouldRender] = useState(isLoading);
 
   useEffect(() => {
     if (!isLoading) {

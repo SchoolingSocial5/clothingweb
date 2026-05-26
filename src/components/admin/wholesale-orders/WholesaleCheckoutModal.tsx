@@ -1,7 +1,9 @@
 "use client";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useWholesaleOrderStore } from '@/store/useWholesaleOrderStore';
 import { getImageUrl } from '@/utils/image';
+import { useAuth } from '@/context/AuthContext';
+import { useUserStore } from '@/store/useUserStore';
 
 interface WholesaleCheckoutModalProps {
   cartItems: any[];
@@ -14,8 +16,40 @@ interface WholesaleCheckoutModalProps {
 
 export default function WholesaleCheckoutModal({ cartItems, onClose, onUpdateQty, onRemove, onOrderCreated, onError }: WholesaleCheckoutModalProps) {
   const { createOrder } = useWholesaleOrderStore();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({ name: '', phone: '' });
+  const [formData, setFormData] = useState({ name: '', phone: '', email: '', address: '' });
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [focusedField, setFocusedField] = useState<'name' | 'phone' | null>(null);
+
+  useEffect(() => {
+    if (useUserStore.getState().users.length === 0) {
+      useUserStore.getState().fetchUsers();
+    }
+  }, []);
+
+  const handleInputChange = (field: 'name' | 'phone', value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    
+    if (value.length < 2) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    const allUsers = useUserStore.getState().users;
+    const matches = allUsers.filter(u => {
+      if (field === 'name') {
+        return u.name.toLowerCase().includes(value.toLowerCase());
+      } else {
+        return u.phone?.includes(value) || false;
+      }
+    }).slice(0, 5);
+    
+    setSuggestions(matches);
+    setShowSuggestions(matches.length > 0);
+  };
 
   const total = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
 
@@ -30,8 +64,13 @@ export default function WholesaleCheckoutModal({ cartItems, onClose, onUpdateQty
       const fd = new FormData();
       fd.append('customer_name', formData.name);
       fd.append('customer_phone', formData.phone);
+      if (formData.email) fd.append('customer_email', formData.email);
+      if (formData.address) fd.append('delivery_address', formData.address);
       fd.append('total_amount', String(total));
       fd.append('payment_method', paymentMethod);
+      if (user) {
+        fd.append('approved_by', user.name || user.email);
+      }
       fd.append('items', JSON.stringify(cartItems.map(i => ({
         productId: i.id,
         productName: i.name,
@@ -98,27 +137,77 @@ export default function WholesaleCheckoutModal({ cartItems, onClose, onUpdateQty
           </div>
 
           <form onSubmit={(e) => e.preventDefault()} className="space-y-4">
-            <div className="space-y-2">
+            <div className="space-y-2 relative">
               <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Customer Name</label>
               <input
                 required
                 type="text"
                 placeholder="Full Name"
                 value={formData.name}
-                onChange={e => setFormData({ ...formData, name: e.target.value })}
+                onChange={e => handleInputChange('name', e.target.value)}
+                onFocus={() => { setFocusedField('name'); if (formData.name.length >= 2) handleInputChange('name', formData.name); }}
+                onBlur={() => setTimeout(() => { setShowSuggestions(false); setFocusedField(null); }, 200)}
                 className="w-full px-5 py-4 bg-gray-50 dark:bg-neutral-800 border-none rounded-2xl focus:ring-2 focus:ring-black dark:focus:ring-white font-bold"
               />
+              {showSuggestions && focusedField === 'name' && suggestions.length > 0 && (
+                <div className="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-neutral-800 border border-gray-150 dark:border-neutral-700 rounded-2xl shadow-xl z-50 overflow-hidden divide-y divide-gray-50 dark:divide-neutral-700 animate-in fade-in duration-150 max-h-[200px] overflow-y-auto">
+                  {suggestions.map(u => (
+                    <div 
+                      key={u.id}
+                      onClick={() => {
+                        setFormData({
+                          name: u.name,
+                          phone: u.phone || '',
+                          email: u.email || '',
+                          address: u.address || ''
+                        });
+                        setSuggestions([]);
+                        setShowSuggestions(false);
+                      }}
+                      className="px-5 py-3 hover:bg-gray-50 dark:hover:bg-neutral-700/50 cursor-pointer transition-colors text-left"
+                    >
+                      <p className="font-bold text-sm text-gray-900 dark:text-gray-100">{u.name}</p>
+                      <p className="text-xs text-gray-400 font-medium">{u.phone || 'No phone'} · {u.email}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2 relative">
               <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Phone Number</label>
               <input
                 required
                 type="tel"
                 placeholder="080XXXXXXXX"
                 value={formData.phone}
-                onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                onChange={e => handleInputChange('phone', e.target.value)}
+                onFocus={() => { setFocusedField('phone'); if (formData.phone.length >= 2) handleInputChange('phone', formData.phone); }}
+                onBlur={() => setTimeout(() => { setShowSuggestions(false); setFocusedField(null); }, 200)}
                 className="w-full px-5 py-4 bg-gray-50 dark:bg-neutral-800 border-none rounded-2xl focus:ring-2 focus:ring-black dark:focus:ring-white font-bold"
               />
+              {showSuggestions && focusedField === 'phone' && suggestions.length > 0 && (
+                <div className="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-neutral-800 border border-gray-150 dark:border-neutral-700 rounded-2xl shadow-xl z-50 overflow-hidden divide-y divide-gray-50 dark:divide-neutral-700 animate-in fade-in duration-150 max-h-[200px] overflow-y-auto">
+                  {suggestions.map(u => (
+                    <div 
+                      key={u.id}
+                      onClick={() => {
+                        setFormData({
+                          name: u.name,
+                          phone: u.phone || '',
+                          email: u.email || '',
+                          address: u.address || ''
+                        });
+                        setSuggestions([]);
+                        setShowSuggestions(false);
+                      }}
+                      className="px-5 py-3 hover:bg-gray-50 dark:hover:bg-neutral-700/50 cursor-pointer transition-colors text-left"
+                    >
+                      <p className="font-bold text-sm text-gray-900 dark:text-gray-100">{u.name}</p>
+                      <p className="text-xs text-gray-400 font-medium">{u.phone || 'No phone'} · {u.email}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
             <div className="flex flex-wrap gap-2 pt-2">
               <button

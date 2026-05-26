@@ -52,6 +52,65 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
     return allRoles.includes(moduleName.toLowerCase());
   };
 
+  const shouldShowMenu = (label: string) => {
+    // My Profile is always shown
+    if (label.toLowerCase() === 'my profile') return true;
+
+    // Super admins or staff with staffRole "All" see all allowed menus
+    const staffRoleStr = user?.staffRole || '';
+    const hasAll = staffRoleStr.toLowerCase().trim() === 'all' || isSuper;
+    if (hasAll) {
+      if (label === 'Customers') return hasAccess('customer');
+      if (label === 'Whole Sale Products') return hasAccess('product');
+      if (label === 'Expenses') return hasAccess('expense');
+      if (label === 'Content') return hasAccess('content');
+      if (label === 'Settings') return hasAccess('setting');
+      if (label === 'Purchases' || label === 'Wholesale Purchases') return hasAccess('purchase');
+      if (label === 'Orders' || label === 'Wholesale Orders' || label === 'Transactions' || label === 'Wholesale Trans') {
+        return hasAccess('order');
+      }
+      return true;
+    }
+
+    // Otherwise, check if menu name is in user's staffRole (case-insensitive comma-separated check)
+    const userRoles = staffRoleStr.split(',').map(r => r.trim().toLowerCase()).filter(Boolean);
+    const searchLabel = label.toLowerCase();
+    const hasSettingsRole = userRoles.includes('settings');
+
+    return userRoles.some(role => {
+      // Direct matches or smart mapping:
+      if (role === 'orders' && (searchLabel === 'orders' || searchLabel === 'wholesale orders')) return true;
+      if (role === 'transactions' && (searchLabel === 'transactions' || searchLabel === 'wholesale trans')) return true;
+      if (role === 'products' && (searchLabel === 'retail products' || searchLabel === 'whole sale products' || searchLabel === 'products')) return true;
+      if (role === 'purchases' && (searchLabel === 'purchases' || searchLabel === 'wholesale purchases')) return true;
+      if (role === 'content' && searchLabel === 'content') return true;
+      if (role === 'settings' && searchLabel === 'settings') return true;
+
+      // Allow settings parent menu if they have access to any setting submenus
+      if (searchLabel === 'settings' && (
+        role === 'company' ||
+        role === 'email template' ||
+        role === 'notification template' ||
+        role === 'finance' ||
+        role === 'position' ||
+        role === 'staff'
+      )) return true;
+
+      // Submenus allow if they have settings permission or explicit submenu permission
+      const settingSubmenus = ['company', 'email template', 'notification template', 'finance', 'position', 'staff'];
+      if (settingSubmenus.includes(searchLabel) && hasSettingsRole) return true;
+
+      if (searchLabel === 'company' && role === 'company') return true;
+      if (searchLabel === 'email template' && role === 'email template') return true;
+      if (searchLabel === 'notification template' && role === 'notification template') return true;
+      if (searchLabel === 'finance' && role === 'finance') return true;
+      if (searchLabel === 'position' && role === 'position') return true;
+      if (searchLabel === 'staff' && role === 'staff') return true;
+
+      return searchLabel === role || searchLabel.includes(role) || role.includes(searchLabel);
+    });
+  };
+
   // Close sidebar on path change (mobile)
   const lastPathname = useRef(pathname);
   useEffect(() => {
@@ -64,7 +123,7 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
   return (
     <aside className={`
       fixed inset-y-0 left-0 z-[70] w-64 bg-white dark:bg-neutral-900 border-r border-gray-200 dark:border-neutral-800 
-      transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0
+      transform transition-transform duration-300 ease-in-out md:translate-x-0
       ${isOpen ? 'translate-x-0' : '-translate-x-full'}
       flex flex-col
     `}>
@@ -89,96 +148,91 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
         </button>
       </div>
       <nav className="flex-1 px-4 py-8 space-y-2 overflow-y-auto scrollbar-thin">
-        <Link href="/admin" className={`flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin' ? 'text-white bg-black dark:bg-white dark:text-black' : 'text-gray-500 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-          Dashboard
-        </Link>
-        {hasAccess('customer') && (
+        {shouldShowMenu('Dashboard') && (
+          <Link href="/admin" className={`flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin' ? 'text-white bg-black dark:bg-white dark:text-black' : 'text-gray-500 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+            Dashboard
+          </Link>
+        )}
+        {shouldShowMenu('Customers') && (
           <Link href="/admin/customers" className={`flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin/customers' ? 'text-white bg-black dark:bg-white dark:text-black' : 'text-gray-500 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
             Customers
           </Link>
         )}
-        {hasAccess('order') && (
-          <>
-            {canShowRetail && (
-              <Link href="/admin/orders" className={`flex items-center justify-between px-4 py-3 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin/orders' ? 'text-white bg-black dark:bg-white dark:text-black' : 'text-gray-500 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
-                <div className="flex items-center gap-3">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
-                  <span>Orders</span>
-                </div>
-                {unpaidCount > 0 && (
-                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-md flex items-center justify-center min-w-[20px] transition-colors
-                    ${pathname === '/admin/orders' 
-                      ? 'bg-white text-black dark:bg-black dark:text-white' 
-                      : 'bg-black text-white dark:bg-white dark:text-black'
-                    }`}
-                  >
-                    {unpaidCount}
-                  </span>
-                )}
-              </Link>
+        {canShowRetail && shouldShowMenu('Orders') && (
+          <Link href="/admin/orders" className={`flex items-center justify-between px-4 py-3 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin/orders' ? 'text-white bg-black dark:bg-white dark:text-black' : 'text-gray-500 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
+            <div className="flex items-center gap-3">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+              <span>Orders</span>
+            </div>
+            {unpaidCount > 0 && (
+              <span className={`text-[10px] font-black px-2 py-0.5 rounded-md flex items-center justify-center min-w-[20px] transition-colors
+                ${pathname === '/admin/orders' 
+                  ? 'bg-white text-black dark:bg-black dark:text-white' 
+                  : 'bg-black text-white dark:bg-white dark:text-black'
+                }`}
+              >
+                {unpaidCount}
+              </span>
             )}
-            {canShowWholesale && (
-              <Link href="/admin/wholesale-orders" className={`flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin/wholesale-orders' ? 'text-white bg-black dark:bg-white dark:text-black' : 'text-gray-500 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
-                Wholesale Orders
-              </Link>
-            )}
-            {canShowRetail && (
-              <Link href="/admin/transactions" className={`flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin/transactions' ? 'text-white bg-black dark:bg-white dark:text-black' : 'text-gray-500 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="5" width="20" height="14" rx="2" ry="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
-                Transactions
-              </Link>
-            )}
-            {canShowWholesale && (
-              <Link href="/admin/wholesale-transactions" className={`flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin/wholesale-transactions' ? 'text-white bg-black dark:bg-white dark:text-black' : 'text-gray-500 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
-                Wholesale Trans
-              </Link>
-            )}
-          </>
+          </Link>
         )}
-        {canShowRetail && (
+        {canShowWholesale && shouldShowMenu('Wholesale Orders') && (
+          <Link href="/admin/wholesale-orders" className={`flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin/wholesale-orders' ? 'text-white bg-black dark:bg-white dark:text-black' : 'text-gray-500 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+            Wholesale Orders
+          </Link>
+        )}
+        {canShowRetail && shouldShowMenu('Transactions') && (
+          <Link href="/admin/transactions" className={`flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin/transactions' ? 'text-white bg-black dark:bg-white dark:text-black' : 'text-gray-500 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="5" width="20" height="14" rx="2" ry="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
+            Transactions
+          </Link>
+        )}
+        {canShowWholesale && shouldShowMenu('Wholesale Trans') && (
+          <Link href="/admin/wholesale-transactions" className={`flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin/wholesale-transactions' ? 'text-white bg-black dark:bg-white dark:text-black' : 'text-gray-500 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+            Wholesale Trans
+          </Link>
+        )}
+        {canShowRetail && shouldShowMenu('Retail Products') && (
           <Link href="/admin/products" className={`flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin/products' ? 'text-white bg-black dark:bg-white dark:text-black' : 'text-gray-500 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
             Retail Products
           </Link>
         )}
-        {canShowWholesale && hasAccess('product') && (
+        {canShowWholesale && shouldShowMenu('Whole Sale Products') && (
           <Link href="/admin/whole-sale-products" className={`flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin/whole-sale-products' ? 'text-white bg-black dark:bg-white dark:text-black' : 'text-gray-500 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
             Whole Sale Products
           </Link>
         )}
-        {hasAccess('expense') && (
+        {shouldShowMenu('Expenses') && (
           <Link href="/admin/expenses" className={`flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin/expenses' ? 'text-white bg-black dark:bg-white dark:text-black' : 'text-gray-500 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
             Expenses
           </Link>
         )}
-        {hasAccess('purchase') && (
-          <>
-            {canShowRetail && (
-              <Link href="/admin/purchases" className={`flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin/purchases' ? 'text-white bg-black dark:bg-white dark:text-black' : 'text-gray-500 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
-                Purchases
-              </Link>
-            )}
-            {canShowWholesale && (
-              <Link href="/admin/wholesale-purchases" className={`flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin/wholesale-purchases' ? 'text-white bg-black dark:bg-white dark:text-black' : 'text-gray-500 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
-                Wholesale Purchases
-              </Link>
-            )}
-          </>
+        {canShowRetail && shouldShowMenu('Purchases') && (
+          <Link href="/admin/purchases" className={`flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin/purchases' ? 'text-white bg-black dark:bg-white dark:text-black' : 'text-gray-500 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+            Purchases
+          </Link>
         )}
-
-        <Link href="/admin/profile" className={`flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin/profile' ? 'text-white bg-black dark:bg-white dark:text-black' : 'text-gray-500 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-          My Profile
-        </Link>
-        {hasAccess('content') && (
+        {canShowWholesale && shouldShowMenu('Wholesale Purchases') && (
+          <Link href="/admin/wholesale-purchases" className={`flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin/wholesale-purchases' ? 'text-white bg-black dark:bg-white dark:text-black' : 'text-gray-500 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+            Wholesale Purchases
+          </Link>
+        )}
+        {shouldShowMenu('My Profile') && (
+          <Link href="/admin/profile" className={`flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin/profile' ? 'text-white bg-black dark:bg-white dark:text-black' : 'text-gray-500 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            My Profile
+          </Link>
+        )}
+        {shouldShowMenu('Content') && (
           <div>
             <button
               onClick={() => setContentOpen((o) => !o)}
@@ -214,7 +268,7 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
           </div>
         )}
 
-        {hasAccess('setting') && (
+        {shouldShowMenu('Settings') && (
           <div>
             {/* Settings Menu */}
             <button
@@ -229,18 +283,36 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
             </button>
             {settingsOpen && (
               <div className="ml-7 mt-1 space-y-0.5 border-l border-gray-100 dark:border-neutral-800 pl-4">
-                <Link href="/admin/settings" className={`flex items-center gap-2 px-3 py-2 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin/settings' ? 'text-black dark:text-white bg-gray-50 dark:bg-neutral-800' : 'text-gray-400 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
-                  Company
-                </Link>
-                <Link href="/admin/finance" className={`flex items-center gap-2 px-3 py-2 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin/finance' ? 'text-black dark:text-white bg-gray-50 dark:bg-neutral-800' : 'text-gray-400 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
-                  Finance
-                </Link>
-                <Link href="/admin/settings/positions" className={`flex items-center gap-2 px-3 py-2 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin/settings/positions' ? 'text-black dark:text-white bg-gray-50 dark:bg-neutral-800' : 'text-gray-400 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
-                  Position
-                </Link>
-                <Link href="/admin/staff" className={`flex items-center gap-2 px-3 py-2 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin/staff' ? 'text-black dark:text-white bg-gray-50 dark:bg-neutral-800' : 'text-gray-400 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
-                  Staff
-                </Link>
+                {shouldShowMenu('Company') && (
+                  <Link href="/admin/settings" className={`flex items-center gap-2 px-3 py-2 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin/settings' ? 'text-black dark:text-white bg-gray-50 dark:bg-neutral-800' : 'text-gray-400 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
+                    Company
+                  </Link>
+                )}
+                {shouldShowMenu('Email Template') && (
+                  <Link href="/admin/settings/email" className={`flex items-center gap-2 px-3 py-2 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin/settings/email' ? 'text-black dark:text-white bg-gray-50 dark:bg-neutral-800' : 'text-gray-400 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
+                    Email Template
+                  </Link>
+                )}
+                {shouldShowMenu('Notification Template') && (
+                  <Link href="/admin/settings/notification" className={`flex items-center gap-2 px-3 py-2 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin/settings/notification' ? 'text-black dark:text-white bg-gray-50 dark:bg-neutral-800' : 'text-gray-400 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
+                    Notification Template
+                  </Link>
+                )}
+                {shouldShowMenu('Finance') && (
+                  <Link href="/admin/finance" className={`flex items-center gap-2 px-3 py-2 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin/finance' ? 'text-black dark:text-white bg-gray-50 dark:bg-neutral-800' : 'text-gray-400 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
+                    Finance
+                  </Link>
+                )}
+                {shouldShowMenu('Position') && (
+                  <Link href="/admin/settings/positions" className={`flex items-center gap-2 px-3 py-2 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin/settings/positions' ? 'text-black dark:text-white bg-gray-50 dark:bg-neutral-800' : 'text-gray-400 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
+                    Position
+                  </Link>
+                )}
+                {shouldShowMenu('Staff') && (
+                  <Link href="/admin/staff" className={`flex items-center gap-2 px-3 py-2 text-sm font-semibold rounded-xl transition-colors ${pathname === '/admin/staff' ? 'text-black dark:text-white bg-gray-50 dark:bg-neutral-800' : 'text-gray-400 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
+                    Staff
+                  </Link>
+                )}
               </div>
             )}
           </div>

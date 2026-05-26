@@ -17,8 +17,8 @@ interface OrderState {
   unpaidCount: number;
   fetchOrders: (page?: number, from?: string, to?: string, search?: string, paymentStatus?: string, trash?: boolean) => Promise<void>;
   fetchCustomerOrders: () => Promise<void>;
-  updateOrderStatus: (id: number, data: Partial<Order>) => Promise<void>;
-  bulkUpdateStatus: (ids: number[], data: Partial<Order>) => Promise<void>;
+  updateOrderStatus: (id: number, data: Partial<Order>, page?: number, from?: string, to?: string, search?: string, paymentStatus?: string, trash?: boolean) => Promise<void>;
+  bulkUpdateStatus: (ids: number[], data: Partial<Order>, page?: number, from?: string, to?: string, search?: string, paymentStatus?: string, trash?: boolean) => Promise<void>;
   bulkDeleteOrders: (ids: number[]) => Promise<void>;
   deleteOrder: (id: number) => Promise<void>;
   restoreOrder: (id: number) => Promise<void>;
@@ -58,6 +58,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       if (trash) params.set('trash', 'true');
       const response = await apiClient<any>(`/admin/orders?${params.toString()}`);
       set({ orders: response.orders, pagination: response.pagination, loading: false, error: null });
+      await get().fetchUnpaidCount();
     } catch (err: any) {
       set({ error: err.message, loading: false });
     }
@@ -73,15 +74,13 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     }
   },
 
-  updateOrderStatus: async (id, data) => {
+  updateOrderStatus: async (id, data, page = 1, from = '', to = '', search = '', paymentStatus = '', trash = false) => {
     try {
       const response = await apiClient<any>(`/admin/orders/${id}`, {
         method: 'PATCH',
         body: data,
       });
-      // The API returns { message, orders } but with pagination it might be different now
-      // Let's re-fetch the current page to keep it consistent
-      await get().fetchOrders(get().pagination.page);
+      await get().fetchOrders(page, from, to, search, paymentStatus, trash);
       await get().fetchUnpaidCount();
     } catch (err: any) {
       set({ error: err.message });
@@ -89,7 +88,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     }
   },
 
-  bulkUpdateStatus: async (ids, data) => {
+  bulkUpdateStatus: async (ids, data, page = 1, from = '', to = '', search = '', paymentStatus = '', trash = false) => {
     try {
       set({ loading: true });
       await apiClient<any>('/admin/orders/bulk-status', {
@@ -97,7 +96,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
         body: { ids, ...data },
       });
       set({ selectedOrderIds: [] }); // Clear selection after bulk action
-      await get().fetchOrders(get().pagination.page);
+      await get().fetchOrders(page, from, to, search, paymentStatus, trash);
       await get().fetchUnpaidCount();
     } catch (err: any) {
       set({ error: err.message, loading: false });

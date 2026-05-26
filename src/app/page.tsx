@@ -14,7 +14,6 @@ import ProductCard from "@/components/ProductCard";
 import ProductImageModal from "@/components/ProductImageModal";
 import { getImageUrl } from "@/utils/image";
 import { useBlogStore, Blog } from "@/store/useBlogStore";
-import PageLoader from "@/components/common/PageLoader";
 
 const PER_PAGE = 40;
 
@@ -28,6 +27,7 @@ export default function Home() {
   const fetchBanners = useBannerStore(state => state.fetchBanners);
 
   const fetchPublicBlogs = useBlogStore(state => state.fetchPublicBlogs);
+  const publicBlogs = useBlogStore(state => state.blogs);
   const banners = allBanners.filter(b => !b.category || b.category === 'Home');
   const [page, setPage] = useState(1);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -42,17 +42,23 @@ export default function Home() {
 
   useEffect(() => {
     setMounted(true);
-    fetchProducts();
-    fetchBanners();
+    if (products.length === 0) fetchProducts();
+    if (allBanners.length === 0) fetchBanners();
 
-    fetchPublicBlogs()
-      .then(data => {
-        const blog = data.find(b => b.category?.toLowerCase() === 'home');
-        if (blog) setHomeBlog(blog);
-      })
-      .catch(() => { })
-      .finally(() => setBlogsLoading(false));
-  }, [fetchProducts, fetchBanners, fetchPublicBlogs]);
+    if (publicBlogs.length === 0) {
+      fetchPublicBlogs()
+        .then(data => {
+          const blog = data.find(b => b.category?.toLowerCase() === 'home');
+          if (blog) setHomeBlog(blog);
+        })
+        .catch(() => { })
+        .finally(() => setBlogsLoading(false));
+    } else {
+      const blog = publicBlogs.find(b => b.category?.toLowerCase() === 'home');
+      if (blog) setHomeBlog(blog);
+      setBlogsLoading(false);
+    }
+  }, [fetchProducts, fetchBanners, fetchPublicBlogs, products.length, allBanners.length, publicBlogs]);
 
   // Filter by category and price, then sort by availability (in-stock first)
   const filtered = products.filter((p) => {
@@ -90,11 +96,8 @@ export default function Home() {
     setPage(1);
   }, []);
 
-  const isPageLoading = productsLoading || bannersLoading || blogsLoading || !mounted;
-
   return (
     <main className="w-full min-h-screen bg-gray-50 dark:bg-neutral-950 transition-colors duration-300">
-      <PageLoader isLoading={isPageLoading} />
       <Header />
 
       {/* Immersive Hero Section with Swiper */}

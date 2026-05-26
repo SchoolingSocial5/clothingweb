@@ -13,6 +13,8 @@ interface AssignPositionModalProps {
     staffPosition?: string;
     staffType?: string;
     staff_type?: string;
+    staffRole?: string;
+    role?: string;
   } | null;
   onSuccess: () => void;
   showToast: (message: string, type: 'success' | 'error') => void;
@@ -23,12 +25,14 @@ export default function AssignPositionModal({ isOpen, onClose, user, onSuccess, 
   const { assignPosition, loading: assigning } = useUserStore();
   const [selectedPositionId, setSelectedPositionId] = useState('');
   const [staffType, setStaffType] = useState('Retail');
+  const [staffRole, setStaffRole] = useState('');
 
   useEffect(() => {
     if (isOpen) {
       fetchPositions();
       if (user) {
         setStaffType(user.staffType || user.staff_type || 'Retail');
+        setStaffRole(user.staffRole || user.role || 'Staff');
       }
     }
   }, [isOpen, fetchPositions, user]);
@@ -51,7 +55,7 @@ export default function AssignPositionModal({ isOpen, onClose, user, onSuccess, 
     if (!selectedPositionId) return;
 
     try {
-      await assignPosition(user.id, selectedPositionId, staffType);
+      await assignPosition(user.id, selectedPositionId, staffType, staffRole);
       onSuccess();
       onClose();
     } catch (error: any) {
@@ -80,7 +84,14 @@ export default function AssignPositionModal({ isOpen, onClose, user, onSuccess, 
               <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 px-1">Select Job Position</label>
               <select
                 value={selectedPositionId}
-                onChange={(e) => setSelectedPositionId(e.target.value)}
+                onChange={(e) => {
+                  const posId = e.target.value;
+                  setSelectedPositionId(posId);
+                  const selectedPos = positions.find(p => p.id === posId);
+                  if (selectedPos) {
+                    setStaffRole(selectedPos.role || 'Staff');
+                  }
+                }}
                 required
                 className="w-full bg-gray-50 dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 rounded-2xl px-5 py-4 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all appearance-none text-gray-900 dark:text-gray-100"
               >
@@ -92,6 +103,18 @@ export default function AssignPositionModal({ isOpen, onClose, user, onSuccess, 
               <div className="absolute right-5 bottom-4 pointer-events-none text-gray-400">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="6 9 12 15 18 9"></polyline></svg>
               </div>
+            </div>
+
+            <div className="space-y-2 relative">
+              <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 px-1">Edit Roles (Comma-separated permissions)</label>
+              <input
+                type="text"
+                value={staffRole}
+                onChange={(e) => setStaffRole(e.target.value)}
+                required
+                placeholder="e.g. Order, Customer, Content"
+                className="w-full bg-gray-50 dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 rounded-2xl px-5 py-4 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all text-gray-900 dark:text-gray-100"
+              />
             </div>
 
             <div className="space-y-2 relative">

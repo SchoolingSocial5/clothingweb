@@ -49,7 +49,7 @@ export default function ProductsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [search, setSearch] = useState('');
   const [isSearching, setIsSearching] = useState(false);
-  const itemsPerPage = 20;
+  const itemsPerPage = 40;
 
   const filteredProducts = products.filter(p => {
     if (!search.trim()) return true;
@@ -263,7 +263,6 @@ export default function ProductsPage() {
                         </div>
                         <div>
                           <p className="font-bold text-sm text-gray-900 dark:text-gray-100">{product.name}</p>
-                          <p className="text-xs text-gray-500">ID: #{product.id}</p>
                         </div>
                       </div>
                     </td>

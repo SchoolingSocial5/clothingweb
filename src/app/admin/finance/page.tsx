@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useSettings } from '@/context/SettingsContext';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { apiClient } from '@/utils/api';
 
 interface FinanceRow {
   name: string;
@@ -42,34 +43,21 @@ export default function FinancePage() {
     setLoading(true);
     setError(null);
     try {
-      const headers: HeadersInit = {
-        'Content-Type': 'application/json',
-      };
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-
       const params = new URLSearchParams();
       if (isFilterApplied) {
         if (fromDate) params.append('from', fromDate);
         if (toDate) params.append('to', toDate);
       }
 
-      const url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/admin/finance?${params.toString()}`;
-      const res = await fetch(url, { headers });
-      
-      if (!res.ok) {
-        throw new Error('Failed to fetch finance records');
-      }
-
-      const financeData: FinanceData = await res.json();
+      const url = `/admin/finance?${params.toString()}`;
+      const financeData = await apiClient<FinanceData>(url);
       setData(financeData);
     } catch (err: any) {
       setError(err.message || 'An error occurred while fetching finance summaries.');
     } finally {
       setLoading(false);
     }
-  }, [token, isFilterApplied, fromDate, toDate]);
+  }, [isFilterApplied, fromDate, toDate]);
 
   useEffect(() => {
     fetchFinanceData();

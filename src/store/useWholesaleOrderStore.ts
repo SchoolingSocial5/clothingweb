@@ -14,8 +14,8 @@ interface WholesaleOrderState {
   loading: boolean;
   error: string | null;
   fetchOrders: (page?: number, from?: string, to?: string, search?: string, paymentStatus?: string, trash?: boolean) => Promise<void>;
-  updateOrderStatus: (id: number, data: Partial<Order>) => Promise<void>;
-  bulkUpdateStatus: (ids: number[], data: Partial<Order>) => Promise<void>;
+  updateOrderStatus: (id: number, data: Partial<Order>, page?: number, from?: string, to?: string, search?: string, paymentStatus?: string, trash?: boolean) => Promise<void>;
+  bulkUpdateStatus: (ids: number[], data: Partial<Order>, page?: number, from?: string, to?: string, search?: string, paymentStatus?: string, trash?: boolean) => Promise<void>;
   bulkDeleteOrders: (ids: number[]) => Promise<void>;
   deleteOrder: (id: number) => Promise<void>;
   restoreOrder: (id: number) => Promise<void>;
@@ -57,20 +57,20 @@ export const useWholesaleOrderStore = create<WholesaleOrderState>((set, get) => 
     }
   },
 
-  updateOrderStatus: async (id, data) => {
+  updateOrderStatus: async (id, data, page = 1, from = '', to = '', search = '', paymentStatus = '', trash = false) => {
     try {
       await apiClient<any>(`/admin/wholesale-orders/${id}`, {
         method: 'PATCH',
         body: data,
       });
-      await get().fetchOrders(get().pagination.page);
+      await get().fetchOrders(page, from, to, search, paymentStatus, trash);
     } catch (err: any) {
       set({ error: err.message });
       throw err;
     }
   },
 
-  bulkUpdateStatus: async (ids, data) => {
+  bulkUpdateStatus: async (ids, data, page = 1, from = '', to = '', search = '', paymentStatus = '', trash = false) => {
     try {
       set({ loading: true });
       await apiClient<any>('/admin/wholesale-orders/bulk-status', {
@@ -78,7 +78,7 @@ export const useWholesaleOrderStore = create<WholesaleOrderState>((set, get) => 
         body: { ids, ...data },
       });
       set({ selectedOrderIds: [] });
-      await get().fetchOrders(get().pagination.page);
+      await get().fetchOrders(page, from, to, search, paymentStatus, trash);
     } catch (err: any) {
       set({ error: err.message, loading: false });
       throw err;

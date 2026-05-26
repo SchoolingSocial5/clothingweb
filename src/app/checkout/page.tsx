@@ -42,6 +42,7 @@ export default function CheckoutPage() {
   const [orderId, setOrderId] = useState<number | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [finalTotal, setFinalTotal] = useState<number>(0);
   const [form, setForm] = useState({
     customer_name: '',
     customer_email: '',
@@ -97,6 +98,7 @@ export default function CheckoutPage() {
       quantity: item.quantity
     }))));
     formData.append('receipt', receipt);
+    formData.append('payment_method', 'transfer');
     
     const isWholesale = cart.some(item => item.isWholesale || item.category?.toLowerCase() === 'wholesale');
     try {
@@ -105,6 +107,7 @@ export default function CheckoutPage() {
         : await createRetailOrder(formData) as any;
       setOrderId(response.id);
       if (response.auth) login(response.auth.access_token, response.auth.user);
+      setFinalTotal(total);
       setDone(true);
       clearCart();
     } catch {}
@@ -136,7 +139,7 @@ export default function CheckoutPage() {
                 </div>
                 <div className="pt-3 border-t border-gray-100 dark:border-neutral-800 flex justify-between">
                   <span className="text-gray-500 dark:text-gray-400">Amount to Pay</span>
-                  <span className="font-black text-xl text-gray-900 dark:text-gray-100">{formatPrice(total, globalSettings?.currency_symbol)}</span>
+                  <span className="font-black text-xl text-gray-900 dark:text-gray-100">{formatPrice(finalTotal, globalSettings?.currency_symbol)}</span>
                 </div>
               </div>
             </div>
