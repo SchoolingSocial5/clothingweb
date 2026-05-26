@@ -13,6 +13,7 @@ import ProductCard from "@/components/ProductCard";
 import ProductImageModal from "@/components/ProductImageModal";
 import { getImageUrl } from "@/utils/image";
 import { useBlogStore, Blog } from "@/store/useBlogStore";
+import PageLoader from "@/components/common/PageLoader";
 
 const PER_PAGE = 20;
 
@@ -34,8 +35,11 @@ export default function WholeSales() {
   const [wholeBlog, setWholeBlog] = useState<Blog | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [previewIndex, setPreviewIndex] = useState(0);
+  const [mounted, setMounted] = useState(false);
+  const [blogsLoading, setBlogsLoading] = useState(true);
 
   useEffect(() => {
+    setMounted(true);
     fetchWholesaleProducts();
     fetchBanners();
 
@@ -44,7 +48,8 @@ export default function WholeSales() {
         const blog = data.find(b => b.category?.toLowerCase() === 'whole sales');
         if (blog) setWholeBlog(blog);
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setBlogsLoading(false));
   }, [fetchWholesaleProducts, fetchBanners, fetchPublicBlogs]);
 
   // Filter by category and price, then sort by availability (in-stock first)
@@ -67,8 +72,11 @@ export default function WholeSales() {
     document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const isPageLoading = productsLoading || bannersLoading || blogsLoading || !mounted;
+
   return (
     <main className="w-full min-h-screen bg-gray-50 dark:bg-neutral-950 transition-colors duration-300">
+      <PageLoader isLoading={isPageLoading} />
       <Header />
 
       {/* Spacer to replace hero section and separate header from main content */}

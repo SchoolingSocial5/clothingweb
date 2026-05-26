@@ -55,11 +55,12 @@ export default function Sidebar({
   const [localMax, setLocalMax] = useState<number | null>(null);
   const effectiveMax = localMax ?? maxPrice;
 
-  // Reset local slider when product prices change
+  // Reset local slider when the parent priceRange is reset to default
   useEffect(() => {
-    setLocalMax(null);
-    onPriceRangeChange?.([minPrice, maxPrice]);
-  }, [minPrice, maxPrice]);
+    if (priceRange && priceRange[0] === 0 && priceRange[1] === Infinity) {
+      setLocalMax(null);
+    }
+  }, [priceRange]);
 
   const toggleColor = (color: string) => {
     const next = selectedColors.includes(color)

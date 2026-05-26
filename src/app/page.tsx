@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination, EffectFade } from 'swiper/modules';
 import 'swiper/css';
@@ -14,8 +14,9 @@ import ProductCard from "@/components/ProductCard";
 import ProductImageModal from "@/components/ProductImageModal";
 import { getImageUrl } from "@/utils/image";
 import { useBlogStore, Blog } from "@/store/useBlogStore";
+import PageLoader from "@/components/common/PageLoader";
 
-const PER_PAGE = 20;
+const PER_PAGE = 40;
 
 export default function Home() {
   const products = useProductStore(state => state.products);
@@ -36,8 +37,11 @@ export default function Home() {
   const [homeBlog, setHomeBlog] = useState<Blog | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [previewIndex, setPreviewIndex] = useState(0);
+  const [mounted, setMounted] = useState(false);
+  const [blogsLoading, setBlogsLoading] = useState(true);
 
   useEffect(() => {
+    setMounted(true);
     fetchProducts();
     fetchBanners();
 
@@ -46,7 +50,8 @@ export default function Home() {
         const blog = data.find(b => b.category?.toLowerCase() === 'home');
         if (blog) setHomeBlog(blog);
       })
-      .catch(() => { });
+      .catch(() => { })
+      .finally(() => setBlogsLoading(false));
   }, [fetchProducts, fetchBanners, fetchPublicBlogs]);
 
   // Filter by category and price, then sort by availability (in-stock first)
@@ -64,23 +69,37 @@ export default function Home() {
   const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
   const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
-  const changePage = (p: number) => {
+  const changePage = useCallback((p: number) => {
     setPage(p);
     document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' });
-  };
+  }, []);
 
-  const handleCategoryChange = (cat: string) => {
+  const handleCategoryChange = useCallback((cat: string) => {
     setSelectedCategory(cat);
+    setPriceRange([0, Infinity]);
     setPage(1);
-  };
+  }, []);
+
+  const handlePriceRangeChange = useCallback((range: [number, number]) => {
+    setPriceRange(range);
+    setPage(1);
+  }, []);
+
+  const handleColorsChange = useCallback((colors: string[]) => {
+    setSelectedColors(colors);
+    setPage(1);
+  }, []);
+
+  const isPageLoading = productsLoading || bannersLoading || blogsLoading || !mounted;
 
   return (
     <main className="w-full min-h-screen bg-gray-50 dark:bg-neutral-950 transition-colors duration-300">
+      <PageLoader isLoading={isPageLoading} />
       <Header />
 
       {/* Immersive Hero Section with Swiper */}
       <section className="w-full h-[50vh] bg-neutral-900 relative">
-        {bannersLoading ? (
+        {bannersLoading || !mounted ? (
           <div className="w-full h-full flex items-center justify-center">
             <div className="w-12 h-12 border-4 border-white/20 border-t-white rounded-full animate-spin" />
           </div>
@@ -154,14 +173,14 @@ export default function Home() {
           selectedCategory={selectedCategory}
           onCategoryChange={handleCategoryChange}
           selectedColors={selectedColors}
-          onColorsChange={(colors) => { setSelectedColors(colors); setPage(1); }}
+          onColorsChange={handleColorsChange}
           priceRange={priceRange}
-          onPriceRangeChange={(range) => { setPriceRange(range); setPage(1); }}
+          onPriceRangeChange={handlePriceRangeChange}
           allProducts={products}
         />
 
         <div className="flex-1 min-w-0">
-          <div className="flex flex-wrap justify-between items-end mb-10 pb-4 border-b border-gray-100 dark:border-neutral-800 gap-3">
+          <div className="flex flex-wrap justify-between items-end mb-10 lg:pb-4 lg:border-b lg:border-gray-100 lg:dark:border-neutral-800 gap-3">
             <div>
               <h2 className="text-3xl font-bold tracking-tight mb-2 text-gray-900 dark:text-white transition-colors">
                 {selectedCategory}
@@ -175,11 +194,11 @@ export default function Home() {
                 }
               </p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center justify-between lg:justify-end gap-3 w-full lg:w-auto sticky lg:relative top-[64px] lg:top-auto z-40 lg:z-auto bg-gray-50/95 dark:bg-neutral-950/95 lg:bg-transparent backdrop-blur-md lg:backdrop-blur-none py-3 lg:py-0 px-4 lg:px-0 -mx-4 lg:mx-0 border-b border-gray-200 dark:border-neutral-800 lg:border-none">
               {/* Mobile Filter Toggle */}
               <button
                 onClick={() => setIsSidebarOpen(true)}
-                className="lg:hidden flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-neutral-700 rounded-xl text-sm font-bold text-gray-700 dark:text-gray-300 hover:border-black dark:hover:border-white transition-colors"
+                className="lg:hidden flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-neutral-700 rounded-xl text-sm font-bold text-gray-700 dark:text-gray-300 hover:border-black dark:hover:border-white transition-colors bg-white dark:bg-neutral-900"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <line x1="4" y1="6" x2="20" y2="6" />
@@ -192,7 +211,7 @@ export default function Home() {
                 )}
               </button>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 max-lg:bg-white max-lg:dark:bg-neutral-900 max-lg:px-4 max-lg:py-2 max-lg:border max-lg:border-gray-200 max-lg:dark:border-neutral-700 max-lg:rounded-xl">
                 <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Sort by:</span>
                 <select className="text-sm font-bold bg-transparent border-none outline-none cursor-pointer text-gray-900 dark:text-gray-100">
                   <option className="bg-white dark:bg-neutral-900">Newest Arrivals</option>

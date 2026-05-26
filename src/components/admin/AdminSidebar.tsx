@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useSettings } from '@/context/SettingsContext';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import ThemeToggle from '@/components/ThemeToggle';
 import { getImageUrl } from '@/utils/image';
 import { useOrderStore } from '@/store/useOrderStore';
@@ -21,7 +21,8 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
     pathname.startsWith('/admin/faq') ||
     pathname.startsWith('/admin/blog') ||
     pathname.startsWith('/admin/terms') ||
-    pathname.startsWith('/admin/social-media')
+    pathname.startsWith('/admin/social-media') ||
+    pathname.startsWith('/admin/pages/banners')
   );
   const [settingsOpen, setSettingsOpen] = useState(
     pathname.startsWith('/admin/settings') ||
@@ -52,8 +53,12 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
   };
 
   // Close sidebar on path change (mobile)
+  const lastPathname = useRef(pathname);
   useEffect(() => {
-    onClose();
+    if (lastPathname.current !== pathname) {
+      onClose();
+      lastPathname.current = pathname;
+    }
   }, [pathname, onClose]);
 
   return (
@@ -189,6 +194,9 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
               <div className="ml-7 mt-1 space-y-0.5 border-l border-gray-100 dark:border-neutral-800 pl-4">
                 <Link href="/admin/social-media" className={`flex items-center gap-2 px-3 py-2 text-sm font-semibold rounded-xl transition-colors ${pathname.startsWith('/admin/social-media') ? 'text-black dark:text-white bg-gray-50 dark:bg-neutral-800' : 'text-gray-400 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
                   Social Media
+                </Link>
+                <Link href="/admin/pages/banners" className={`flex items-center gap-2 px-3 py-2 text-sm font-semibold rounded-xl transition-colors ${pathname.startsWith('/admin/pages/banners') ? 'text-black dark:text-white bg-gray-50 dark:bg-neutral-800' : 'text-gray-400 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>
+                  Banners
                 </Link>
                 {settings?.show_blog !== false && (
                   <Link href="/admin/blog" className={`flex items-center gap-2 px-3 py-2 text-sm font-semibold rounded-xl transition-colors ${pathname.startsWith('/admin/blog') ? 'text-black dark:text-white bg-gray-50 dark:bg-neutral-800' : 'text-gray-400 hover:text-black hover:bg-gray-50 dark:hover:bg-neutral-800 dark:hover:text-white'}`}>

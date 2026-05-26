@@ -47,6 +47,10 @@ export default function WholesaleOrdersPage() {
   const bulkUpdateStatus = useWholesaleOrderStore(state => state.bulkUpdateStatus);
   const toggleOrderSelection = useWholesaleOrderStore(state => state.toggleOrderSelection);
   const toggleAllSelection = useWholesaleOrderStore(state => state.toggleAllSelection);
+  const restoreOrder = useWholesaleOrderStore(state => state.restoreOrder);
+  const bulkRestoreOrders = useWholesaleOrderStore(state => state.bulkRestoreOrders);
+  const deleteOrderPermanent = useWholesaleOrderStore(state => state.deleteOrderPermanent);
+  const bulkDeleteOrdersPermanent = useWholesaleOrderStore(state => state.bulkDeleteOrdersPermanent);
 
   const [detailsOrder, setDetailsOrder] = useState<Order | null>(null);
   const [receiptOrder, setReceiptOrder] = useState<Order | null>(null);
@@ -54,6 +58,7 @@ export default function WholesaleOrdersPage() {
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [bulkUpdating, setBulkUpdating] = useState(false);
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+  const [viewingTrash, setViewingTrash] = useState(false);
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [search, setSearch] = useState('');
@@ -105,21 +110,22 @@ export default function WholesaleOrdersPage() {
     router.push('/admin/wholesale-transactions');
   };
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = (() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  })();
 
   const { settings } = useSettings();
 
   useEffect(() => {
-    fetchOrders(1, '', '', '', 'unpaid');
-  }, [token, fetchOrders]);
-
-  const handleFilter = () => fetchOrders(1, from, to, search, 'unpaid');
+    fetchOrders(1, '', '', '', 'unpaid', viewingTrash);
+  }, [token, fetchOrders, viewingTrash]);
 
   const handleClear = () => {
     setFrom('');
     setTo('');
     setSearch('');
-    fetchOrders(1, '', '', '', 'unpaid');
+    fetchOrders(1, '', '', '', 'unpaid', viewingTrash);
   };
 
   const updateStatus = async (id: number, field: 'status' | 'payment_status', value: string) => {
@@ -173,17 +179,33 @@ export default function WholesaleOrdersPage() {
   return (
     <div className="p-[10px] md:p-8 w-full">
       <AdminPageHeader
-        title="Wholesale Orders"
-        description="Manage and track all wholesale partner orders"
-        stats={{ label: "Total", value: pagination?.total || 0 }}
+        title={viewingTrash ? "Wholesale Orders Trash" : "Wholesale Orders"}
+        description={viewingTrash ? "View and restore soft-deleted wholesale orders or permanently delete them" : "Manage and track all wholesale partner orders"}
+        stats={{ label: viewingTrash ? "Total Deleted" : "Total", value: pagination?.total || 0 }}
       >
         <button
-          onClick={() => setShowProductPicker(true)}
-          className="bg-black text-white px-6 py-3 rounded-xl text-sm font-bold shadow-lg shadow-black/20 hover:bg-gray-900 transition-all flex items-center gap-2"
+          onClick={() => setViewingTrash(!viewingTrash)}
+          className={`px-5 py-3 rounded-xl text-sm font-bold border transition-all flex items-center gap-2 shadow-sm cursor-pointer ${
+            viewingTrash 
+              ? 'bg-red-50 dark:bg-red-500/10 border-red-200 text-red-600 dark:border-red-500/20' 
+              : 'bg-white dark:bg-neutral-800 border-gray-200 dark:border-neutral-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-neutral-700/50'
+          }`}
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
-          Create Wholesale Order
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <polyline points="3 6 5 6 21 6" />
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+          </svg>
+          {viewingTrash ? "Active Wholesale" : "Trash Can"}
         </button>
+        {!viewingTrash && (
+          <button
+            onClick={() => setShowProductPicker(true)}
+            className="bg-black text-white px-6 py-3 rounded-xl text-sm font-bold shadow-lg shadow-black/20 hover:bg-gray-900 transition-all flex items-center gap-2 cursor-pointer"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+            Create Wholesale Order
+          </button>
+        )}
       </AdminPageHeader>
 
       {/* Filter Bar */}
@@ -194,7 +216,7 @@ export default function WholesaleOrdersPage() {
             <input
               type="text"
               value={search}
-              onChange={e => { setSearch(e.target.value); fetchOrders(1, from, to, e.target.value); }}
+              onChange={e => { setSearch(e.target.value); fetchOrders(1, from, to, e.target.value, 'unpaid', viewingTrash); }}
               placeholder="Name, email, phone, receipt..."
               className="w-full pl-9 pr-9 py-2 bg-gray-50 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-black dark:text-gray-100 dark:placeholder-gray-500"
             />
@@ -208,7 +230,11 @@ export default function WholesaleOrdersPage() {
             type="date"
             value={from}
             max={to || today}
-            onChange={e => setFrom(e.target.value)}
+            onChange={e => {
+              const val = e.target.value;
+              setFrom(val);
+              fetchOrders(1, val, to, search, 'unpaid', viewingTrash);
+            }}
             className="px-3 py-2 bg-gray-50 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-black dark:text-gray-100"
           />
         </div>
@@ -219,17 +245,14 @@ export default function WholesaleOrdersPage() {
             value={to}
             min={from}
             max={today}
-            onChange={e => setTo(e.target.value)}
+            onChange={e => {
+              const val = e.target.value;
+              setTo(val);
+              fetchOrders(1, from, val, search, 'unpaid', viewingTrash);
+            }}
             className="px-3 py-2 bg-gray-50 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-black dark:text-gray-100"
           />
         </div>
-        <button
-          onClick={handleFilter}
-          disabled={!from && !to}
-          className="px-5 py-2.5 bg-black text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-gray-900 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          Apply
-        </button>
         {(from || to) && (
           <button
             onClick={handleClear}
@@ -270,7 +293,7 @@ export default function WholesaleOrdersPage() {
                   <th className="px-4 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 text-center">Receipt ID</th>
                   <th className="px-4 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 text-center">Method</th>
                   <th className="px-4 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 text-center">Receipt Image</th>
-                  <th className="px-4 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">Payment</th>
+                  <th className="px-4 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">{viewingTrash ? "Actions" : "Payment"}</th>
                   <th className="px-4 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 text-right">Date/Time</th>
                 </tr>
               </thead>
@@ -361,20 +384,59 @@ export default function WholesaleOrdersPage() {
                       )}
                     </td>
                     <td className="px-4 py-5" onClick={e => e.stopPropagation()}>
-                      {updatingId === order.id ? (
-                        <div className="flex items-center gap-2 px-3 py-1.5">
-                          <div className="w-3.5 h-3.5 border-2 border-gray-300 border-t-gray-700 rounded-full animate-spin" />
-                          <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Updating…</span>
+                      {viewingTrash ? (
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={async () => {
+                              if (window.confirm("Are you sure you want to restore this wholesale order?")) {
+                                try {
+                                  await restoreOrder(order.id);
+                                  setToast({ message: 'Wholesale order restored successfully!', type: 'success' });
+                                } catch (err: any) {
+                                  setToast({ message: err.message || 'Failed to restore wholesale order', type: 'error' });
+                                }
+                              }
+                            }}
+                            className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest px-3 py-2 rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:bg-emerald-500/20 transition-all cursor-pointer active:scale-95"
+                            title="Restore Wholesale Order"
+                          >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                            Restore
+                          </button>
+                          <button
+                            onClick={async () => {
+                              if (window.confirm("WARNING: Are you sure you want to permanently delete this wholesale order? This action CANNOT be undone.")) {
+                                try {
+                                  await deleteOrderPermanent(order.id);
+                                  setToast({ message: 'Wholesale order permanently deleted!', type: 'success' });
+                                } catch (err: any) {
+                                  setToast({ message: err.message || 'Failed to permanently delete wholesale order', type: 'error' });
+                                }
+                              }
+                            }}
+                            className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest px-3 py-2 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500/20 transition-all cursor-pointer active:scale-95"
+                            title="Delete Permanently"
+                          >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                            Purge
+                          </button>
                         </div>
                       ) : (
-                        <select
-                          value={order.payment_status}
-                          onChange={e => updateStatus(order.id, 'payment_status', e.target.value)}
-                          className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full border-0 cursor-pointer focus:ring-2 focus:ring-black transition-all ${paymentColors[order.payment_status]}`}
-                        >
-                          <option value="unpaid">Unpaid</option>
-                          <option value="paid">Paid</option>
-                        </select>
+                        updatingId === order.id ? (
+                          <div className="flex items-center gap-2 px-3 py-1.5">
+                            <div className="w-3.5 h-3.5 border-2 border-gray-300 border-t-gray-700 rounded-full animate-spin" />
+                            <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Updating…</span>
+                          </div>
+                        ) : (
+                          <select
+                            value={order.payment_status}
+                            onChange={e => updateStatus(order.id, 'payment_status', e.target.value)}
+                            className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full border-0 cursor-pointer focus:ring-2 focus:ring-black transition-all ${paymentColors[order.payment_status]}`}
+                          >
+                            <option value="unpaid">Unpaid</option>
+                            <option value="paid">Paid</option>
+                          </select>
+                        )
                       )}
                     </td>
                     <td className="pr-4 py-5 text-right">
@@ -394,7 +456,7 @@ export default function WholesaleOrdersPage() {
             <Pagination
               currentPage={pagination?.page || 1}
               totalPages={pagination?.last_page || 1}
-              onPageChange={(page) => fetchOrders(page, from, to, search)}
+              onPageChange={(page) => fetchOrders(page, from, to, search, 'unpaid', viewingTrash)}
             />
           </div>
         </div>
@@ -407,19 +469,47 @@ export default function WholesaleOrdersPage() {
               {selectedOrderIds.length} Selected
             </span>
             <div className="h-6 w-px bg-white/10"></div>
-            <div className="flex items-center gap-4">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-white/50">Actions</span>
-              <button onClick={() => handleBulkUpdate('payment_status', 'paid')} disabled={bulkUpdating} className="text-[10px] font-black uppercase tracking-widest px-6 py-2.5 bg-white text-black rounded-xl hover:bg-gray-200 transition-all disabled:opacity-50 active:scale-95">Mark Paid</button>
-              <button onClick={() => handleBulkUpdate('payment_status', 'unpaid')} disabled={bulkUpdating} className="text-[10px] font-black uppercase tracking-widest px-6 py-2.5 bg-white/10 text-white border border-white/20 rounded-xl hover:bg-white/20 transition-all disabled:opacity-50 active:scale-95">Mark Unpaid</button>
-              <button
-                onClick={() => setShowBulkDeleteConfirm(true)}
-                disabled={bulkUpdating}
-                className="text-[10px] font-black uppercase tracking-widest px-6 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all disabled:opacity-50 flex items-center gap-2 active:scale-95"
-              >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
-                Delete
-              </button>
-            </div>
+            {viewingTrash ? (
+              <div className="flex items-center gap-4">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-white/50">Trash Actions</span>
+                <button
+                  onClick={async () => {
+                    if (window.confirm(`Are you sure you want to restore ${selectedOrderIds.length} selected wholesale orders?`)) {
+                      try {
+                        await bulkRestoreOrders(selectedOrderIds);
+                        setToast({ message: 'Bulk restore successful!', type: 'success' });
+                      } catch (err: any) {
+                        setToast({ message: err.message || 'Failed to restore wholesale orders', type: 'error' });
+                      }
+                    }
+                  }}
+                  className="text-[10px] font-black uppercase tracking-widest px-6 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-all cursor-pointer active:scale-95"
+                >
+                  Restore Selected
+                </button>
+                <button
+                  onClick={() => setShowBulkDeleteConfirm(true)}
+                  className="text-[10px] font-black uppercase tracking-widest px-6 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all cursor-pointer flex items-center gap-2 active:scale-95"
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
+                  Purge Permanently
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-4">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-white/50">Actions</span>
+                <button onClick={() => handleBulkUpdate('payment_status', 'paid')} disabled={bulkUpdating} className="text-[10px] font-black uppercase tracking-widest px-6 py-2.5 bg-white text-black rounded-xl hover:bg-gray-200 transition-all disabled:opacity-50 active:scale-95">Mark Paid</button>
+                <button onClick={() => handleBulkUpdate('payment_status', 'unpaid')} disabled={bulkUpdating} className="text-[10px] font-black uppercase tracking-widest px-6 py-2.5 bg-white/10 text-white border border-white/20 rounded-xl hover:bg-white/20 transition-all disabled:opacity-50 active:scale-95">Mark Unpaid</button>
+                <button
+                  onClick={() => setShowBulkDeleteConfirm(true)}
+                  disabled={bulkUpdating}
+                  className="text-[10px] font-black uppercase tracking-widest px-6 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all disabled:opacity-50 flex items-center gap-2 active:scale-95 cursor-pointer"
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
+                  Delete
+                </button>
+              </div>
+            )}
           </div>
           <button onClick={() => useWholesaleOrderStore.getState().clearSelection()} className="text-white/40 hover:text-white transition-all p-2 flex items-center gap-2 group active:scale-90">
             <span className="text-[10px] font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Clear</span>
@@ -431,9 +521,25 @@ export default function WholesaleOrdersPage() {
       <DeleteConfirmModal
         isOpen={showBulkDeleteConfirm}
         onClose={() => setShowBulkDeleteConfirm(false)}
-        onConfirm={() => useWholesaleOrderStore.getState().bulkDeleteOrders(selectedOrderIds)}
-        title="Delete Wholesale Orders"
-        message={`Are you sure you want to delete ${selectedOrderIds.length} selected wholesale order${selectedOrderIds.length !== 1 ? 's' : ''}? This action cannot be undone.`}
+        onConfirm={async () => {
+          try {
+            if (viewingTrash) {
+              await bulkDeleteOrdersPermanent(selectedOrderIds);
+              setToast({ message: 'Wholesale orders permanently deleted!', type: 'success' });
+            } else {
+              await useWholesaleOrderStore.getState().bulkDeleteOrders(selectedOrderIds);
+              setToast({ message: 'Wholesale orders moved to trash!', type: 'success' });
+            }
+          } catch (err: any) {
+            setToast({ message: err.message || 'Operation failed', type: 'error' });
+          }
+          setShowBulkDeleteConfirm(false);
+        }}
+        title={viewingTrash ? "Permanently Delete Wholesale Orders" : "Delete Wholesale Orders"}
+        message={viewingTrash
+          ? `WARNING: Are you sure you want to permanently delete ${selectedOrderIds.length} selected wholesale orders? This action CANNOT be undone.`
+          : `Are you sure you want to delete ${selectedOrderIds.length} selected wholesale order${selectedOrderIds.length !== 1 ? 's' : ''}? They will be moved to the trash.`
+        }
       />
 
       {/* Order Details Modal */}

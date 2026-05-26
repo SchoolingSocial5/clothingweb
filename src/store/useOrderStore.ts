@@ -15,12 +15,16 @@ interface OrderState {
   loading: boolean;
   error: string | null;
   unpaidCount: number;
-  fetchOrders: (page?: number, from?: string, to?: string, search?: string, paymentStatus?: string) => Promise<void>;
+  fetchOrders: (page?: number, from?: string, to?: string, search?: string, paymentStatus?: string, trash?: boolean) => Promise<void>;
   fetchCustomerOrders: () => Promise<void>;
   updateOrderStatus: (id: number, data: Partial<Order>) => Promise<void>;
   bulkUpdateStatus: (ids: number[], data: Partial<Order>) => Promise<void>;
   bulkDeleteOrders: (ids: number[]) => Promise<void>;
   deleteOrder: (id: number) => Promise<void>;
+  restoreOrder: (id: number) => Promise<void>;
+  bulkRestoreOrders: (ids: number[]) => Promise<void>;
+  deleteOrderPermanent: (id: number) => Promise<void>;
+  bulkDeleteOrdersPermanent: (ids: number[]) => Promise<void>;
   createOrder: (formData: FormData) => Promise<Order>;
   toggleOrderSelection: (id: number) => void;
   toggleAllSelection: () => void;
@@ -43,7 +47,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
   error: null,
   unpaidCount: 0,
 
-  fetchOrders: async (page = 1, from = '', to = '', search = '', paymentStatus = '') => {
+  fetchOrders: async (page = 1, from = '', to = '', search = '', paymentStatus = '', trash = false) => {
     if (get().orders.length === 0) set({ loading: true });
     try {
       const params = new URLSearchParams({ page: String(page), limit: '20' });
@@ -51,6 +55,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       if (to) params.set('to', to);
       if (search) params.set('search', search);
       if (paymentStatus) params.set('payment_status', paymentStatus);
+      if (trash) params.set('trash', 'true');
       const response = await apiClient<any>(`/admin/orders?${params.toString()}`);
       set({ orders: response.orders, pagination: response.pagination, loading: false, error: null });
     } catch (err: any) {
@@ -123,6 +128,62 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       await get().fetchUnpaidCount();
     } catch (err: any) {
       set({ error: err.message });
+      throw err;
+    }
+  },
+
+  restoreOrder: async (id) => {
+    try {
+      set({ loading: true });
+      await apiClient<any>(`/admin/orders/${id}/restore`, { method: 'POST' });
+      await get().fetchOrders(get().pagination.page, '', '', '', '', true);
+      await get().fetchUnpaidCount();
+    } catch (err: any) {
+      set({ error: err.message, loading: false });
+      throw err;
+    }
+  },
+
+  bulkRestoreOrders: async (ids) => {
+    try {
+      set({ loading: true });
+      await apiClient<any>('/admin/orders/bulk-restore', {
+        method: 'POST',
+        body: { ids },
+      });
+      set({ selectedOrderIds: [] });
+      await get().fetchOrders(get().pagination.page, '', '', '', '', true);
+      await get().fetchUnpaidCount();
+    } catch (err: any) {
+      set({ error: err.message, loading: false });
+      throw err;
+    }
+  },
+
+  deleteOrderPermanent: async (id) => {
+    try {
+      set({ loading: true });
+      await apiClient(`/admin/orders/${id}?permanent=true`, { method: 'DELETE' });
+      await get().fetchOrders(get().pagination.page, '', '', '', '', true);
+      await get().fetchUnpaidCount();
+    } catch (err: any) {
+      set({ error: err.message, loading: false });
+      throw err;
+    }
+  },
+
+  bulkDeleteOrdersPermanent: async (ids) => {
+    try {
+      set({ loading: true });
+      await apiClient<any>('/admin/orders/bulk-delete?permanent=true', {
+        method: 'DELETE',
+        body: { ids },
+      });
+      set({ selectedOrderIds: [] });
+      await get().fetchOrders(get().pagination.page, '', '', '', '', true);
+      await get().fetchUnpaidCount();
+    } catch (err: any) {
+      set({ error: err.message, loading: false });
       throw err;
     }
   },

@@ -23,6 +23,15 @@ export default function ProductDetailPage() {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [imgError, setImgError] = useState(false);
+
+  const formatColorDisplay = (val: string) => {
+    if (!val) return "";
+    const trimmed = val.trim();
+    if (trimmed.startsWith('#') || /^[0-9A-F]{6}$/i.test(trimmed) || /^[0-9A-F]{3}$/i.test(trimmed)) {
+      return "";
+    }
+    return trimmed.replace(/\s*\(?#[0-9A-Fa-f]{3,8}\)?/g, "").replace(/\s*-\s*#[0-9A-Fa-f]{3,8}/g, "").trim();
+  };
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [previewInitialIndex, setPreviewInitialIndex] = useState(0);
   const [previewProducts, setPreviewProducts] = useState<Product[]>([]);
@@ -184,7 +193,9 @@ export default function ProductDetailPage() {
                   className="w-8 h-8 rounded-full border-2 border-white dark:border-neutral-800 shadow-md ring-2 ring-gray-300 dark:ring-neutral-600"
                   style={{ backgroundColor: product.color }}
                 />
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300 capitalize">{product.color}</span>
+                {formatColorDisplay(product.color) && (
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300 capitalize">{formatColorDisplay(product.color)}</span>
+                )}
               </div>
             </div>
 

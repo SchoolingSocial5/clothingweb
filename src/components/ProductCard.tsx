@@ -26,6 +26,15 @@ export default function ProductCard({ id, name, category, price, color, quantity
   const { hydrated, hydrate, toggle, isWishlisted } = useWishlistStore();
   const [imgError, setImgError] = useState(false);
 
+  const formatColorDisplay = (val: string) => {
+    if (!val) return "";
+    const trimmed = val.trim();
+    if (trimmed.startsWith('#') || /^[0-9A-F]{6}$/i.test(trimmed) || /^[0-9A-F]{3}$/i.test(trimmed)) {
+      return "";
+    }
+    return trimmed.replace(/\s*\(?#[0-9A-Fa-f]{3,8}\)?/g, "").replace(/\s*-\s*#[0-9A-Fa-f]{3,8}/g, "").trim();
+  };
+
   useEffect(() => {
     if (!hydrated) hydrate();
   }, [hydrated, hydrate]);
@@ -136,7 +145,9 @@ export default function ProductCard({ id, name, category, price, color, quantity
             className="w-4 h-4 rounded-full border border-gray-200 dark:border-neutral-700 shadow-inner flex-shrink-0"
             style={{ backgroundColor: color }}
           />
-          <span className="text-[10px] text-gray-400 capitalize hidden sm:block">{color}</span>
+          {formatColorDisplay(color) && (
+            <span className="text-[10px] text-gray-400 capitalize hidden sm:block">{formatColorDisplay(color)}</span>
+          )}
         </div>
 
         {/* Quantity / cart controls */}
