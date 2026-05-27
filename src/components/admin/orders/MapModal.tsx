@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState, useRef } from 'react';
 import { apiClient } from '@/utils/api';
+import { socket } from '@/utils/socket';
 
 interface Dispatcher {
   id: string | number;
@@ -46,9 +47,47 @@ export default function MapModal({ onClose }: MapModalProps) {
 
   useEffect(() => {
     fetchLocations();
-    // Poll location updates every 10 seconds
-    const interval = setInterval(fetchLocations, 10000);
-    return () => clearInterval(interval);
+
+    if (!socket.connected) socket.connect();
+
+    const handleLocationUpdate = (updatedDisp: any) => {
+      setDispatchers((prev) => {
+        const dispId = updatedDisp.id || updatedDisp._id;
+        
+        if (!updatedDisp.isTrackingEnabled) {
+          // Remove dispatcher from list if they turn location tracking OFF
+          return prev.filter(d => String(d.id || (d as any)._id) !== String(dispId));
+        }
+
+        const exists = prev.some(d => String(d.id || (d as any)._id) === String(dispId));
+        if (exists) {
+          // Update dispatcher's coordinates inside state if they already exist
+          return prev.map(d => 
+            String(d.id || (d as any)._id) === String(dispId)
+              ? { ...d, latitude: updatedDisp.latitude, longitude: updatedDisp.longitude, lastLocationUpdate: updatedDisp.lastLocationUpdate }
+              : d
+          );
+        } else {
+          // Append dispatcher if they newly turned tracking ON
+          return [...prev, {
+            id: dispId,
+            name: updatedDisp.name,
+            phone: updatedDisp.phone,
+            email: updatedDisp.email,
+            staffPosition: updatedDisp.staffPosition,
+            latitude: updatedDisp.latitude,
+            longitude: updatedDisp.longitude,
+            lastLocationUpdate: updatedDisp.lastLocationUpdate
+          }];
+        }
+      });
+    };
+
+    socket.on('locationUpdated', handleLocationUpdate);
+
+    return () => {
+      socket.off('locationUpdated', handleLocationUpdate);
+    };
   }, []);
 
   const validDispatchers = dispatchers.filter(disp => 

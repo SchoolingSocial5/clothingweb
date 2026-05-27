@@ -8,6 +8,7 @@ import ThemeToggle from '@/components/ThemeToggle';
 import { getImageUrl } from '@/utils/image';
 import { useOrderStore } from '@/store/useOrderStore';
 import { apiClient } from '@/utils/api';
+import { socket } from '@/utils/socket';
 
 interface AdminSidebarProps {
   isOpen: boolean;
@@ -51,14 +52,13 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
         watchIdRef.current = null;
       }
       setIsTracking(false);
-      try {
-        await apiClient('/admin/users/profile/location', {
-          method: 'PATCH',
-          body: { isTrackingEnabled: false }
-        });
-      } catch (err) {
-        console.error('Failed to disable location tracking:', err);
-      }
+      
+      // Emit tracking disabled over socket
+      if (!socket.connected) socket.connect();
+      socket.emit('updateLocation', {
+        userId: user?.id,
+        isTrackingEnabled: false
+      });
     } else {
       if (!navigator.geolocation) {
         alert('Geolocation is not supported by your browser');
@@ -66,26 +66,26 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
       }
 
       setIsTracking(true);
-      try {
-        await apiClient('/admin/users/profile/location', {
-          method: 'PATCH',
-          body: { isTrackingEnabled: true }
-        });
-      } catch (err) {
-        console.error('Failed to enable location tracking:', err);
-      }
+      
+      // Establish socket connection if needed
+      if (!socket.connected) socket.connect();
+      
+      // Immediately announce tracking enabled
+      socket.emit('updateLocation', {
+        userId: user?.id,
+        isTrackingEnabled: true
+      });
 
       const watchId = navigator.geolocation.watchPosition(
-        async (position) => {
+        (position) => {
           const { latitude, longitude } = position.coords;
-          try {
-            await apiClient('/admin/users/profile/location', {
-              method: 'PATCH',
-              body: { latitude, longitude, isTrackingEnabled: true }
-            });
-          } catch (err) {
-            console.error('Failed to send coordinates update:', err);
-          }
+          if (!socket.connected) socket.connect();
+          socket.emit('updateLocation', {
+            userId: user?.id,
+            latitude,
+            longitude,
+            isTrackingEnabled: true
+          });
         },
         (error) => {
           let errorMsg = 'Unknown location error';
@@ -102,6 +102,11 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
             navigator.geolocation.clearWatch(watchIdRef.current);
             watchIdRef.current = null;
           }
+          
+          socket.emit('updateLocation', {
+            userId: user?.id,
+            isTrackingEnabled: false
+          });
         },
         {
           enableHighAccuracy: false, // Prevents satellite timeout failures on desktop browsers
