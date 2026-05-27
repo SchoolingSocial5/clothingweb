@@ -18,6 +18,7 @@ import ReceiptModal from '@/components/admin/orders/ReceiptModal';
 import WholesaleProductPickerModal from '@/components/admin/orders/WholesaleProductPickerModal';
 import WholesaleCheckoutModal from '@/components/admin/orders/WholesaleCheckoutModal';
 import FloatingCartIndicator from '@/components/admin/orders/FloatingCartIndicator';
+import MapModal from '@/components/admin/orders/MapModal';
 
 const paymentColors: Record<string, string> = {
   unpaid: 'bg-red-50 text-red-500',
@@ -66,6 +67,7 @@ export default function WholesaleTransactionsPage() {
   const [cartItems, setCartItems] = useState<any[]>([]);
   const [showProductPicker, setShowProductPicker] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false);
+  const [showMap, setShowMap] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
 
   const cartTotal = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
@@ -332,10 +334,22 @@ export default function WholesaleTransactionsPage() {
                       )}
                     </div>
                   </td>
-                  <td className="px-4 py-5 text-center">
-                    <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1.5 rounded-lg border ${paymentMethodColors[order.payment_method] || paymentMethodColors.online}`}>
-                      {order.payment_method === 'transfer' ? 'Transfer' : (order.payment_method === 'pos' ? 'POS' : (order.payment_method === 'cash' ? 'Cash' : (order.payment_method === 'online' ? 'Online' : order.payment_method)))}
-                    </span>
+                  <td className="px-4 py-5 text-center" onClick={e => e.stopPropagation()}>
+                    <div className="flex items-center justify-center gap-1.5">
+                      <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1.5 rounded-lg border ${paymentMethodColors[order.payment_method] || paymentMethodColors.online}`}>
+                        {order.payment_method === 'transfer' ? 'Transfer' : (order.payment_method === 'pos' ? 'POS' : (order.payment_method === 'cash' ? 'Cash' : (order.payment_method === 'online' ? 'Online' : order.payment_method)))}
+                      </span>
+                      <button
+                        onClick={() => setShowMap(true)}
+                        className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors cursor-pointer active:scale-95"
+                        title="Track Dispatch Staff"
+                      >
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="animate-pulse">
+                          <path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z" />
+                          <circle cx="12" cy="10" r="3" />
+                        </svg>
+                      </button>
+                    </div>
                   </td>
                   <td className="px-4 py-5" onClick={e => e.stopPropagation()}>
                     {order.approved_by ? (
@@ -546,6 +560,10 @@ export default function WholesaleTransactionsPage() {
           total={cartTotal}
           onClick={() => { setShowProductPicker(false); setShowCheckout(true); }}
         />
+      )}
+
+      {showMap && (
+        <MapModal onClose={() => setShowMap(false)} />
       )}
 
       {toast && <Toast message={toast.message} type={toast.type} visible={!!toast} onClose={() => setToast(null)} />}

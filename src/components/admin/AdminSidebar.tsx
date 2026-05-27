@@ -7,6 +7,7 @@ import { useEffect, useState, useRef } from 'react';
 import ThemeToggle from '@/components/ThemeToggle';
 import { getImageUrl } from '@/utils/image';
 import { useOrderStore } from '@/store/useOrderStore';
+import { apiClient } from '@/utils/api';
 
 interface AdminSidebarProps {
   isOpen: boolean;
@@ -30,6 +31,88 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
   );
   const logoSrc = getImageUrl(settings?.logo);
   const { unpaidCount } = useOrderStore();
+
+  const [isTracking, setIsTracking] = useState(false);
+  const watchIdRef = useRef<number | null>(null);
+  const isDispatcher = user?.staffPosition?.toLowerCase().includes('dispatch');
+
+  useEffect(() => {
+    return () => {
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+      }
+    };
+  }, []);
+
+  const toggleLocationTracking = async () => {
+    if (isTracking) {
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+      }
+      setIsTracking(false);
+      try {
+        await apiClient('/admin/users/profile/location', {
+          method: 'PATCH',
+          body: { isTrackingEnabled: false }
+        });
+      } catch (err) {
+        console.error('Failed to disable location tracking:', err);
+      }
+    } else {
+      if (!navigator.geolocation) {
+        alert('Geolocation is not supported by your browser');
+        return;
+      }
+
+      setIsTracking(true);
+      try {
+        await apiClient('/admin/users/profile/location', {
+          method: 'PATCH',
+          body: { isTrackingEnabled: true }
+        });
+      } catch (err) {
+        console.error('Failed to enable location tracking:', err);
+      }
+
+      const watchId = navigator.geolocation.watchPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords;
+          try {
+            await apiClient('/admin/users/profile/location', {
+              method: 'PATCH',
+              body: { latitude, longitude, isTrackingEnabled: true }
+            });
+          } catch (err) {
+            console.error('Failed to send coordinates update:', err);
+          }
+        },
+        (error) => {
+          let errorMsg = 'Unknown location error';
+          if (error.code === 1) errorMsg = 'Permission denied - Please enable browser location services';
+          else if (error.code === 2) errorMsg = 'Position unavailable - GPS signal or network disconnected';
+          else if (error.code === 3) errorMsg = 'Timeout occurred while waiting for GPS coordinates';
+          
+          console.error(`Error watching location (Code ${error.code}): ${error.message || errorMsg}`);
+          alert(`Location tracking error: ${errorMsg}`);
+          
+          // Reset tracking state on failure
+          setIsTracking(false);
+          if (watchIdRef.current !== null) {
+            navigator.geolocation.clearWatch(watchIdRef.current);
+            watchIdRef.current = null;
+          }
+        },
+        {
+          enableHighAccuracy: false, // Prevents satellite timeout failures on desktop browsers
+          timeout: 30000,            // Throttles timeout back to 30 seconds
+          maximumAge: 0
+        }
+      );
+
+      watchIdRef.current = watchId;
+    }
+  };
 
   const isSuper =
     user?.role === 'admin' ||
@@ -318,6 +401,32 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
           </div>
         )}
       </nav>
+      {isDispatcher && (
+        <div className="mx-4 mb-4 p-4 bg-red-50/50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/30 rounded-2xl space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="relative flex h-2 w-2">
+                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isTracking ? 'bg-emerald-400' : 'bg-red-400'}`}></span>
+                <span className={`relative inline-flex rounded-full h-2 w-2 ${isTracking ? 'bg-emerald-500' : 'bg-red-500'}`}></span>
+              </span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-gray-400">Dispatch Status</span>
+            </div>
+            <span className="text-[10px] font-bold text-gray-450 dark:text-gray-400">
+              {isTracking ? 'Tracking ON' : 'Offline'}
+            </span>
+          </div>
+          <button
+            onClick={toggleLocationTracking}
+            className={`w-full flex items-center justify-center gap-2 py-2.5 px-4 text-xs font-black uppercase tracking-widest rounded-xl transition-all cursor-pointer ${isTracking ? 'bg-emerald-600 text-white hover:bg-emerald-700 hover:scale-102 active:scale-98' : 'bg-red-600 text-white hover:bg-red-700 hover:scale-102 active:scale-98'}`}
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+              <path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z" />
+              <circle cx="12" cy="10" r="3" />
+            </svg>
+            {isTracking ? 'Disable Location' : 'Enable Location'}
+          </button>
+        </div>
+      )}
       <div className="p-4 border-t border-gray-100 dark:border-neutral-800 flex items-center gap-2">
         <button
           onClick={logout}
