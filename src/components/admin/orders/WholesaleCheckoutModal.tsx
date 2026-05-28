@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useWholesaleOrderStore } from '@/store/useWholesaleOrderStore';
 import { getImageUrl } from '@/utils/image';
 import { useUserStore } from '@/store/useUserStore';
+import { useAuth } from '@/context/AuthContext';
 
 interface WholesaleCheckoutModalProps {
   cartItems: any[];
@@ -14,6 +15,7 @@ interface WholesaleCheckoutModalProps {
 
 export default function WholesaleCheckoutModal({ cartItems, onClose, onUpdateQty, onRemove, onOrderCreated, onError }: WholesaleCheckoutModalProps) {
   const { createOrder } = useWholesaleOrderStore();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({ name: '', phone: '', email: '', address: '' });
   const [suggestions, setSuggestions] = useState<any[]>([]);
@@ -72,6 +74,9 @@ export default function WholesaleCheckoutModal({ cartItems, onClose, onUpdateQty
       if (formData.address) fd.append('delivery_address', formData.address);
       fd.append('total_amount', String(total));
       fd.append('payment_method', paymentMethod);
+      if (user) {
+        fd.append('approved_by', user.name || user.email);
+      }
       fd.append('items', JSON.stringify(cartItems.map(i => ({
         productId: i.id,
         productName: i.name,

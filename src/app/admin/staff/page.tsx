@@ -57,7 +57,7 @@ export default function StaffPage() {
 
       <div className="mt-8 bg-white dark:bg-neutral-900 rounded-[32px] border border-gray-100 dark:border-neutral-800 shadow-sm overflow-hidden">
         <div className="overflow-x-auto min-h-[400px]">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse min-w-[900px]">
             <thead>
               <tr className="bg-gray-50/50 dark:bg-neutral-800/50 text-gray-400 dark:text-gray-500 text-[10px] font-black uppercase tracking-widest border-b border-gray-100 dark:border-neutral-800">
                 <th className="px-8 py-5 w-16">s/n</th>

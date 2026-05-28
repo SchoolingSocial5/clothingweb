@@ -98,7 +98,7 @@ export default function FinancePage() {
           </span>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse min-w-[800px]">
             <thead>
               <tr className="border-b border-gray-100 dark:border-neutral-800 text-gray-400 text-[10px] font-black uppercase tracking-widest">
                 <th className="px-6 py-4">Defined Role</th>

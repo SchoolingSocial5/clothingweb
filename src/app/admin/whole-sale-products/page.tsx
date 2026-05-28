@@ -231,7 +231,7 @@ export default function WholeSaleProductsPage() {
         </div>
 
         <div className="overflow-x-auto min-h-[400px]">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-left border-collapse min-w-[900px]">
               <thead>
                 <tr className="bg-gray-50/50 dark:bg-neutral-800/50 text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wider">
                   <th className="px-6 py-4 font-semibold text-center w-16">S/N</th>

@@ -164,10 +164,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <AdminSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col min-h-screen md:pl-64">
+      <main className="flex-1 flex flex-col min-h-screen md:pl-64 min-w-0 w-full max-w-full">
         <AdminTopHeader onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
 
-        {children}
+        <div className="flex-1 w-full min-w-0 max-w-full">
+          {children}
+        </div>
       </main>
     </div>
   );

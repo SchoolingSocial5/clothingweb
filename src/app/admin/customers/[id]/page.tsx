@@ -172,7 +172,7 @@ export default function CustomerDetailsPage() {
             </div>
           )}
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-left border-collapse min-w-[800px]">
               <thead>
                 <tr className="bg-gray-50/50 dark:bg-neutral-800/50 text-gray-400 dark:text-gray-500 text-[10px] font-black uppercase tracking-[0.2em] border-b border-gray-100 dark:border-neutral-800">
                   <th className="px-8 py-5">Order ID</th>
