@@ -8,9 +8,33 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "Hi Health Equipment",
-  description: "Explore the various collection of Hi Health Equipment",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || "https://hihealthequipment.com"),
+  title: {
+    default: "Hi Health Equipment",
+    template: "%s | Hi Health Equipment",
+  },
+  description: "Explore the various collection of Hi Health Equipment. Get the best health, fitness and medical equipment at affordable prices.",
+  keywords: ["Hi Health Equipment", "Health Equipment", "Fitness", "Medical Equipment", "Healthcare"],
   manifest: "/manifest.json",
+  openGraph: {
+    title: "Hi Health Equipment",
+    description: "Explore the various collection of Hi Health Equipment.",
+    url: "/",
+    siteName: "Hi Health Equipment",
+    locale: "en_US",
+    type: "website",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
 };
 
 import { CartProvider } from "@/context/CartContext";
