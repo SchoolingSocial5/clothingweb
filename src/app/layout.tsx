@@ -8,7 +8,7 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || "https://hihealthequipment.com"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || "https://hi-healthequipment.com"),
   title: {
     default: "Hi Health Equipment",
     template: "%s | Hi Health Equipment",
