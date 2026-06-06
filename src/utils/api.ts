@@ -48,13 +48,6 @@ export const apiClient = async <T = any>(endpoint: string, options: ApiOptions =
         try {
           const userObj = JSON.parse(userJson);
           if (userObj && userObj.status) {
-            if (userObj.status !== 'staff') {
-              alert("You are not authorized to perform this action.");
-              localStorage.removeItem('auth_token');
-              localStorage.removeItem('auth_user');
-              window.location.href = '/sign-in';
-              throw new Error("Not authorized");
-            }
             // Carry parameter of the user status
             if (finalUrl.includes('?')) {
               finalUrl += `&status=${encodeURIComponent(userObj.status)}`;
